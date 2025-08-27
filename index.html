@@ -1053,8 +1053,8 @@ window.guidedFixes = {
     title: "Form inputs unlabeled — associate a label",
     wcag: { id: "3.3.2", url: "https://www.w3.org/WAI/WCAG22/Understanding/labels-or-instructions.html" },
     build(state = {}) {
-      const labelText = sanitize(state.labelText || "Email");
-      const id = sanitize(state.id || "email");
+      const labelText = sanitize(state.labelText || "");
+      const id = sanitize(state.id || "");
       const pattern = (state.pattern || "textlabel").toLowerCase();
 
       let html = "", react = "", notes = [];
@@ -2772,7 +2772,7 @@ if (ok) { ok.classList.remove('opacity-0'); setTimeout(()=>ok.classList.add('opa
   const nextB = document.getElementById('guideNext');
   const okMsg = document.getElementById('guideCopyOk');
   const decisionA = document.getElementById('guideDecision');
-  let opener = null, rule = null, state = {}, step = 0, total = 3;
+  let opener = null, rule = null, state = {}, step = 0, total = 3, attemptedNext = false;
 
   const DECISION_TREE_URL = 'https://www.w3.org/WAI/tutorials/images/decision-tree/'; // W3C Alt-text Decision Tree
   // Clipboard API note: requires secure context (HTTPS). :contentReference[oaicite:2]{index=2}
@@ -2805,6 +2805,24 @@ if (ok) { ok.classList.remove('opacity-0'); setTimeout(()=>ok.classList.add('opa
     if (rule === 'image-alt') { decisionA.hidden = false; decisionA.href = DECISION_TREE_URL; }
     else { decisionA.hidden = true; decisionA.removeAttribute('href'); }
   }
+      // Extract id from offending selector/snippet so Step 1 can prefill
+      function extractIdFromAnchor(s = '') {
+        const m1 = s.match(/id="([A-Za-z][\w:-]*)"/);
+        if (m1) return m1[1];
+        const m2 = s.match(/#([A-Za-z][\w:-]*)/);
+        if (m2) return m2[1];
+        const m3 = s.match(/name="([A-Za-z][\w:-]*)"/);
+        if (m3) return m3[1];
+        return '';
+      }
+
+      function deriveLabelFromIdOrName(s = '') {
+        if (!s) return '';
+        return s
+          .replace(/(^[A-Za-z])/, m => m.toUpperCase()) // leading capital
+          .replace(/[-_]+/g, ' ')                       // dashes/underscores → spaces
+          .trim();
+      }
 
   function html(input){ const d=document.createElement('div'); d.innerHTML=input; return d.firstElementChild; }
 
@@ -2871,19 +2889,23 @@ if (ok) { ok.classList.remove('opacity-0'); setTimeout(()=>ok.classList.add('opa
         const id  = dlg.querySelector('#lblId');
         const ok1 = !!(lbl && lbl.value.trim());
         let   ok2 = !!(id && id.value.trim());
-        if (lbl) (ok1 ? clearFieldError(lbl) : setFieldError(lbl, 'Visible label is required.'));
-        if (id)  (ok2 ? clearFieldError(id)  : setFieldError(id,  'Provide a stable id.'));
-
-        // id: no spaces, starts with a letter, only [A-Za-z0-9_:-]
+      if (lbl) (ok1 ? clearFieldError(lbl) : (attemptedNext && setFieldError(lbl, 'Visible label is required.')));
+      if (id)  (ok2 ? clearFieldError(id)  : (attemptedNext && setFieldError(id,  'Provide a stable id.')));        // id: no spaces, starts with a letter, only [A-Za-z0-9_:-]
         const idVal = (id?.value || '').trim();
-        const formatOK = /^[A-Za-z][\\w:-]*$/.test(idVal);
-        if (id && ok2 && !formatOK) { setFieldError(id, 'Use a valid id (start with a letter; no spaces).'); ok2 = false; }
-
-        // Basic uniqueness guard (on current page)
+      const formatOK = /^[A-Za-z][\w:-]*$/.test(idVal);
+      if (id && ok2 && !formatOK) {
+        if (attemptedNext) setFieldError(id, 'Use a valid id (start with a letter; no spaces).');
+        else clearFieldError(id);
+        ok2 = false;
+      }        // Basic uniqueness guard (on current page)
         if (id && ok2) {
           try {
             const used = document.querySelectorAll(`#${CSS.escape(idVal)}`).length;
-            if (used > 0) { setFieldError(id, 'This id is already used on the page. Use a unique id.'); ok2 = false; }
+            if (used > 0) {
+              if (attemptedNext) setFieldError(id, 'This id is already used on the page. Use a unique id.');
+              else clearFieldError(id);
+              ok2 = false;
+            }
           } catch {}
         }
 
@@ -3090,11 +3112,25 @@ if (ok) { ok.classList.remove('opacity-0'); setTimeout(()=>ok.classList.add('opa
         body.append(
           html(`<h3 class="text-base font-semibold">Enter the visible label and an id</h3>`),
           html(`<div class="grid sm:grid-cols-2 gap-3">
-            <label>Visible label text
-              <input id="lblText" class="mt-1 w-full rounded border px-2 py-1" placeholder="Email" value="${state.labelText||''}">
+            <label class="block">
+              Visible label text
+              <input id="lblText" class="mt-1 w-full rounded border px-2 py-1"
+                     aria-describedby="lblText-hint"
+                     placeholder="${state.id ? deriveLabelFromIdOrName(state.id) : 'Email'}"
+                     value="${state.labelText || (state.id ? deriveLabelFromIdOrName(state.id) : '')}">
+              <p id="lblText-hint" class="mt-1 text-sm text-zinc-500">
+                Example: "Email" or "First name". This is what users see.
+              </p>
             </label>
-            <label>id attribute to use
-              <input id="lblId" class="mt-1 w-full rounded border px-2 py-1" placeholder="email" value="${state.id||''}">
+            <label class="block">
+              id attribute to use
+              <input id="lblId" class="mt-1 w-full rounded border px-2 py-1"
+                     aria-describedby="lblId-hint"
+                     placeholder="${state.id || 'email'}"
+                     value="${state.id || ''}">
+              <p id="lblId-hint" class="mt-1 text-sm text-zinc-500">
+                Use a <code>kebab-case</code> or <code>snake_case</code> id starting with a letter (no spaces).
+              </p>
             </label>
           </div>`)
         );
@@ -3120,9 +3156,10 @@ if (ok) { ok.classList.remove('opacity-0'); setTimeout(()=>ok.classList.add('opa
         body.append(html(`<h3 class="text-base font-semibold">Summary</h3>`));
         renderSummaryTabs({ html: sum.html, react: sum.react, notes: sum.notes });
         setVerify([
-          "Screen reader announces the label for the input.",
-          "Visible label matches the programmatic name."
-        ]);
+            "Clicking the visible label focuses the input.",
+            "Screen reader announces the label for the input.",
+            "Visible label matches the programmatic name."
+          ]);
       }
     }
 
@@ -3142,8 +3179,19 @@ if (ok) { ok.classList.remove('opacity-0'); setTimeout(()=>ok.classList.add('opa
         if (el.id === 'altBrief') state.altBrief = el.value;
         if (el.id === 'longDesc') state.longDesc = el.value;
 
-        if (el.id === 'lblText') state.labelText = el.value;
-        if (el.id === 'lblId')   state.id = el.value;
+        if (el.id === 'lblText') {
+          state.labelText = el.value;
+          const idEl = dlg.querySelector('#lblId');
+          if (idEl && (!idEl.value || idEl.dataset.autofill === '1')) {
+            let sug = (el.value || '').trim().toLowerCase()
+              .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+            if (sug && !/^[a-z]/.test(sug)) sug = 'f-' + sug;
+            idEl.value = sug;
+            state.id = sug;
+            idEl.dataset.autofill = '1';
+          }
+        }
+        if (el.id === 'lblId') { state.id = el.value; const idEl = dlg.querySelector('#lblId'); if (idEl) idEl.dataset.autofill = ''; }
         if (el.name === 'pattern') state.pattern = dlg.querySelector('input[name="pattern"]:checked')?.value || state.pattern;
 
         applyValidation();
@@ -3154,9 +3202,17 @@ if (ok) { ok.classList.remove('opacity-0'); setTimeout(()=>ok.classList.add('opa
 
   backB.addEventListener('click', () => { step = Math.max(0, step-1); render(); });
   nextB.addEventListener('click', () => {
-    // advance only when valid
-    if (nextB.disabled) { sr.textContent = 'Complete required fields to continue.'; return; }
-    step = Math.min(total-1, step+1);
+    attemptedNext = true;
+    // Re-run validation to ensure errors are shown now
+    applyValidation();
+    if (nextB.disabled) {
+      sr.textContent = 'Complete required fields to continue.';
+      const firstErr = dlg.querySelector('[aria-invalid="true"]');
+      if (firstErr) firstErr.focus();
+      return;
+    }
+    step = Math.min(total - 1, step + 1);
+    attemptedNext = false; // reset for the new step
     render();
   });
 
@@ -3167,7 +3223,18 @@ if (ok) { ok.classList.remove('opacity-0'); setTimeout(()=>ok.classList.add('opa
     const meta = window.guidedFixes?.[ruleId];
     if (!meta) return;
     opener = openerEl || document.activeElement;
-    rule = ruleId; state = { anchor: anchorText || '' }; step = 0; total = 3;
+    rule = ruleId;
+    state = { anchor: anchorText || '' };
+    if (ruleId === 'label') {
+      const g = extractIdFromAnchor(anchorText || '');
+      if (g) {
+        state.id = g;
+        state.labelText = deriveLabelFromIdOrName(g);
+      }
+    }
+    step = 0;
+    total = 3;
+    attemptedNext = false;
     setHeader({ title: meta.title, wcag: meta.wcag });
     setVerify([]);
     render();
