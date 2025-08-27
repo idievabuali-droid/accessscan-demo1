@@ -1,0 +1,43 @@
+diff --git a/index.html b/index.html
+index c415c5f..89a9453 100644
+--- a/index.html
++++ b/index.html
+@@ -1053,8 +1053,8 @@ window.guidedFixes = {
+     title: "Form inputs unlabeled — associate a label",
+     wcag: { id: "3.3.2", url: "https://www.w3.org/WAI/WCAG22/Understanding/labels-or-instructions.html" },
+     build(state = {}) {
+-      const labelText = sanitize(state.labelText || "Email");
+-      const id = sanitize(state.id || "email");
++      const labelText = sanitize(state.labelText || "");
++      const id = sanitize(state.id || "");
+       const pattern = (state.pattern || "textlabel").toLowerCase();
+ 
+       let html = "", react = "", notes = [];
+@@ -3142,8 +3142,19 @@ if (ok) { ok.classList.remove('opacity-0'); setTimeout(()=>ok.classList.add('opa
+         if (el.id === 'altBrief') state.altBrief = el.value;
+         if (el.id === 'longDesc') state.longDesc = el.value;
+ 
+-        if (el.id === 'lblText') state.labelText = el.value;
+-        if (el.id === 'lblId')   state.id = el.value;
++        if (el.id === 'lblText') {
++          state.labelText = el.value;
++          const idEl = dlg.querySelector('#lblId');
++          if (idEl && (!idEl.value || idEl.dataset.autofill === '1')) {
++            let sug = (el.value || '').trim().toLowerCase()
++              .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
++            if (sug && !/^[a-z]/.test(sug)) sug = 'f-' + sug;
++            idEl.value = sug;
++            state.id = sug;
++            idEl.dataset.autofill = '1';
++          }
++        }
++        if (el.id === 'lblId') { state.id = el.value; const idEl = dlg.querySelector('#lblId'); if (idEl) idEl.dataset.autofill = ''; }
+         if (el.name === 'pattern') state.pattern = dlg.querySelector('input[name="pattern"]:checked')?.value || state.pattern;
+ 
+         applyValidation();
+@@ -3190,3 +3201,5 @@ if (ok) { ok.classList.remove('opacity-0'); setTimeout(()=>ok.classList.add('opa
+ 
+ </body>
+ </html>
++<!-- SANITY TEST -->
++<!-- SANITY TEST -->

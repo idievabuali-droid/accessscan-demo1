@@ -417,34 +417,24 @@ window.generateReportPDF = function generateReportPDF() {
     const ORDER = ["critical","serious","moderate","minor"];
     const bySeverity = (a,b) => ORDER.indexOf(a.sev) - ORDER.indexOf(b.sev);
     const sorted = rowsAll.slice().sort(bySeverity);
-    const topRows = sorted.slice(0, 10); // Top-10
+    const topRows = sorted.slice(0, 10); // Top-10 (for listing)
 
-    // Score: weighted Top-10 (transparent formula; bounded 0..100)
-    const W = { critical:25, serious:12, moderate:6, minor:2 };
-    const points = topRows.reduce((s,r)=> s + (W[r.sev] || 0), 0);
-    const score = Math.max(0, Math.min(100, Math.round(100 - (points / (25*10))*100)));
+    // Score: use Before → After reduction (transparent, bounded 0..100)
+    let beforeCount = 0, afterCount = 0;
+    try {
+      beforeCount = (typeof DEMO_DATA !== 'undefined' && DEMO_DATA.before?.issues?.length) || 0;
+      afterCount  = (typeof DEMO_DATA !== 'undefined' && DEMO_DATA.after?.issues?.length)  || 0;
+    } catch {}
+    const fixed = Math.max(0, beforeCount - afterCount);
+    const score = beforeCount > 0 ? Math.round((fixed / beforeCount) * 100) : 0;
 
-    // Automation box numbers (Top-10 basis in this earlier version)
-// Automation box numbers — keep them consistent with the Trend line
-// If DEMO_DATA (before/after) is present, use it so:
-//   autoCount  = fixed this pass (before - after)
-//   humanCount = left after fixes (after)
-// Otherwise (real scans), fall back to Top-10 automatable vs human.
-let autoCount = null, humanCount = null;
-try {
-  const b = (typeof DEMO_DATA !== "undefined" && DEMO_DATA.before && Array.isArray(DEMO_DATA.before.issues))
-    ? DEMO_DATA.before.issues.length : null;
-  const a = (typeof DEMO_DATA !== "undefined" && DEMO_DATA.after && Array.isArray(DEMO_DATA.after.issues))
-    ? DEMO_DATA.after.issues.length : null;
-  if (b != null && a != null) {
-    autoCount  = Math.max(0, b - a); // fixed this pass
-    humanCount = a;                  // left after fixes
-  }
-} catch {}
-if (autoCount == null || humanCount == null) {
-  autoCount = topRows.filter(r => r.auto).length;
-  humanCount = topRows.length - autoCount;
-}
+    // Automation box numbers (from BEFORE so they match the demo split)
+    let autoCount = 0, humanCount = 0;
+    try {
+      const be = DEMO_DATA.before?.issues || [];
+      autoCount   = be.filter(r => r.auto).length;
+      humanCount  = be.length - autoCount;
+    } catch {}
 
 
     // Trend note from demo datasets (safe no-op if not present)
@@ -523,11 +513,11 @@ if (autoCount == null || humanCount == null) {
     setText(10, 26,86,219, "bold"); doc.text("Automatable (tools)", x0+10, y+18);
     setText(11, 26,86,219, "bold"); doc.text(`${autoCount}`, x0+10, y+36);
     setText(9, 90,90,90); doc.text("Quick wins you can copy-paste.", x0+40, y+36);
-    // Human review
-    doc.setDrawColor(223); doc.setFillColor(250); doc.roundedRect(x0 + panelW + 12, y, panelW, panelH, 8, 8, "FD");
-    setText(10, 22,101,52, "bold"); doc.text("Needs human checks", x0+panelW+22, y+18);
-    setText(11, 22,101,52, "bold"); doc.text(`${humanCount}`, x0+panelW+22, y+36);
-    setText(9, 90,90,90); doc.text("Keyboard flow, semantics, intent.", x0+panelW+52, y+36);
+  // Human review
+  doc.setDrawColor(223); doc.setFillColor(250); doc.roundedRect(x0 + panelW + 12, y, panelW, panelH, 8, 8, "FD");
+  setText(10, 22,101,52, "bold"); doc.text("Remaining after pass (machine-tests)", x0+panelW+22, y+18);
+  setText(11, 22,101,52, "bold"); doc.text(`${humanCount}`, x0+panelW+22, y+36);
+  setText(9, 90,90,90); doc.text("Items still present after this pass.", x0+panelW+52, y+36);
     cursorY += panelH + 16;
 
     // Short methodology copy
@@ -869,7 +859,10 @@ const WCAG_ANCHORS = {
   '2.4.4': 'link-purpose-in-context',
   '2.4.6': 'headings-and-labels',
   '2.4.2': 'page-titled',          // added
-  '3.1.1': 'language-of-page'      // added
+  '3.1.1': 'language-of-page',      // added
+  '2.1.2': 'no-keyboard-trap',      // NEW — No Keyboard Trap
+  '2.4.3': 'focus-order',           // NEW — Focus Order
+  '2.4.7': 'focus-visible'          // NEW — Focus Visible
 };
 
 function wcagHref(sc) {
@@ -1395,30 +1388,64 @@ function Donut({ value, total, label = "fewer issues" }) {
 // Source pages users can open to verify: BAD Before Report / BAD After Report.
 // These are curated to mirror common issues listed for the BAD demo.
 // (Demo transparency: numbers here are for the sample report; your real scan will differ.)
+// --- Human review script library (renders the Human checks tab) ---
+const HUMAN_SCRIPT_LIBRARY = {
+  'keyboard-flow': {
+    title: 'Keyboard flow (no traps)',
+    body: 'Tab/Shift+Tab across the page. Focus never disappears and you can exit modals and widgets using only the keyboard. Esc closes dialogs and returns focus to the trigger.'
+  },
+  'link-purpose': {
+    title: 'Link purpose in context',
+    body: 'Each link makes sense from surrounding text. Replace “Click here”/“Read more” with descriptive text or add off-screen context for repeated links.'
+  },
+  'focus-order': {
+    title: 'Focus order',
+    body: 'Tab/read order matches the visual order. When modals or menus open, focus moves into them; on close, focus returns to the trigger.'
+  },
+  'visible-focus': {
+    title: 'Visible focus',
+    body: 'Keyboard focus is always visible. Do not remove outlines; ensure a clear focus indicator around links, buttons, and form fields.'
+  }
+};
+
 const DEMO_DATA = {
   before: {
     name: 'W3C BAD — Before',
     url: 'https://www.w3.org/WAI/demos/bad/before/home.html',
     // each issue: severity, category, selector/snippet, wcag, auto-fixable?
     issues: [
-  { sev:'critical', cat:'Color contrast',         sel:'.btn-primary',       wcag:'1.4.3', fix:'Increase contrast to ≥4.5:1',                 copy:'.btn-primary{color:#111;background:#2d3b8f}', auto:true },
-  { sev:'serious',  cat:'Images without alt',     sel:'img.hero',           wcag:'1.1.1', fix:'Provide concise alt (or empty alt if decorative)', copy:'<img src="hero.jpg" alt="City skyline" />', auto:false },
-  { sev:'serious',  cat:'Form inputs unlabeled',  sel:'input#email',        wcag:'3.3.2', fix:'Associate <label> with input via for/id',    copy:'<label for="email">Email</label><input id="email" />', auto:false },
-  { sev:'moderate', cat:'Empty links/buttons',    sel:'a.icon-only',        wcag:'2.4.4', fix:'Provide accessible name via text or aria-label', auto:true },
-  { sev:'minor',    cat:'Heading order',          sel:'h1→h3',              wcag:'2.4.6', fix:'Avoid skipping heading levels',               auto:false },
-  { sev:'moderate', cat:'Missing page title',     sel:'<title>',            wcag:'2.4.2', fix:'Add a concise, descriptive <title>',         copy:'<title>CityLights — Home</title>', auto:true },
-  { sev:'moderate', cat:'Missing page language',  sel:'<html>',             wcag:'3.1.1', fix:'Set the primary language on <html lang="…">', copy:'<html lang="en">', auto:true },
-]
+      // 8 machine-detected issues: 5 automatable (Copy fix), 3 guided (wizard)
+
+      // Copy-fix (automatable) — 5
+      { sev:'critical', cat:'Color contrast',         sel:'.btn-primary',              wcag:'1.4.3', copy:'.btn-primary{color:#111;background:#2d3b8f}', auto:true },
+      { sev:'moderate', cat:'Empty links/buttons',    sel:'a.icon-only',               wcag:'4.1.2', copy:'Provide accessible name via text or aria-label', auto:true },
+      { sev:'moderate', cat:'Empty links/buttons',    sel:'button.icon-only',          wcag:'4.1.2', copy:'Provide accessible name via text or aria-label', auto:true },
+      { sev:'moderate', cat:'Missing page title',     sel:'<title>',                   wcag:'2.4.2', copy:'<title>CityLights — Home</title>', auto:true },
+      { sev:'moderate', cat:'Missing page language',  sel:'<html>',                    wcag:'3.1.1', copy:'<html lang="en">', auto:true },
+
+      // “Guide me” (wizard) — 3
+  { sev:'serious',  cat:'Images without alt',     sel:'img.hero',                  wcag:'1.1.1', fix:'Provide descriptive alt for informative images; use empty alt for decorative.', auto:false },
+  { sev:'serious',  cat:'Form inputs unlabeled',  sel:'input[type="email"]',      wcag:'3.3.2', fix:'Use <label for> or aria-labelledby/aria-label so inputs have accessible names.', auto:false },
+  { sev:'serious',  cat:'Form inputs unlabeled',  sel:'input[type="search"]',     wcag:'3.3.2', fix:'Use <label for> or aria-labelledby/aria-label so inputs have accessible names.', auto:false },
+
+  // Human-review — 4
+  { sev:'serious',  cat:'Keyboard flow (no traps)', sel:'#nav, #modal',                   wcag:'2.1.2', needsHuman:true, humanKey:'keyboard-flow' },
+  { sev:'moderate', cat:'Link purpose in context',  sel:'a:contains("Read more"), .icon', wcag:'2.4.4', needsHuman:true, humanKey:'link-purpose' },
+  { sev:'moderate', cat:'Focus order',              sel:'header > nav > a, main h1, .cta', wcag:'2.4.3', needsHuman:true, humanKey:'focus-order' },
+  { sev:'moderate', cat:'Visible focus',            sel:'a, button, input',               wcag:'2.4.7', needsHuman:true, humanKey:'visible-focus' },
+    ]
 ,
   },
   after: {
     name: 'W3C BAD — After',
     url: 'https://www.w3.org/WAI/demos/bad/after/home.html',
     issues: [
-      // after fixes: fewer issues remain (contrast + link names resolved)
-      { sev:'minor', cat:'Heading order', sel:'h1→h3', wcag:'2.4.6', fix:'Confirm hierarchy is logical', auto:false },
-      // keep one improvement opportunity visible:
-      { sev:'moderate', cat:'Form inputs unlabeled', sel:'input#newsletter', wcag:'3.3.2', fix:'Confirm labels/aria-labelledby present', auto:false },
+      // After demo fixes: unresolved machine-detected items (guided)
+  { sev:'serious',  cat:'Images without alt',     sel:'img.hero',                  wcag:'1.1.1', fix:'Confirm alt text (or empty alt for decorative).', auto:false },
+  { sev:'serious',  cat:'Form inputs unlabeled',  sel:'input[type="email"]',       wcag:'3.3.2', fix:'Confirm labels/aria-labelledby present', auto:false },
+  { sev:'serious',  cat:'Form inputs unlabeled',  sel:'input[type="search"]',      wcag:'3.3.2', fix:'Confirm labels/aria-labelledby present', auto:false },
+  { sev:'moderate', cat:'Link purpose in context',  sel:'a:contains("Read more"), .icon', wcag:'2.4.4', needsHuman:true, humanKey:'link-purpose' },
+  { sev:'moderate', cat:'Focus order',              sel:'header > nav > a, main h1, .cta', wcag:'2.4.3', needsHuman:true, humanKey:'focus-order' },
     ],
   },
 };
@@ -1477,9 +1504,11 @@ const rows = issues.map(it => {
     sev: it.sev,
     desc: sanitize(it.fix || it.cat),        // sanitize text
     help: AXE_RULE_URL(rule),
-    sel: sanitize(it.sel || ""),             // sanitize selector (fixes arrow)
+    sel: sanitize(it.sel || ""),             // sanitize selector/snippet
     wcag: it.wcag,
-    auto: !!it.auto,                         // keep which ones are automatable
+    auto: !!it.auto,
+    needsHuman: !!it.needsHuman,
+    humanKey: it.humanKey || null
   };
 });
 
@@ -1493,6 +1522,18 @@ const improved     = Math.max(0, beforeTotal - afterTotal);
 // Consistent summary numbers based on Before → After
 const fixedThisPass   = Math.max(0, beforeTotal - afterTotal); // e.g., 5
 const leftAfterFixes  = afterTotal;                             // e.g., 2
+
+  useEffect(() => {
+    try {
+      const el = document.getElementById('report-status');
+      if (!el) return;
+      if (dataset === 'after') {
+        el.textContent = `Demo fixes applied. ${fixedThisPass} resolved, ${afterTotal} remaining.`;
+      } else {
+        el.textContent = `Showing Before: ${beforeTotal} total issues. Switch to After to hear the reduction.`;
+      }
+    } catch {}
+  }, [dataset, fixedThisPass, afterTotal, beforeTotal]);
 
 
 // Expose to PDF/JSON according to selected dataset
@@ -1519,16 +1560,16 @@ const scanUrl = data.url;
 
 
 
-const effort = estimateEffort(issues);
 const resolvedCats = diffResolved(DEMO_DATA.before.issues, DEMO_DATA.after.issues);
-const manualCount = issues.filter(i=>!i.auto).length;
+// Demo: things tools can't confirm (kept separate from machine-tested counts)
+const HUMAN_CHECKS = 4;
 
-  const automatable = automatableCount(issues);
 const total = issues.length || 1;
 
 
   return (
     <div className="rounded-3xl glass-strong border border-white/30 p-6 shadow-xl">
+      <p id="report-status" role="status" className="sr-only"></p>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="text-center">
   <div className="text-xs text-gray-500">{data.name}</div>
@@ -1557,8 +1598,8 @@ const total = issues.length || 1;
 
   </div>
   <div className="rounded-2xl bg-white/80 border border-gray-200 p-3">
-   <div className="font-semibold">Still needs human review</div>
-<div className="text-gray-700">{leftAfterFixes} left after fixes</div>
+  <div className="font-semibold">Remaining (machine-tests)</div>
+<div className="text-gray-700">{afterTotal} remaining</div>
 
   </div>
   <div className="rounded-2xl bg-white/80 border border-gray-200 p-3">
@@ -1568,6 +1609,10 @@ const total = issues.length || 1;
   <span className="font-semibold">{improved}</span>
   <span>fewer issues</span>
 </div>
+
+<p className="mt-1 text-xs text-gray-500">
+  Human checks pending: {HUMAN_CHECKS}. See the “Human checks” tab.
+</p>
 
   </div>
 </div>
@@ -1586,6 +1631,12 @@ const total = issues.length || 1;
       aria-pressed={dataset==='after'}
     >After</button>
   </div>
+  <button
+    className="px-3 py-1.5 rounded border border-indigo-200 text-indigo-700"
+    onClick={() => setDataset('after')}
+  >
+  Show After (demo)
+  </button>
 </div>
 
 
@@ -1596,7 +1647,7 @@ const total = issues.length || 1;
           {[
   { k: 'issues',   t: `Issues (${issues.length})` },
   { k: 'overview', t: 'Overview' },
-  { k: 'human',    t: 'Needs Human Review' },
+  { k: 'human',    t: `Human checks (${HUMAN_CHECKS})` },
 ].map((x) => (
   <button
     key={x.k}
@@ -1727,6 +1778,9 @@ const total = issues.length || 1;
   ) : null;
 })() : null}
 
+{!it.auto && it.needsHuman ? (
+  <span className="ml-2 inline-block text-xs rounded px-2 py-1 bg-yellow-100 text-yellow-800">Needs human review</span>
+) : null}
 
 
                     </div>
@@ -1742,13 +1796,16 @@ const total = issues.length || 1;
   <div role="tabpanel" id="panel-human" aria-labelledby="tab-human" className="mt-4 text-sm text-gray-800 space-y-3">
 
           <h3 className="font-semibold text-gray-900">Human review scripts</h3>
-<ul className="list-disc pl-5 space-y-2">
-  <li><strong>Keyboard flow:</strong> Tab/Shift+Tab across the page. Focus is visible, logical; no traps. Esc closes dialogs and returns focus to the trigger.</li>
-  <li><strong>Forms — error announcement:</strong> Submit with errors and confirm messages are programmatically announced (aria-live) and linked via <code>aria-describedby</code>.</li>
-  <li><strong>Link purpose in context:</strong> Links make sense from surrounding text; avoid ambiguous “Click here”.</li>
-  <li><strong>Focus order:</strong> Tab/read order matches visual order; modals return focus to the trigger on close.</li>
-</ul>
-<p className="text-xs text-gray-600">Note: This list describes what to test; the number of items that need human review is shown above in “Guided fixes”.</p>
+      <ul className="list-disc pl-5 space-y-2">
+        {Array.from(new Set((DEMO_DATA.before?.issues||[]).filter(i=>i.needsHuman).map(i=>i.humanKey)))
+          .map(k => HUMAN_SCRIPT_LIBRARY[k])
+          .filter(Boolean)
+          .map((s,idx) => (
+            <li key={idx}><strong>{s.title}:</strong> {s.body}</li>
+          ))
+        }
+      </ul>
+      <p className="text-xs text-gray-600">Note: This list is derived from the demo dataset and the count matches the “Human checks” badge.</p>
 
         </div>
       )}
@@ -2151,10 +2208,18 @@ function QueuedView({ navigate }) {
   You’re queued — thank you. We’ll email your baseline link when it’s ready. You can close this tab.
 </h1>
 
-          <div className="mt-4 h-3 w-full bg-gray-100 rounded-full overflow-hidden" aria-label="Progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+          <div
+            className="mt-4 h-3 w-full bg-gray-100 rounded-full overflow-hidden"
+            aria-label="Progress"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progress}
+            aria-describedby="queue-status"
+          >
             <div className="h-full bg-indigo-600" style={{ width: `${progress}%` }} />
           </div>
-          <p className="mt-2 text-sm text-gray-700" aria-live="polite">Status: {status}</p>
+          <p id="queue-status" className="mt-2 text-sm text-gray-700" aria-live="polite">Status: {status}</p>
           <div className="mt-6 flex gap-3">
             <Button onClick={() => navigate('/report/demo')}>View sample report now</Button>
             <Button variant='ghost' onClick={() => navigate('/')}>Back to home</Button>
@@ -2897,16 +2962,24 @@ if (ok) { ok.classList.remove('opacity-0'); setTimeout(()=>ok.classList.add('opa
         if (attemptedNext) setFieldError(id, 'Use a valid id (start with a letter; no spaces).');
         else clearFieldError(id);
         ok2 = false;
-      }        // Basic uniqueness guard (on current page)
+      }        // Basic id guard — allow 0 or 1 existing element; error only on duplicates or wrong type
         if (id && ok2) {
-          try {
-            const used = document.querySelectorAll(`#${CSS.escape(idVal)}`).length;
-            if (used > 0) {
-              if (attemptedNext) setFieldError(id, 'This id is already used on the page. Use a unique id.');
+          const matches = document.querySelectorAll(`#${CSS.escape(idVal)}`);
+          const count = matches.length;
+          if (count > 1) {
+            if (attemptedNext) setFieldError(id, 'Duplicate id found on the page. Choose a unique id.');
+            else clearFieldError(id);
+            ok2 = false;
+          } else if (count === 1) {
+            const el = matches[0];
+            const isFormControl = /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(el.tagName);
+            if (!isFormControl) {
+              if (attemptedNext) setFieldError(id, 'This id is used by a non-form element. Choose a different id or change the element id.');
               else clearFieldError(id);
               ok2 = false;
             }
-          } catch {}
+          }
+          // else count === 0 → fine (you may create a new input with this id)
         }
 
         ok = ok1 && ok2;

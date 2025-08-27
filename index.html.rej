@@ -1,0 +1,14 @@
+diff a/index.html b/index.html	(rejected hunks)
+@@ -3091,10 +3091,10 @@
+           html(`<h3 class="text-base font-semibold">Enter the visible label and an id</h3>`),
+           html(`<div class="grid sm:grid-cols-2 gap-3">
+             <label>Visible label text
+-              <input id="lblText" class="mt-1 w-full rounded bo...r px-2 py-1" placeholder="Email" value="${state.labelText||''}">
++              <input id="lblText" class="mt-1 w-full rounded border px-2 py-1" placeholder="" value="${state.labelText||''}">
+             </label>
+             <label>id attribute to use
+-              <input id="lblId" class="mt-1 w-full rounded border px-2 py-1" placeholder="email" value="${state.id||''}">
++              <input id="lblId" class="mt-1 w-full rounded border px-2 py-1" placeholder="" value="${state.id||''}">
+             </label>
+           </div>`)
+         );
