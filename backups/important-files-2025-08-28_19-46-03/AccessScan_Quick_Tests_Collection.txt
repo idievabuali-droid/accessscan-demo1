@@ -1,0 +1,111 @@
+AccessScan – Quick Tests Collection
+All acceptance checks gathered from recent UI improvements.
+1.1 Scan speed & timestamp (Report)
+
+Toggle Before/After and confirm the note under the grey banner shows: 'Scan completed in 3.2 s' for Before
+and '2.6 s' for After.
+
+Confirm the old 'Demo data  Last generated …' line near the header is removed.
+
+Keyboard/AT: the new line is announced as ancillary (role='note').
+1.2 Expected outcome → actionable (jump to Human checks)
+
+Click/Enter/Space on 'Human checks pending: N — Review now'.
+
+Tab switches to 'Human checks', panel scrolls into view, focus is set on the panel (focus ring visible).
+
+Verify N matches the Human checks tab badge.
+1.3 Tiny score trend next to donut
+
+A small 5■value sparkline appears next to the donut on the Overview.
+
+Toggle Before/After: the series updates and the final value reflects the current pass.
+
+Screen reader announces: 'Recent score trend: …'. Layout remains stable.
+2.1 Severity chips (Issues tab)
+
+Open Issues tab; toggle 'Critical/Serious/Moderate/Minor'. Rows filter accordingly.
+
+Each chip has aria-pressed true/false and is keyboard activatable with Space/Enter.
+
+Clear restores visibility for all severities.
+2.2 Default to Top 5 + 'Show all'
+
+By default, the counter shows '5 of Y shown' and only 5 rows render.
+
+Click 'Show all' to reveal the rest; click again to collapse back to Top 5.
+
+Rows are sorted by severity rank (Critical → Minor). Counter remains accurate.
+2.3 How to fix as code blocks + Copy (automatable rows)
+
+In Issues table, automatable items show an inline code block and a 'Copy' button; 'Rule help' opens the rule
+page.
+
+Copy works in secure contexts (HTTPS/localhost). Paste into an editor to confirm.
+
+Non■automatable rows still show 'Guide me' (when applicable) and the 'Needs human review' badge.
+2.4 Per■issue element thumbnail
+
+Each issue row shows a 64×48 decorative thumbnail before the Selector/Snippet column.
+
+No screen reader output for the thumbnail (empty alt).
+
+
+--- PAGE BREAK ---
+
+
+Table headers align; no external assets are required.
+2.5 'Locate in code' helper
+
+Click 'Locate in code' next to the selector; paste into editor search — string includes selector + short
+snippet.
+
+Screen reader hears a polite status: 'Search string copied'.
+
+Try multiple rows (automatable and non■automatable).
+4.1 Disable exports when empty + announce success
+
+When there are zero issues, 'Download PDF/JSON/CSV' buttons are disabled (greyed out, inert).
+
+After exporting, the status region announces: 'PDF downloaded' / 'JSON downloaded' / 'CSV downloaded'.
+
+Share uses 'Copy link' and announces success via the same status region.
+5.1 Accessible modals (focus trap + Esc)
+
+Open each modal; Tab/Shift+Tab keep focus inside the dialog.
+
+Press Esc; modal closes and focus returns to the opener.
+6.1 Automation vs Human box (Overview)
+
+On Overview, a two■column 'Automation vs Human review' box appears directly under the tip paragraph.
+
+Print preview: the box renders cleanly.
+7.1 ROI helper line (Pricing)
+
+In each plan card, below the features list, a muted line shows estimated time savings.
+
+Mobile: line wraps cleanly.
+8.1 'What happens next' on queued screen
+
+After submitting baseline form, the Queued screen shows three bullets explaining next steps.
+
+Status line uses aria■live='polite' and updates are announced.
+8.2 Mock email preview
+
+Open /email/preview (or the link on Queued). Summary reads '12 → 5 issues; +58 score' (from demo data).
+
+Click 'Open dashboard' → goes to /dashboard/welcome.
+
+Click 'Download PDF' → navigates to the demo report and triggers the existing PDF export.
+9.1 PDF mirrors on■screen report
+
+Export PDF and verify presence/order: scan meta line; ring + tiny trend; automatable vs remaining panels;
+Issues (all); Quick■fix snippets; Human review checklist.
+
+WCAG and rule cells are clickable links.
+
+Timestamp formats in Europe/London style (e.g., '28 Aug 2025, 14:07').
+
+
+--- PAGE BREAK ---
+

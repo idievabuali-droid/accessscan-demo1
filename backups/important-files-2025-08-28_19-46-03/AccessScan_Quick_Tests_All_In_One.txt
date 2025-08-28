@@ -1,0 +1,92 @@
+AccessScan – Master Quick Tests
+ One■page checks to verify each implemented spec step
+9.1 – PDF Parity: Content
+Ensure the exported PDF mirrors the on■screen report content.
+
+■ Generate a PDF via Report → Download PDF.
+
+■ Confirm the issues table shows a column titled “How to fix (code)” with monospace snippets.
+
+■ Confirm a “Human checks (4)” section appears after the tables, listing the checklist items.
+
+■ Confirm severity grouping order is Critical → Serious → Moderate → Minor.
+
+■ Confirm the PDF includes ALL issues (expanded), not only Top■5.
+9.1 – PDF Parity: Score Donut
+The PDF should show a donut like the on■screen report.
+
+■ Generate a PDF and locate the score block under the header.
+
+■ Visually verify a circular donut with an indigo progress arc and the score number in the center.
+
+■ Select the score text next to the donut to confirm it’s real text (searchable), e.g., “97 / 100”.
+9.1 – PDF Parity: Header Note & Link
+The PDF header mirrors the on■screen meta note and labels, and the URL is clickable.
+
+■ On the on■screen report, note the banner line (duration + timestamp).
+
+■ Generate a PDF and check the first page header area shows “Completed in X s  Generated: …
+(Europe/London)”.
+
+■ Confirm the right■hand header shows “View: Before/After” matching the current dataset.
+
+■ Move your cursor over the URL in the header; verify it is clickable and opens the correct page.
+9.1 – Full Acceptance Sweep (PDF)
+Do this once to conclude PDF parity is complete.
+
+■ Donut + trend are visible and match the on■screen report.
+
+■ Header includes “Completed in X s  Generated: …” and the dataset label (“View: Before/After”).
+
+■ URL in the PDF header is clickable.
+
+■ Issues table includes “How to fix (code)” with readable snippets.
+
+■ A “Human checks (4)” section appears after tables.
+
+■ All issues are present (expanded), grouped by severity.
+
+
+--- PAGE BREAK ---
+
+10.1 – Avoid Actions That Do Nothing (incl. 10.2 spot checks)
+No dead clicks; disabled controls show clear reasons; ARIA states stay correct.
+
+■ In the Before/After switch: the active button (e.g., Before) is disabled; the other is enabled and switches on
+click.
+
+■ “Show After (demo)” is disabled when After is active (title shows “Already showing After”).
+
+■ On the Overview tab: “Copy quick■fix pack” is disabled if there are no automatable fixes (e.g., in After).
+
+■ Export buttons are disabled when there are no issues to export (tooltip explains why).
+
+■ Tab through the controls: pressed/selected/disabled ARIA states are announced correctly (10.2).
+6.1 – Automation Coverage Box (UI)
+On the Overview tab, show a concise two■column panel describing what tools cover vs what needs a human.
+
+■ Open Report → Overview; verify a rounded two■column box appears: “Automated (tools)” vs “Needs a
+human)”.
+
+■ Keyboard■only: Tab through and confirm it is reachable and announced with aria■label “Automation
+coverage”.
+
+■ Toggle Before/After and confirm the same box appears on both (content is static in the demo).
+
+■ Export a PDF and confirm the PDF contains the equivalent two■panel content near the top.
+1.1 – Scan Note Placement
+The scan note sits immediately under the grey banner, in both visual and reading order.
+
+■ Reload the Report page.
+
+■ Confirm the line “Scan completed in X s  Last generated: …” appears directly under the grey banner
+paragraph.
+
+■ Keyboard: from the banner, press Tab; focus should proceed to the next interactive element after the note.
+6.1 – No Duplicate Coverage Box
+Keep only the concise two■column coverage panel.
+
+■ Scroll near the top of the Report; verify you see only one coverage section — the concise two■column grid.
+
+■ Screen reader: navigate by headings/landmarks; you should encounter that coverage section once only.
+Tip: if any check fails, re■run just that section after applying the relevant patch.

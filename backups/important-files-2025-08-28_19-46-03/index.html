@@ -1,0 +1,3805 @@
+<!doctype html>
+<html lang="en-GB">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AccessScan — Accessibility issues, prioritized</title>
+  <meta name="description" content="Automate 30–40% of fixes and get guided steps for the rest." />
+  <!-- Tailwind (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Glassmorphism + brand helpers (copied from the working design) -->
+<style>
+  /* Strong focus ring for a11y (keep this in addition to Tailwind) */
+  :where(a,button,[role="button"],input,select,textarea,summary):focus-visible{
+    outline:0;
+    box-shadow:0 0 0 2px #4f46e5, 0 0 0 4px #fff;
+    border-radius:10px;
+  }
+
+  /* Page background (matches the “good” version’s calm gradient) */
+  body{
+  color:#0f172a;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji",
+               sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  background:
+    radial-gradient(1200px 700px at 100% -120px, #eef2ff 0%, rgba(238,242,255,0) 55%),
+    radial-gradient(900px 600px  at -10% -100px, #f7f2ff 0%, rgba(247,242,255,0) 50%),
+    linear-gradient(180deg,#f8fafc 0%, #f1f5f9 100%);
+}
+
+
+  /* Glass surfaces used across the site */
+  .glass-card  { background:rgba(255,255,255,0.70); backdrop-filter:saturate(1.2) blur(14px); -webkit-backdrop-filter:saturate(1.2) blur(14px); }
+  .glass-strong{ background:rgba(255,255,255,0.86); backdrop-filter:saturate(1.2) blur(18px); -webkit-backdrop-filter:saturate(1.2) blur(18px); }
+
+  /* 16:9 video/image placeholder used in the hero/demo */
+  .placeholder-16x9{
+    position:relative; border-radius:20px;
+    background:linear-gradient(135deg, rgba(79,70,229,0.12), rgba(16,185,129,0.10));
+    border:1px solid rgba(255,255,255,0.45); overflow:hidden;
+  }
+  .placeholder-16x9::after{
+    content:""; position:absolute; inset:0;
+    background:linear-gradient(180deg,rgba(255,255,255,0.25),rgba(255,255,255,0));
+    mix-blend-mode:screen;
+  }
+
+  /* Brand utility tokens referenced in buttons/rings */
+  .bg-brand-600{background-color:#4f46e5}
+  .text-brand-700{color:#4338ca}
+  .ring-brand-600\/30{box-shadow:0 0 0 1px rgba(79,70,229,0.3) inset}
+  /* --- BEGIN dialog backdrop tweak (optional) --- */
+dialog::backdrop { background: rgba(0,0,0,0.35); }
+/* --- END dialog backdrop tweak --- */
+
+</style>
+
+
+<script>
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init Re Ms Fs Pe Rs Cs capture Ve calculateEventProperties Ds register register_once register_for_session unregister unregister_for_session zs getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey canRenderSurveyAsync identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty Ls As createPersonProfile Ns Is Us opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing is_capturing clear_opt_in_out_capturing Os debug I js getPageViewId captureTraceFeedback captureTraceMetric".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    posthog.init('phc_QbwwWFTMR37wCx9Fju431hnstPNJ5fXOtWG81Q1caMC', {
+        api_host: 'https://eu.posthog.com',
+        defaults: '2025-05-24',
+        person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
+    })
+</script>
+<script>
+  // Safely open Tally popup with prefilled hidden fields
+  window.openTallyLead = function openTallyLead({ name, workEmail, website }) {
+    try {
+      // Collect UTMs from storage or current URL
+      const q = new URLSearchParams(location.search || '');
+      const utm = {};
+      ['utm_source','utm_medium','utm_campaign','utm_term','utm_content'].forEach(k => {
+        utm[k] = localStorage.getItem(k) || q.get(k) || '';
+      });
+
+      if (window.Tally && typeof Tally.openPopup === 'function') {
+        Tally.openPopup('w46VlY', {                 // your form id from the iframe src
+          layout: 'modal',
+          // The page query string will be auto-forwarded by Tally too
+          hiddenFields: {
+  email: workEmail,
+  originPage: location.pathname + location.search + location.hash,
+  ...utm
+}
+
+        });
+      }
+    } catch (e) { /* no-op */ }
+  };
+</script>
+
+<script>
+  (function persistUTMsOnLoad() {
+    try {
+      const q = new URLSearchParams(location.search);
+      ['utm_source','utm_medium','utm_campaign','utm_term','utm_content'].forEach(k => {
+        const v = q.get(k);
+        if (v) localStorage.setItem(k, v);
+      });
+    } catch {}
+  })();
+</script>
+
+
+
+
+
+
+
+
+
+ 
+
+<!-- Tally embed loader -->
+<script src="https://tally.so/widgets/embed.js"></script>
+
+</head>
+<body>
+  <a href="#main" class="sr-only focus:not-sr-only">Skip to content</a>
+  <div id="root"></div>
+  <!-- --- BEGIN Copy Fix Modal (native <dialog>) --- -->
+<p id="sr-status" role="status" class="sr-only"></p>
+
+<dialog id="fixModal" aria-modal="true" aria-labelledby="fixModalTitle" class="rounded-2xl p-0 w-[min(92vw,720px)]">
+  <form method="dialog" class="m-0">
+    <header class="flex items-center justify-between gap-3 px-4 py-3 border-b">
+      <h2 id="fixModalTitle" class="text-lg font-semibold text-zinc-900">Fix</h2>
+      <button value="close" aria-label="Close" class="rounded p-2 text-zinc-600 hover:bg-zinc-100">✕</button>
+    </header>
+
+    <div class="px-4 py-3">
+      <div class="text-xs text-zinc-600 mb-2">
+        <span class="font-medium text-zinc-800">Find:</span>
+        <code id="fixModalAnchor" class="ml-1 rounded bg-zinc-100 px-1.5 py-0.5"></code>
+        <a id="fixModalWcag" class="ml-3 underline text-indigo-700" target="_blank" rel="noreferrer">WCAG</a>
+      </div>
+
+      <div id="fixTabs" class="flex items-center gap-2 text-xs mb-3" role="tablist" aria-label="Snippet type">
+        <button id="tab-html"  data-tab="html"  role="tab" aria-controls="panel-html"  aria-selected="false" tabindex="-1" class="px-2 py-1 rounded border">HTML</button>
+        <button id="tab-react" data-tab="react" role="tab" aria-controls="panel-react" aria-selected="false" tabindex="-1" class="px-2 py-1 rounded border">React/JSX</button>
+        <button id="tab-css"   data-tab="css"   role="tab" aria-controls="panel-css"   aria-selected="false" tabindex="-1" class="px-2 py-1 rounded border">CSS</button>
+       <span class="ml-auto"></span>
+<button id="copySnippet" type="button" class="px-2 py-1 rounded border border-indigo-200 text-indigo-700">Copy</button>
+<span id="copyOk" role="status" aria-live="polite" class="ml-2 text-xs text-indigo-700 opacity-0 transition-opacity">Copied!</span>
+
+      </div>
+
+      <div id="panel-html"  role="tabpanel" aria-labelledby="tab-html"  hidden>
+        <pre class="rounded bg-zinc-50 p-3 text-xs overflow-auto" id="code-html"></pre>
+      </div>
+      <div id="panel-react" role="tabpanel" aria-labelledby="tab-react" hidden>
+        <pre class="rounded bg-zinc-50 p-3 text-xs overflow-auto" id="code-react"></pre>
+      </div>
+      <div id="panel-css"   role="tabpanel" aria-labelledby="tab-css"   hidden>
+        <pre class="rounded bg-zinc-50 p-3 text-xs overflow-auto" id="code-css"></pre>
+      </div>
+
+      <div class="mt-3">
+        <div class="text-sm font-semibold text-zinc-800">Verify</div>
+        <ul id="fixModalVerify" class="list-disc pl-5 text-sm text-zinc-700 mt-1"></ul>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<style>dialog::backdrop{background:rgba(0,0,0,.35)}</style>
+<!-- --- END Copy Fix Modal --- -->
+<!-- --- BEGIN GuideMe Wizard Modal --- -->
+<p id="guide-status" role="status" class="sr-only"></p>
+
+<dialog id="guideModal" aria-modal="true" aria-labelledby="guideTitle" class="rounded-2xl p-0 w-[min(92vw,760px)]">
+  <form method="dialog" class="m-0">
+    <header class="flex items-center justify-between gap-3 px-4 py-3 border-b">
+      <h2 id="guideTitle" class="text-lg font-semibold text-zinc-900">Guide me</h2>
+      <button value="close" aria-label="Close wizard" class="rounded p-2 text-zinc-600 hover:bg-zinc-100">✕</button>
+    </header>
+
+    <div class="px-4 py-3 space-y-3">
+      <div class="text-xs text-zinc-600">
+        <span class="font-medium text-zinc-800">Find:</span>
+        <code id="guideAnchor" class="ml-1 rounded bg-zinc-100 px-1.5 py-0.5"></code>
+        <a id="guideWcag" class="ml-3 underline text-indigo-700" target="_blank" rel="noreferrer">WCAG</a>
+        <a id="guideDecision" class="ml-3 underline text-indigo-700" target="_blank" rel="noreferrer" hidden>Alt-text Decision Tree</a>
+
+      </div>
+
+      <!-- Step body injected here -->
+      <div id="guideBody" class="text-sm text-zinc-800 space-y-3"></div>
+
+      <!-- Verify list -->
+            <!-- Verify list (Step 3 only) -->
+      <div id="guideVerifyWrap" hidden>
+        <div class="text-sm font-semibold text-zinc-800">Verify</div>
+        <ul id="guideVerify" class="list-disc pl-5 text-sm text-zinc-700 mt-1"></ul>
+      </div>
+
+
+      <!-- Footer: Back / Next / Copy -->
+      <div class="flex items-center justify-between border-t pt-3 mt-2">
+        <div class="text-xs text-zinc-600" id="guideStepLabel">Step 1 of 3</div>
+        <div class="flex items-center gap-2">
+          <button type="button" id="guideBack" class="px-3 py-1 rounded border">Back</button>
+          <button type="button" id="guideNext" class="px-3 py-1 rounded border border-indigo-300 text-indigo-700">Next</button>
+          <button type="button" id="guideCopy" class="hidden px-3 py-1 rounded border border-indigo-300 text-indigo-700">Copy</button>
+          <span id="guideCopyOk" role="status" aria-live="polite" class="ml-2 text-xs text-indigo-700 opacity-0 transition-opacity">Copied!</span>
+        </div>
+      </div>
+    </div>
+  </form>
+</dialog>
+<!-- --- END GuideMe Wizard Modal --- -->
+
+ <!-- removed duplicate FixModal markup -->
+
+
+  <!-- PDF libs (UMD) -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.3/dist/jspdf.plugin.autotable.min.js"></script>
+
+  <!-- React + ReactDOM + Babel -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Your app -->
+  <script type="text/babel" data-presets="react,env">
+    // --- early no-ops so analytics can never block rendering
+if (typeof window.t !== 'function') window.t = function(){};
+if (typeof window.__ctx !== 'function') window.__ctx = (p={}) => p;
+
+
+
+
+
+
+
+
+    // Get hooks from the React global (no ESM imports in browser)
+    const { useState, useEffect, useRef, useMemo, useCallback, Fragment } = React;
+
+    // Minimal SPA navigate helper (prevents Vercel 404 on "/pricing")
+ 
+// --- auto-scroll when we land on #how-it-works (from any page) ---
+function scrollToHowItWorksIfNeeded() {
+  if (location.hash === '#how-it-works') {
+    setTimeout(() => {
+      const el = document.getElementById('how-it-works');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }, 0);
+  }
+}
+scrollToHowItWorksIfNeeded();
+window.addEventListener('hashchange', scrollToHowItWorksIfNeeded);
+
+
+    // OPTIONAL: tiny analytics queue (safe, cookie-less)
+    if (typeof window !== 'undefined' && !window.analyticsQueue) window.analyticsQueue = [];
+    const track = (name, props = {}) => {
+  try {
+    const IGNORE = localStorage.getItem('a11y_ignore') === '1';
+    if (!IGNORE) window.analyticsQueue.push({ name, ts: Date.now(), ...props });
+  } catch {}
+  try {
+    if (window.posthog && typeof window.posthog.capture === 'function') {
+      window.posthog.capture(name, props);
+    }
+  } catch {}
+};
+
+// Global text normalizer used by ReportTabs and PDF export
+function sanitize(s = "") {
+  return String(s)
+    .replace(/[“”]/g, '"')
+    .replace(/[’]/g, "'")
+    .replace(/[–—]/g, "-")
+    .replace(/•/g, "-")
+    .replace(/≥/g, ">=")
+    .replace(/≤/g, "<=")
+    .replace(/→/g, "->")   // arrow -> ASCII
+    .replace(/…/g, "...")  // ellipsis -> ASCII
+    .replace(/\s+/g, " ")
+    .trim();
+}
+// make it explicitly global (avoids any scope surprises with IIFEs)
+window.sanitize = sanitize;
+   
+
+// Global helper: copy text and announce for screen readers
+window.copyTextWithStatus = async function(txt = '', ok = 'Copied') {
+  try {
+    await navigator.clipboard.writeText(String(txt));
+    const sr = document.getElementById('sr-status');
+    if (sr) sr.textContent = ok;
+  } catch (e) {
+    try { alert('Copy failed — Clipboard API requires HTTPS.'); } catch {}
+  }
+};
+
+// === VALIDATION INSTRUMENTATION PACK (extends existing track()) ===
+(function () {
+  // ----- visitor & session ids -----
+  const vid = (localStorage.a11y_vid ||= `${Math.random().toString(36).slice(2)}.${Date.now()}`);
+  const sid = (sessionStorage.a11y_sid ||= `${Math.random().toString(36).slice(2)}.${Date.now()}`);
+  const ctx = (props = {}) => ({
+  ...props,
+  vid,
+  sid,
+  route: location.hash || location.pathname,
+});
+  // expose ctx + a convenience tracker so UI calls don't forget context
+window.__ctx = ctx;
+window.t = (name, props = {}) => track(name, ctx(props));
+// --- Tally popup helper (prefill with Name, Email, Website URL + UTMs) ---
+
+
+  
+
+  // One global handler for ALL "Start free baseline" CTAs (install once)
+if (!window.__ctaHookInstalled) {
+  window.__ctaHookInstalled = true;
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.js-cta-start');
+    if (!btn) return;
+    try { track('cta_start_baseline', ctx({ source: btn.dataset.source || '' })); } catch {}
+    e.preventDefault();
+    // Navigate the SPA by setting the hash; your router will render StartBaselineView
+    location.hash = '#start-baseline';
+    window.scrollTo(0, 0);
+  }, true);
+}
+
+
+
+  // ----- UTM & referrer on session_start -----
+  function parseUTM() {
+    const p = new URLSearchParams(location.search);
+    const utm = {};
+    ["source", "medium", "campaign", "term", "content"].forEach((k) => {
+      const v = p.get("utm_" + k);
+      if (v) utm["utm_" + k] = v;
+    });
+    return utm;
+  }
+  if (!sessionStorage.a11y_started) {
+    sessionStorage.a11y_started = "1";
+    track("session_start", ctx({
+      referrer: document.referrer || "",
+      ...parseUTM(),
+      ua: navigator.userAgent,
+      tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
+      vw: window.innerWidth,
+      vh: window.innerHeight,
+    }));
+  }
+
+// ----- Pricing view (50% in viewport) -----
+function waitForEl(sel, fn) {
+  const el = document.querySelector(sel);
+  if (el) return fn(el);
+  const mo = new MutationObserver(() => {
+    const e2 = document.querySelector(sel);
+    if (e2) { mo.disconnect(); fn(e2); }
+  });
+  const target = document.getElementById('root');
+  if (target) mo.observe(target, { childList: true, subtree: true });
+}
+
+waitForEl("#pricing, [data-pricing]", (pricingEl) => {
+  if (!("IntersectionObserver" in window)) return;
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (e.isIntersecting && e.intersectionRatio >= 0.35) { // was 0.5
+        track("pricing_view", ctx());
+        io.disconnect();
+      }
+    });
+  }, { threshold: [0.35], rootMargin: "0px 0px -20% 0px" }); // easier to hit
+  io.observe(pricingEl);
+});
+// Export the current demo report as JSON
+window.downloadReportJSON = function downloadReportJSON(){
+  try {
+    const R = window.__demoReport || {};
+    const blob = new Blob([JSON.stringify(R, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'accessscan-sample-report.json';
+    a.click();
+  URL.revokeObjectURL(a.href);
+  const sr = document.getElementById('sr-status'); if (sr) sr.textContent = 'JSON downloaded';
+  } catch (e) { alert('Failed to download JSON'); }
+};
+
+
+
+window.generateReportPDF = function generateReportPDF() {
+  try {
+    const { jsPDF } = window.jspdf || {};
+    if (!jsPDF) { alert("jsPDF not loaded"); return; }
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    if (typeof doc.autoTable !== "function") { alert("AutoTable not loaded"); return; }
+
+    // ===== Inputs from current view =====
+    const R = window.__demoReport || {};
+    const BRAND = R.brand || "AccessScan";
+    const URL_STR = R.url || "https://example.com";
+    const ENGINE = R.engine || "axe-core";
+    const ENGINE_VER = R.engineVersion ? `${R.engine} ${R.engineVersion}` : ENGINE;
+  const GEN = new Date(R.generatedAt || Date.now());
+  const DATASET = R.datasetName || "";
+  const DUR = typeof R.durationSeconds === "number" ? R.durationSeconds : Number(R.durationSeconds || 0);
+
+    // Rows coming from your HTML report (kept as-is, only sanitized)
+    const rowsAll = (R.rows || []).map(r => ({
+      title: r.title || r.rule,
+      rule: r.rule,
+      sev:  (r.sev || "moderate").toLowerCase(),
+      desc: sanitize(r.desc || ""),
+      wcag: r.wcag || "",
+      sel:  sanitize(r.sel  || ""),
+      help: r.help || "",
+      auto: !!r.auto,
+      fix:  sanitize(r.fix || r.copy || ""),
+      needsHuman: !!r.needsHuman,
+      humanKey: r.humanKey || null
+    }));
+
+    // ===== Derived data (Top-10, score, trend, automation vs human) =====
+    const ORDER = ["critical","serious","moderate","minor"];
+    const bySeverity = (a,b) => ORDER.indexOf(a.sev) - ORDER.indexOf(b.sev);
+  const sorted = rowsAll.slice().sort(bySeverity);
+  const topRows = sorted; // All issues for PDF parity (spec 9.1)
+
+    // Score: use Before → After reduction (transparent, bounded 0..100)
+    let beforeCount = 0, afterCount = 0;
+    try {
+      beforeCount = (typeof DEMO_DATA !== 'undefined' && DEMO_DATA.before?.issues?.length) || 0;
+      afterCount  = (typeof DEMO_DATA !== 'undefined' && DEMO_DATA.after?.issues?.length)  || 0;
+    } catch {}
+    const fixed = Math.max(0, beforeCount - afterCount);
+    const score = beforeCount > 0 ? Math.round((fixed / beforeCount) * 100) : 0;
+
+    // Automation box numbers (from BEFORE so they match the demo split)
+    let autoCount = 0, humanCount = 0;
+    try {
+      const be = DEMO_DATA.before?.issues || [];
+      autoCount   = be.filter(r => r.auto).length;
+      humanCount  = be.length - autoCount;
+    } catch {}
+
+
+    // Trend note from demo datasets (safe no-op if not present)
+    let trendText = "";
+    try {
+      const b = (typeof DEMO_DATA !== "undefined" && DEMO_DATA.before && DEMO_DATA.before.issues) ? DEMO_DATA.before.issues.length : null;
+      const a = (typeof DEMO_DATA !== "undefined" && DEMO_DATA.after  && DEMO_DATA.after.issues)  ? DEMO_DATA.after.issues.length  : null;
+      if (b != null && a != null) {
+        const diff = b - a;
+        trendText = diff > 0 ? `Trend: ${diff} fewer issues (Before -> After: ${b} -> ${a}).` : `Trend: no reduction detected (Before -> After: ${b} -> ${a}).`;
+      }
+    } catch {}
+
+    // Convenience groups (Critical → Serious → Moderate → Minor; only if present)
+    const groups = ORDER
+      .map(sev => ({ sev, items: topRows.filter(r => r.sev === sev) }))
+      .filter(g => g.items.length);
+
+    // ===== Layout helpers =====
+    const x0 = 44, pageW = doc.internal.pageSize.getWidth(), pageH = doc.internal.pageSize.getHeight();
+    let cursorY = 40;
+
+    const setText = (size, r=0,g=0,b=0, style="normal") => {
+      doc.setFontSize(size); doc.setTextColor(r,g,b); doc.setFont(undefined, style);
+    };
+
+    const enGB = (d) => {
+      try {
+        return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/London", hour12: false }).format(d);
+      } catch { return d.toISOString(); }
+    };
+
+    const ensureSpace = (need) => {
+      if (cursorY + need > pageH - 60) { doc.addPage(); cursorY = 40; drawHeaderFooter(); }
+    };
+
+    // Header + footer on each page when drawn
+    function drawHeaderFooter(pageNum) {
+      // header
+  setText(12, 17,24,39, "bold");
+  doc.text(`${BRAND} — Accessibility Report (WCAG 2.2)`, x0, 28);
+  setText(9, 80,80,80);
+  doc.text(`URL: ${URL_STR}`, x0, 42);
+  // Make URL in header clickable (rough bounding box around the text)
+  const __urlText = `URL: ${URL_STR}`;
+  const __urlWidth = doc.getTextWidth(__urlText);
+  doc.link(x0, 42 - 9, __urlWidth, 14, { url: URL_STR });
+  doc.text(`Engine: ${ENGINE_VER}`, pageW - x0, 42, { align:"right" });
+  // View / dataset label
+  doc.text(`View: ${DATASET || '—'}`, pageW - x0, 56, { align: "right" });
+      // (footer is added after all content to get the correct total pages)
+    }
+
+    // Draw header for page 1
+    drawHeaderFooter(1);
+
+    // Draw a small donut as an image and add to PDF (keeps code simple & robust)
+    function drawDonutScore(cx, cy, r, score) {
+      const size = Math.ceil(r * 2 + 10);
+      const can = document.createElement('canvas');
+      can.width = size; can.height = size;
+      const ctx = can.getContext('2d');
+
+      ctx.translate(size / 2, size / 2);
+      ctx.rotate(-Math.PI / 2);             // start from top (12 o’clock)
+
+      // Background ring
+      ctx.beginPath();
+      ctx.lineWidth = r * 0.35;
+      ctx.strokeStyle = '#E5E7EB';          // neutral ring
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Foreground arc
+      ctx.beginPath();
+      ctx.strokeStyle = '#4F46E5';          // indigo foreground
+      ctx.arc(0, 0, r, 0, Math.PI * 2 * (score / 100));
+      ctx.stroke();
+
+      // Move back upright for text
+      ctx.rotate(Math.PI / 2);
+
+      // Score number in the middle (purely visual; we’ll also write text for searchability)
+      ctx.fillStyle = '#111827';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = `${Math.max(10, r * 0.9)}px Inter, system-ui, sans-serif`;
+      ctx.fillText(String(score), 0, 1);
+
+      // Place PNG in PDF
+      const dataUrl = can.toDataURL('image/png');
+      const w = r * 2, h = r * 2;
+      doc.addImage(dataUrl, 'PNG', cx - r, cy - r, w, h);
+    }
+
+    // Meta row: Score + Generated + Trend
+    cursorY = 64;
+    ensureSpace(40);
+  // Score donut (PDF parity with UI donut)
+  drawDonutScore(x0 + 18, cursorY + 14, 14, score);
+  // Also write selectable text for accessibility/search in the PDF
+  setText(12, 17,24,39, "bold"); doc.text(`${score}`, x0 + 44, cursorY + 18);
+  setText(9, 67,56,202);          doc.text("/ 100",  x0 + 60, cursorY + 18);
+
+    // Generated + TZ
+    setText(10, 33,37,41);
+  doc.text(`Completed in ${Number.isFinite(+DUR) && DUR > 0 ? DUR.toFixed(1) : '—'} s • Generated: ${enGB(GEN)} (Europe/London)`, x0 + 110, cursorY + 18);
+    // Trend note (if any)
+    if (trendText) {
+      setText(10, 33,37,41);
+      doc.text(sanitize(trendText), x0 + 110, cursorY + 34, { maxWidth: pageW - x0*2 - 110 });
+    }
+    cursorY += trendText ? 54 : 40;
+
+    // Automation vs Human box (two panels)
+    ensureSpace(70);
+    const panelW = (pageW - x0*2 - 12) / 2, panelH = 58;
+    const y = cursorY;
+    // Automatable
+    doc.setDrawColor(223); doc.setFillColor(250); doc.roundedRect(x0, y, panelW, panelH, 8, 8, "FD");
+    setText(10, 26,86,219, "bold"); doc.text("Automatable (tools)", x0+10, y+18);
+    setText(11, 26,86,219, "bold"); doc.text(`${autoCount}`, x0+10, y+36);
+    setText(9, 90,90,90); doc.text("Quick wins you can copy-paste.", x0+40, y+36);
+  // Human review
+  doc.setDrawColor(223); doc.setFillColor(250); doc.roundedRect(x0 + panelW + 12, y, panelW, panelH, 8, 8, "FD");
+  setText(10, 22,101,52, "bold"); doc.text("Remaining after pass (machine-tests)", x0+panelW+22, y+18);
+  setText(11, 22,101,52, "bold"); doc.text(`${humanCount}`, x0+panelW+22, y+36);
+  setText(9, 90,90,90); doc.text("Items still present after this pass.", x0+panelW+52, y+36);
+    cursorY += panelH + 16;
+
+    // Short methodology copy
+    ensureSpace(48);
+    doc.setDrawColor(235); doc.setFillColor(253);
+    doc.roundedRect(x0, cursorY, pageW - x0*2, 42, 8, 8, "FD");
+    setText(9, 55,65,81);
+    doc.text(
+      "Checks are automated where objective; we link WCAG 2.2 for each item and show concise fixes. Conformance always requires human judgement.",
+      x0 + 10, cursorY + 26, { maxWidth: pageW - x0*2 - 20 }
+    );
+    cursorY += 58;
+
+    // ===== Grouped Top-10 tables =====
+    const baseColumns = [
+      { header: "Issue",        dataKey: "title" },
+      { header: "WCAG",         dataKey: "wcag"  },
+      { header: "Selector",     dataKey: "sel"   },
+      { header: "How to fix (code)", dataKey: "fix" }
+    ];
+    const sevLabel = { critical:"Critical", serious:"Serious", moderate:"Moderate", minor:"Minor" };
+    const sevColor = { critical:[185,28,28], serious:[194,65,12], moderate:[161,98,7], minor:[75,85,99] };
+
+    groups.forEach((g) => {
+      if (!g.items.length) return;
+
+      ensureSpace(80);
+      const barH = 24;
+      const [r,gc,bc] = sevColor[g.sev];
+      doc.setFillColor(r,gc,bc); doc.roundedRect(x0, cursorY, pageW-x0*2, barH, 6, 6, "F");
+      setText(11, 255,255,255, "bold");
+      doc.text(`${sevLabel[g.sev]} issues`, x0 + 10, cursorY + 16);
+      cursorY += barH + 6;
+
+      const body = g.items.map((r) => ({
+        title: sanitize(r.title),
+        wcag:  r.wcag || "-",
+        sel:   sanitize(r.sel),
+        fix:   sanitize(r.fix || r.desc || ""),
+        __help: r.help
+      }));
+
+      doc.autoTable({
+        startY: cursorY,
+        margin: { left: x0, right: x0 },
+        columns: baseColumns,
+        body,
+        theme: "grid",
+        pageBreak: 'auto',
+        rowPageBreak: 'avoid',
+        styles: { fontSize: 10, cellPadding: 6, overflow: "linebreak", lineColor:[230,235,245], lineWidth:0.2, valign:"top" },
+        headStyles: { fillColor:[249,250,251], textColor:40, fontStyle:"bold" },
+        alternateRowStyles: { fillColor:[250,251,253] },
+        columnStyles: {
+          title: { cellWidth: 150, cellPadding: 6, textColor:[33,150,243] },
+          wcag:  { cellWidth: 55, halign:"center", textColor:[33,150,243] },
+          sel:   { cellWidth: 130, font:'courier', fontStyle:'normal', fontSize:9 },
+          fix:   { cellWidth: 200, font:'courier', fontStyle:'normal', fontSize:9 }
+        },
+        didDrawCell: (data) => {
+          if (data.section !== "body") return;
+          const row = body[data.row.index];
+          const key = data.column && data.column.dataKey;
+          if (key === "title" && row.__help) {
+            doc.link(data.cell.x, data.cell.y, data.cell.width, data.cell.height, { url: row.__help });
+          }
+          if (key === "wcag" && row.wcag) {
+            try {
+              const u = wcagHref(row.wcag);
+              doc.link(data.cell.x, data.cell.y, data.cell.width, data.cell.height, { url: u });
+            } catch {}
+          }
+        },
+        didDrawPage: (d) => { drawHeaderFooter(d.pageNumber); }
+      });
+
+      cursorY = doc.lastAutoTable.finalY + 14;
+    });
+
+    // === Human checks checklist (spec 9.1 parity) ===
+    try {
+      const humanKeys = [...new Set(rowsAll
+        .filter(r => r.needsHuman && r.humanKey)
+        .map(r => r.humanKey)
+      )];
+      if (humanKeys.length) {
+        ensureSpace(60);
+        setText(12, 33,37,41, "bold");
+        doc.text(`Human checks (${humanKeys.length})`, x0, cursorY);
+        cursorY += 18;
+
+        humanKeys.forEach((key) => {
+          const item = (typeof HUMAN_SCRIPT_LIBRARY !== 'undefined' && HUMAN_SCRIPT_LIBRARY[key]) || null;
+          if (!item) return;
+          // Bullet
+          setText(10, 22,101,52, "bold");
+          doc.circle(x0 + 6, cursorY + 6, 3, "F");
+          // Title
+          setText(10, 33,37,41);
+          doc.text(sanitize(item.title), x0 + 16, cursorY + 10, { maxWidth: pageW - x0*2 });
+          cursorY += 16;
+          // Body
+          setText(9, 90,90,90);
+          doc.text(sanitize(item.body), x0 + 16, cursorY + 10, { maxWidth: pageW - x0*2 });
+          cursorY += 28;
+          ensureSpace(24);
+        });
+      }
+    } catch {}
+
+    // Footer (correct Page X of N)
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      setText(9, 120,120,120);
+      doc.text(`© ${new Date().getFullYear()} ${BRAND}`, x0, pageH - 18);
+      doc.text(`Page ${i} of ${pageCount}`, pageW - x0, pageH - 18, { align:"right" });
+    }
+
+    // Metadata + save
+    const host = (() => { try { return new URL(URL_STR).hostname.replace(/^www\./,''); } catch { return "example.com"; }})();
+    try {
+      doc.setProperties({
+        title: `${BRAND} – Accessibility Report for ${host}`,
+        subject: "Top-10 issues grouped by severity with WCAG 2.2 links",
+        author: BRAND, creator: BRAND
+      });
+    } catch {}
+    const D = new Date(); const P = (n)=>String(n).padStart(2,"0");
+    const fname = `accessscan-sample-report-${host}-${D.getFullYear()}-${P(D.getMonth()+1)}-${P(D.getDate())}.pdf`;
+    doc.save(fname);
+  const sr = document.getElementById('sr-status'); if (sr) sr.textContent = 'PDF downloaded';
+  } catch (err) {
+    console.error(err);
+    alert("Failed to generate PDF");
+  }
+};
+
+
+
+window.downloadDevCSV = function downloadDevCSV () {
+  try {
+    const R = window.__demoReport || {};
+    const rows = R.rows || [];
+    const headers = ['Priority','Rule','WCAG','Selector','How to fix','Help URL'];
+    const csv = [headers.join(',')].concat(
+      rows.map(r => [
+        r.sev,
+        r.rule,
+        r.wcag || '',
+        JSON.stringify(r.sel || ''),
+        JSON.stringify(r.desc || ''),
+        r.help || ''
+      ].join(','))
+    ).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'accessscan-dev-tickets.csv';
+    a.click();
+  URL.revokeObjectURL(a.href);
+  const sr = document.getElementById('sr-status'); if (sr) sr.textContent = 'CSV downloaded';
+  } catch (e) {
+    alert('Failed to build CSV');
+  }
+};
+
+
+
+// ----- Pricing hover intent (≥800ms) with dedupe -----
+const hoverTimers = new WeakMap();
+// Add near your hoverTimers map:
+const hoveredPlans = new Set(); // per-session, simple memory
+
+document.addEventListener("mouseover", (e) => {
+  const t = e.target;
+  if (!t || t.nodeType !== 1) return;
+  const card = t.closest("[data-plan]");
+  if (!card || hoverTimers.has(card)) return;
+  const plan = card.getAttribute("data-plan");
+  if (hoveredPlans.has(plan)) return; // already tracked this plan this session
+
+  const timer = setTimeout(() => {
+    hoverTimers.delete(card);
+    hoveredPlans.add(plan);
+    track("pricing_hover", ctx({ plan }));
+  }, 800);
+
+  hoverTimers.set(card, timer);
+  card.addEventListener("mouseleave", () => {
+    clearTimeout(timer);
+    hoverTimers.delete(card);
+  }, { once: true });
+}, true);
+
+
+
+
+  // ----- Engaged time (excludes hidden + idle) -----
+ // ----- Engaged time (excludes hidden + idle) -----
+let engagedMs = 0; 
+window.__engagedMs = 0;
+
+let last = Date.now();
+let idle = false;
+let idleTimer;
+
+function bumpIdle() {
+  idle = false;
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => (idle = true), 15000); // idle after 15s no input
+}
+["mousemove","keydown","scroll","click","touchstart"].forEach((ev) =>
+  addEventListener(ev, bumpIdle, { passive: true })
+);
+bumpIdle();
+
+setInterval(() => {
+  const now = Date.now();
+  if (!document.hidden && !idle) engagedMs += now - last;
+  last = now;
+  window.__engagedMs = engagedMs;
+}, 1000);
+
+addEventListener("visibilitychange", () => (last = Date.now()));
+addEventListener("beforeunload", () => {
+  track("engaged_time_final", ctx({ ms: engagedMs }));
+});
+
+
+  // ----- Video quartiles (if you add a <video>) -----
+  document.addEventListener("timeupdate", (e) => {
+    const v = e.target;
+    if (v.tagName !== "VIDEO" || !v.duration) return;
+    const pct = Math.floor((v.currentTime / v.duration) * 100);
+    [25, 50, 75, 100].forEach((q) => {
+      const key = `__qp_${q}`;
+      if (!v[key] && pct >= q) {
+        v[key] = 1;
+        track("video_progress", ctx({ pct: q }));
+      }
+    });
+  }, true);
+
+  // ----- Helper: quick export in Console -----
+  window.downloadEvents = window.downloadEvents || (() => {
+    const data = JSON.stringify(window.analyticsQueue || [], null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const a = Object.assign(document.createElement("a"), {
+      href: URL.createObjectURL(blob),
+      download: "events.json",
+    });
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+
+})();
+/*
+  AccessScan – Demo SPA (HIG + Glassmorphism Redesign)
+  ---------------------------------------------------------------------------------
+  Visual goals (no data/text changed):
+  - Apple HIG-inspired hierarchy: generous spacing, clear typographic scale, focus rings.
+  - Glassmorphism surfaces (translucent white, subtle borders, soft depth) over a calm gradient.
+  - Minimalism: fewer hard borders, more negative space, consistent radii and shadows.
+
+  Notes
+  - All copy and data strings remain EXACTLY as provided.
+  - Works as a single-file React SPA for Canvas preview.
+*/
+
+// ----------------------------
+// Cookieless analytics queue + track helper
+// ----------------------------
+
+
+// ----------------------------
+// Tiny router (client-side)
+// ----------------------------
+function useRouter() {
+  const [route, setRoute] = React.useState('/');
+
+  const normalize = (raw) => {
+    const s1 = (raw || '').replace(/^#/, '').replace(/^\/+/, ''); // drop leading # and /
+    const s2 = s1.split('?')[0].split('#')[0];                    // drop ?query and extra #
+    const s3 = s2.replace(/\/+$/, '');                             // drop trailing slash
+    return '/' + (s3 || '');
+  };
+
+ const read = () => normalize(location.hash || '');
+
+  const write = (r) => {
+    const clean = normalize(r);
+    location.hash = clean === '/' ? '' : '#' + clean.slice(1);
+    window.scrollTo(0, 0);
+    setRoute(clean);
+    try { posthog.capture('$pageview', { path: clean }); } catch {}
+  };
+
+  React.useEffect(() => {
+    const onHash = () => setRoute(read());
+    window.addEventListener('hashchange', onHash);
+    setRoute(read()); // initial
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+
+  return { route, navigate: write };
+}
+
+
+
+  
+
+// ----------------------------
+// Plausible (cookieless) loader
+// ----------------------------
+function usePlausible() {
+  useEffect(() => {
+    try {
+      const domain =
+        (typeof window !== 'undefined' && window.NEXT_PUBLIC_PLAUSIBLE_DOMAIN) ||
+        (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN) ||
+        'accessscan.example'
+      const s = document.createElement('script')
+      s.setAttribute('defer', '')
+      s.setAttribute('data-domain', domain)
+      s.src = 'https://plausible.io/js/script.js'
+      document.head.appendChild(s)
+      return () => {
+        try {
+          document.head.removeChild(s)
+        } catch {
+          /* noop */
+        }
+      }
+    } catch {
+      /* ignore in sandbox */
+    }
+  }, [])
+}
+
+// ----------------------------
+// Validators
+// ----------------------------
+function normalizeUrl(raw) {
+  if (!raw) return ''
+  return /^https?:\/\//i.test(raw) ? raw : `https://${raw}`
+}
+function isValidHttpsUrl(raw) {
+  try {
+    // must start with https:// in the user's input
+    if (!/^https:\/\//i.test(raw)) return false;
+    const u = new URL(raw.trim());
+    // require a real host like example.com (has a dot, no spaces)
+    if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(u.hostname)) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+
+function isValidEmail(raw) {
+  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(raw)
+}
+
+// ----------------------------
+// WCAG Quickref helpers (module-level so they're defined once and testable)
+// ----------------------------
+const WCAG_ANCHORS = {
+  '1.4.3': 'contrast-minimum',
+  '1.1.1': 'non-text-content',
+  '3.3.2': 'labels-or-instructions',
+  '2.4.4': 'link-purpose-in-context',
+  '2.4.6': 'headings-and-labels',
+  '2.4.2': 'page-titled',          // added
+  '3.1.1': 'language-of-page',      // added
+  '2.1.2': 'no-keyboard-trap',      // NEW — No Keyboard Trap
+  '2.4.3': 'focus-order',           // NEW — Focus Order
+  '2.4.7': 'focus-visible'          // NEW — Focus Visible
+};
+
+function wcagHref(sc) {
+  return `https://www.w3.org/WAI/WCAG22/quickref/#${WCAG_ANCHORS[sc] || sc}`
+}
+// Axe rule -> Deque University "help" URL (v4.10 series like your sample PDF)
+const AXE_RULE_URL = (rule) => `https://dequeuniversity.com/rules/axe/4.10/${rule}?application=axeAPI`;
+
+// Map our issue categories to axe rule ids used in your sample PDF
+const RULE_MAP = {
+  'Missing page title': 'document-title',
+'Missing page language': 'html-has-lang',
+  
+
+  'Color contrast': 'color-contrast',
+  'Images without alt': 'image-alt',
+  'Form inputs unlabeled': 'label',              // aka "label"
+  'Empty links/buttons': 'link-name',
+  'Heading order': 'heading-order',              // closest general rule
+  // You can extend when you add more issue types (landmarks, lang, etc.)
+};
+
+// Tiny 64×48 inline SVG placeholder for per-issue thumbnails (no external file needed)
+function buildThumbSrc(it) {
+  try {
+    const svg =
+      `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="48" viewBox="0 0 64 48">` +
+      `<rect width="64" height="48" rx="6" ry="6" fill="#f8fafc" stroke="#e5e7eb"/>` +
+      `<rect x="8" y="10" width="20" height="10" fill="#e5e7eb"/>` +
+      `<rect x="34" y="10" width="22" height="10" fill="#e5e7eb"/>` +
+      `<rect x="8" y="26" width="48" height="12" fill="#eef2ff"/>` +
+      `</svg>`;
+    return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+  } catch (e) {
+    return '';
+  }
+}
+
+// Build a compact "locate in code" search string for an issue row.
+// Keeps it simple for the demo: uses the selector if present, otherwise a short rule/title hint.
+function buildLocateString(it) {
+  try {
+    if (!it) return '';
+    const sel = (it.sel || '').trim();
+    const title = (it.title || it.rule || it.cat || '').toString().trim();
+    if (sel) return `${sel} — ${title}`;
+    return title;
+  } catch (e) {
+    return '';
+  }
+}
+window.buildLocateString = buildLocateString;
+
+// Copy a locate string to the clipboard and announce via the polite SR region.
+window.copyLocateString = async function(it) {
+  const txt = buildLocateString(it);
+  await window.copyTextWithStatus(txt, 'Locate string copied');
+};
+
+// --- BEGIN demoFixes (modal data) ---
+window.demoFixes = {
+  // Color contrast
+  "color-contrast": {
+    ruleId: "color-contrast",
+    title: "Color contrast — .btn-primary",
+    anchors: [".btn-primary {", "color: #ffffff"],
+    wcag: [{ id: "1.4.3", url: "https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html" }],
+    snippets: {
+      css: "/* AA ≥ 4.5:1 */\n.btn-primary{ background:#0053a0; color:#fff; }\n.btn-primary:focus{ outline:2px solid currentColor; outline-offset:2px; }",
+      html: "<a class=\"btn-primary\" href=\"#\">Call to action</a>",
+      react: "<button className=\"btn-primary\">Call to action</button>"
+    },
+    verify: ["Re-run scan; contrast ≥ 4.5:1.", "Button still has visible focus outline."]
+  },
+
+  // Page language
+  "html-has-lang": {
+    ruleId: "html-has-lang",
+    title: "Missing page language — <html lang=\"…\">",
+    anchors: ["<html", "lang=\"en\""],
+    wcag: [{ id: "3.1.1", url: "https://www.w3.org/WAI/WCAG22/Understanding/language-of-page.html" }],
+    snippets: {
+      html: "<html lang=\"en\">"
+    },
+    verify: ["View source: <html> has a valid lang.", "Re-run scan; language rule passes."]
+  },
+  "missing-lang": null, // alias, will be resolved below
+
+  // Page title
+  "document-title": {
+    ruleId: "document-title",
+    title: "Missing page title — <title>…</title>",
+    anchors: ["<title>", "</title>"],
+    wcag: [{ id: "2.4.2", url: "https://www.w3.org/WAI/WCAG22/Understanding/page-titled.html" }],
+    snippets: {
+      html: "<title>Meaningful, concise page title</title>"
+    },
+    verify: ["Browser tab shows expected title.", "Re-run scan; title rule passes."]
+  },
+  "page-title": null, // alias
+
+  // Form label
+  "label": {
+    ruleId: "label",
+    title: "Form label — associate label with input",
+    anchors: ["<label for=\"email\">", "id=\"email\""],
+    wcag: [{ id: "3.3.2", url: "https://www.w3.org/WAI/WCAG22/Understanding/labels-or-instructions.html" }],
+    snippets: {
+      html: "<label for=\"email\">Email</label>\n<input id=\"email\" name=\"email\" type=\"email\" />",
+      react: "<label htmlFor=\"email\">Email</label>\n<input id=\"email\" name=\"email\" type=\"email\" />"
+    },
+    verify: ["Clicking label focuses input.", "Re-run scan; unlabeled input warning gone."]
+  },
+  "form-label": null, // alias
+
+  // Empty link/button name
+  "link-name": {
+    ruleId: "link-name",
+    title: "Empty link/button name — add accessible name",
+    anchors: ["<a", "aria-label=\"…\""],
+    wcag: [{ id: "2.4.4", url: "https://www.w3.org/WAI/WCAG22/Understanding/link-purpose-in-context.html" }],
+    snippets: {
+      html: "<a href=\"/pricing\">See pricing</a>\n<!-- or -->\n<a href=\"#\" aria-label=\"Open menu\"><svg aria-hidden>…</svg></a>",
+      react: "<button aria-label=\"Open menu\"><IconMenu /></button>"
+    },
+    verify: ["Tab to control; screen reader announces purpose.", "Re-run scan; empty name rule passes."]
+  },
+  "empty-link-name": null // alias
+};
+
+// resolve simple aliases to the canonical entries
+(function fixAliases(){
+  const d = window.demoFixes;
+  d["missing-lang"] = d["html-has-lang"];
+  d["page-title"] = d["document-title"];
+  d["form-label"] = d["label"];
+  d["empty-link-name"] = d["link-name"];
+})();
+// --- END demoFixes (modal data) ---
+// --- BEGIN guidedFixes (wizard content) ---
+// --- BEGIN guidedFixes (wizard content) ---
+window.guidedFixes = {
+  // Images without alt (WCAG 1.1.1 Non-text Content)
+  "image-alt": {
+    ruleId: "image-alt",
+    title: "Images without alt — choose the right alt",
+    wcag: { id: "1.1.1", url: "https://www.w3.org/WAI/WCAG22/Understanding/non-text-content.html" },
+        build(state = {}) {
+      const kind = (state.kind || "informative").toLowerCase();
+      let html = "", react = null, notes = [], altOnly = '';
+
+      if (kind === "decorative") {
+        html = '<img src="..." alt="">';
+        altOnly = 'alt=""';
+        notes = [
+          'Decorative images use empty alt (alt="").',
+          'Confirm nothing meaningful is lost when hidden from AT.'
+        ];
+      } else if (kind === "informative") {
+        const desc = sanitize(state.desc || "");
+        html = `<img src="..." alt="${desc}">`;
+        altOnly = `alt="${desc}"`;
+        notes = [
+          "Say what it conveys/purpose; avoid “image of…”.",
+          "Keep it concise; don’t duplicate a nearby caption."
+        ];
+      } else if (kind === "functional") {
+        const hasText = (state.hasText || "no") === "yes";
+        if (hasText) {
+          html =
+`<a href="/target">
+  <img src="..." alt="">
+  <!-- Visible link text is present; image is redundant, so alt="" -->
+</a>`;
+          altOnly = 'alt=""';
+          notes = [
+            "If visible link text is present, the image is redundant — use alt=\"\".",
+            "If no visible text, alt must name the ACTION (e.g., “Search”)."
+          ];
+        } else {
+          const action = sanitize(state.action || "Search");
+          html =
+`<a href="/target">
+  <img src="..." alt="${action}">
+</a> <!-- Functional image: alt names the ACTION. -->`;
+          altOnly = `alt="${action}"`;
+          notes = [
+            "Linked or button images: alt describes the action (e.g., “Search”).",
+            "Same rule if used in a <button>."
+          ];
+        }
+      } else { // complex: charts/diagrams
+        const brief = sanitize(state.altBrief || "Sales by quarter, 2024");
+        const long  = sanitize(state.longDesc || "Explain the axes, series, and key takeaways.");
+        html =
+`<figure>
+  <img src="chart.png" alt="${brief}" aria-describedby="chart-desc">
+  <figcaption id="chart-desc">${long}</figcaption>
+</figure>`;
+        altOnly = `alt="${brief}"`;
+        notes = [
+          "Provide a short alt (purpose/identifier) plus a longer description programmatically associated.",
+          "Ensure aria-describedby ties the image to the detailed description."
+        ];
+      }
+
+      // In React/JSX, markup is equivalent here
+      react = html;
+
+            return { html, react, altOnly, notes, wcag: { id: "1.1.1", url: "https://www.w3.org/WAI/WCAG22/Understanding/non-text-content.html" } };
+    }
+  },
+
+  // Form inputs unlabeled (WCAG 3.3.2 Labels or Instructions)
+  "label": {
+
+    ruleId: "label",
+    title: "Form inputs unlabeled — associate a label",
+    wcag: { id: "3.3.2", url: "https://www.w3.org/WAI/WCAG22/Understanding/labels-or-instructions.html" },
+    build(state = {}) {
+      const labelText = sanitize(state.labelText || "");
+      const id = sanitize(state.id || "");
+      const pattern = (state.pattern || "textlabel").toLowerCase();
+
+      let html = "", react = "", notes = [];
+
+      if (pattern === "textlabel") {
+        html =
+`<label for="${id}">${labelText}</label>
+<input id="${id}" name="${id}" type="text">`;
+        react =
+`<label htmlFor="${id}">${labelText}</label>
+<input id="${id}" name="${id}" type="text" />`;
+        notes = [
+          "Clicking the visible label should focus the input.",
+          "Visible label text should match the programmatic name."
+        ];
+      } else {
+        html  = `<button id="${id}" aria-label="${labelText}" type="button"><svg aria-hidden="true">…</svg></button>  <!-- Or use aria-labelledby -->`;
+        react = `<button id="${id}" aria-label="${labelText}" type="button"><Icon /></button>`;
+        notes = [
+          "Icon-only controls require aria-label or aria-labelledby.",
+          "Placeholder text is not a label."
+        ];
+      }
+
+      return { html, react, notes, wcag: { id: "3.3.2", url: "https://www.w3.org/WAI/WCAG22/Understanding/labels-or-instructions.html" } };
+    }
+  }
+};
+// --- END guidedFixes (wizard content) ---
+
+// Aliases to match scanner rule ids
+window.guidedFixes['images-without-alt']      = window.guidedFixes['image-alt'];
+window.guidedFixes['form-inputs-unlabeled']   = window.guidedFixes['label'];
+
+
+
+
+// ----------------------------
+// UI atoms
+// ----------------------------
+function Button({ as = 'button', href, onClick, children, variant = 'primary', className = '', type, ...rest }) {
+  const base = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 14,
+    padding: '0.625rem 1.0rem',
+    fontSize: '1rem',
+fontWeight: 600,
+
+    lineHeight: 1.2,
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: 'rgba(0,0,0,0.06)',
+    textDecoration: 'none',
+    cursor: 'pointer',
+    boxShadow: '0 6px 18px rgba(15,23,42,0.08)',
+  }
+  let style = { ...base }
+  if (variant === 'primary') {
+    style.background = 'linear-gradient(180deg,#5b54ea 0%,#4f46e5 100%)'
+    style.color = '#ffffff'
+    style.borderColor = 'rgba(79,70,229,0.35)'
+  } else if (variant === 'secondary') {
+    style.backgroundColor = 'rgba(255,255,255,0.86)'
+    style.backdropFilter = 'saturate(1.2) blur(10px)'
+    style.color = '#111827'
+    style.borderColor = 'rgba(0,0,0,0.06)'
+  } else {
+    // ghost
+    style.backgroundColor = 'transparent'
+    style.color = '#111827'
+    style.borderColor = 'rgba(0,0,0,0.10)'
+  }
+  if (as === 'a') return (
+    <a href={href} onClick={onClick} style={style} className={className} {...rest}>
+      {children}
+    </a>
+  );
+  return (
+    <button type={type} onClick={onClick} style={style} className={className} {...rest}>
+      {children}
+    </button>
+  );
+}
+
+function Container({ children }) {
+  return <div className="container mx-auto max-w-[1150px] px-4">{children}</div>
+}
+
+function NavLink({ to, children, navigate }) {
+  return (
+    <a href={to} onClick={(e) => { e.preventDefault(); navigate(to) }} className="hover:underline">
+      {children}
+    </a>
+  )
+}
+
+// ----------------------------
+// Title map
+// ----------------------------
+const TITLE_MAP = {
+  '/': 'AccessScan – Accessibility issues, prioritized',
+  '/start-baseline': 'Start free baseline – AccessScan',
+  '/baseline/queued': 'Queued – AccessScan',
+  '/report/demo': 'Demo Report – AccessScan',
+  '/pricing': 'Pricing – AccessScan',
+  '/accessibility': 'Accessibility Statement – AccessScan',
+  '/privacy': 'Privacy Policy – AccessScan',
+  '/terms': 'Terms of Service – AccessScan',
+  '/cookies': 'Cookies – AccessScan',
+  '/dashboard/welcome': 'Welcome – AccessScan',
+  '/email/preview': 'Email Preview – AccessScan',
+}
+
+// ----------------------------
+// Layout (header + footer)
+// ----------------------------
+function Layout({ title, children, navigate }) {
+  useEffect(() => { document.title = title }, [title])
+  return (
+    <>
+      <header className="sticky top-0 z-40 border-b border-white/20 bg-white/50 backdrop-blur-xl shadow-sm" role="banner">
+        <Container>
+          <div className="h-16 flex items-center justify-between">
+            <a href="#home" onClick={(e) => { e.preventDefault(); navigate('/') }} className="inline-flex items-center gap-2 font-bold">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white text-sm shadow-sm">A</span>
+              <span>AccessScan</span>
+            </a>
+            <nav aria-label="Primary" className="hidden sm:flex items-center gap-6 text-sm">
+              <a
+  href="#how-it-works"
+  onClick={(e) => {
+    e.preventDefault();
+    navigate('/'); // go to home
+    setTimeout(() => {
+      const el = document.getElementById('how-it-works');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      // removed: window.location.hash = '#how-it-works';
+    }, 0);
+  }}
+  className="hover:opacity-80"
+>
+  How it works
+</a>
+
+
+
+              <a href="#/report/demo" onClick={(e) => { e.preventDefault(); navigate('/report/demo') }} className="hover:underline">Sample report</a>
+
+              <a
+                href="/pricing"
+                onClick={(e) => { e.preventDefault(); navigate('/pricing'); }}
+                className="hover:opacity-80"
+                >
+                Pricing
+              </a>
+ 
+              <a href="#accessibility" onClick={(e) => { e.preventDefault(); navigate('/accessibility') }} className="hover:underline">Accessibility</a>
+            </nav>
+            <div className="flex items-center gap-3">
+              <Button as="a"
+        href="#start-baseline"
+        className="js-cta-start"
+        data-source="header">
+  Start free baseline
+</Button>
+
+            </div>
+          </div>
+        </Container>
+      </header>
+
+      <main id="main" role="main">{children}</main>
+
+      <footer className="mt-16 border-t border-white/20 bg-white/40 backdrop-blur-xl" role="contentinfo">
+        <Container>
+          <div className="py-12 grid grid-cols-1 sm:grid-cols-4 gap-6 items-start">
+            <div className="glass-card rounded-2xl p-6">
+              <div className="flex items-center gap-2 font-bold text-gray-900">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white text-sm">A</span>
+                AccessScan
+              </div>
+              <p className="mt-3 text-sm text-gray-700">Transparent automated accessibility audits with human‑check guidance. No overlays, no hype.</p>
+              <p className="mt-3 text-xs text-gray-600">Transparent by design: tools can’t check everything; humans still matter.</p>
+            </div>
+            <div className="glass-card rounded-2xl p-6 text-sm">
+              <div className="font-semibold text-gray-900 mb-2">Product</div>
+              <ul className="space-y-2">
+                <li><a href="#pricing" onClick={(e) => { e.preventDefault(); navigate('/pricing') }} className="hover:underline">Pricing</a></li>
+                <li><a href="#/report/demo" onClick={(e) => { e.preventDefault(); navigate('/report/demo') }} className="hover:underline">Sample report</a>
+</li>
+                <li><a href="#accessibility" onClick={(e) => { e.preventDefault(); navigate('/accessibility') }} className="hover:underline">Accessibility</a></li>
+              </ul>
+            </div>
+            <div className="glass-card rounded-2xl p-6 text-sm">
+              <div className="font-semibold text-gray-900 mb-2">Legal</div>
+              <ul className="space-y-2">
+                <li><a href="#privacy" onClick={(e) => { e.preventDefault(); navigate('/privacy') }} className="hover:underline">Privacy</a></li>
+                <li><a href="#terms" onClick={(e) => { e.preventDefault(); navigate('/terms') }} className="hover:underline">Terms</a></li>
+                <li><a href="#cookies" onClick={(e) => { e.preventDefault(); navigate('/cookies') }} className="hover:underline">Cookies</a></li>
+              </ul>
+            </div>
+            <div className="glass-card rounded-2xl p-6 text-sm">
+              <div className="font-semibold text-gray-900 mb-2">Contact</div>
+              <ul className="space-y-2">
+                <li><a className="hover:underline" href="mailto:idievabuali@gmail.com">idievabuali@gmail.com</a></li>
+              </ul>
+            </div>
+          </div>
+        </Container>
+      </footer>
+      {/* No cookie banner in validation mode (Plausible is cookieless). */}
+    </>
+  )
+}
+
+// ----------------------------
+// Sections
+// ----------------------------
+const NARRATION_TEXT = `Paste your homepage URL and start a baseline scan. In a couple of minutes you’ll get a score, a Top‑10 list with WCAG links, and copy‑paste fix snippets. When you’re ready, pick a paid plan to enable scheduled rescans (weekly or nightly) and watch your score trend improve over time.`
+
+function Hero({ navigate }) {
+  return (
+    <section aria-labelledby="home-hero" className="mx-auto max-w-7xl px-4 lg:px-6 py-16 lg:py-24">
+      <div className="glass-strong rounded-3xl p-8 lg:p-12 shadow-xl border border-white/30">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          <div className="lg:col-span-6">
+            <h1 id="home-hero" className="text-4xl sm:text-5xl font-extrabold tracking-tight">
+              Accessibility issues, prioritized. WCAG 2.2 fixes you can ship this sprint.
+            </h1>
+            <p className="mt-4 max-w-prose text-lg text-slate-700">
+              Find the highest-impact issues, get actionable fixes, and see exactly what still needs a human review—no overlays.
+            </p>
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+  <Button
+    as="a"
+    href="/start-baseline"
+    onClick={(e) => { e.preventDefault(); t('cta_start_baseline'); navigate('/start-baseline'); }}
+    className="js-cta-start"
+    variant="primary"
+  >
+    Start free baseline
+  </Button>
+
+  <Button
+    as="a"
+    href="/report/demo"
+    onClick={(e) => { e.preventDefault(); t('cta_sample_report'); navigate('/report/demo'); }}
+    variant="secondary"
+  >
+    Open sample report
+  </Button>
+</div>
+
+            <p className="mt-3">
+              <a href="https://www.w3.org/TR/WCAG22/" target="_blank" rel="noreferrer" className="underline underline-offset-2">WCAG 2.2</a>
+              &nbsp;aligned •&nbsp;
+              <a href="https://digital-strategy.ec.europa.eu/en/policies/web-accessibility" target="_blank" rel="noreferrer" className="underline underline-offset-2">EAA</a>
+              &nbsp;applies (June 2025)
+            </p>
+          </div>
+
+          {/* Right: 16:9 placeholder (no image yet) */}
+          {/* Right: poster image that looks like a video */}
+<div className="lg:col-span-6">
+  <figure className="relative rounded-3xl overflow-hidden shadow-xl border border-white/30 bg-white/60 backdrop-blur"
+          style={{ aspectRatio: '16 / 9' }}>
+    {/* Poster image */}
+    <img
+      src="img/report-poster.png"          /* <-- relative path (see step 2) */
+      alt="Sample accessibility report with score, severities, and issue list"
+      width={1600}
+      height={900}
+      loading="eager"
+      fetchpriority="high"
+      className="h-full w-full object-cover"
+    />
+
+    {/* Subtle gradient for play-button readability */}
+    <div aria-hidden="true"
+         className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/0 via-black/0 to-black/10"></div>
+
+    {/* Play button overlay (accessible). Click opens the sample report. */}
+    <button
+      type="button"
+      aria-label="Open sample report (demo preview)"
+      onClick={() => { try { t('demo_poster_click') } catch {} ; navigate('/report/demo') }}
+      className="group absolute inset-0 grid place-items-center focus:outline-none"
+    >
+      <span className="rounded-full p-5 bg-white/90 shadow-lg ring-1 ring-black/10 transition
+                       group-hover:scale-105 group-focus-visible:scale-105">
+        <svg viewBox="0 0 24 24" className="h-6 w-6 text-gray-900" aria-hidden="true" focusable="false">
+          <path d="M8 5v14l11-7z"></path>
+        </svg>
+      </span>
+    </button>
+  </figure>
+
+  {/* Honest caption */}
+  <p className="mt-2 text-sm text-gray-600">Demo preview — real video coming soon.</p>
+</div>
+
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ----------------------------
+// Report bits
+// ----------------------------
+function Chip({ tone, children }) {
+  const map = { critical: 'bg-red-100 text-red-700', serious: 'bg-orange-100 text-orange-700', moderate: 'bg-yellow-100 text-yellow-800', minor: 'bg-gray-200 text-gray-700' }
+  return <span className={`inline-block rounded px-2 py-0.5 text-xs ${map[tone]}`}>{children}</span>
+}
+
+function Donut({ value, total, label = "fewer issues" }) {
+  const safeTotal = Math.max(1, total);
+  const pct = Math.round((value / safeTotal) * 100);
+  const r = 38, c = 2 * Math.PI * r, filled = (pct / 100) * c;
+  return (
+    <div className="flex items-center gap-4" aria-label={`${pct}% ${label}`}>
+      <svg width="100" height="100" viewBox="0 0 100 100" role="img">
+        <circle cx="50" cy="50" r={r} fill="none" stroke="#E5E7EB" strokeWidth="12" />
+        <circle
+          cx="50" cy="50" r={r} fill="none" stroke="#4F46E5" strokeWidth="12"
+          strokeDasharray={`${filled} ${c}`} strokeLinecap="round" transform="rotate(-90 50 50)" />
+      </svg>
+      <div className="text-sm text-gray-800">
+        <strong>{value}</strong> of <strong>{total}</strong> ({pct}%) {label}
+      </div>
+    </div>
+  );
+}
+
+
+function Sparkline({ values = [], width = 120, height = 36 }) {
+  const v = Array.isArray(values) && values.length ? values : [0];
+  const min = Math.min(...v), max = Math.max(...v);
+  // Avoid divide-by-zero; pad the range a touch for nicer visuals
+  const range = Math.max(1, max - min);
+  const pad = range * 0.08;
+  const yMin = min - pad, yMax = max + pad;
+
+  const stepX = width / Math.max(1, v.length - 1);
+  const points = v.map((val, i) => {
+    const x = Math.round(i * stepX);
+    const y = Math.round(height - ((val - yMin) / (yMax - yMin)) * height);
+    return [x, y];
+  });
+
+  const d = points.map((p, i) => (i === 0 ? 'M' : 'L') + p[0] + ' ' + p[1]).join(' ');
+
+  const label = 'Recent score trend: ' + v.join(', ');
+  return (
+    <div className="flex items-center gap-2" aria-label={label}>
+      <svg role="img" aria-label={label} width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+        <title>Recent score trend</title>
+        <polyline points={points.map(p=>p.join(',')).join(' ')} fill="none" stroke="#4F46E5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        {/* Optional baseline */}
+        <line x1="0" y1={height-1} x2={width} y2={height-1} stroke="#E5E7EB" strokeWidth="1" />
+      </svg>
+      <span className="sr-only">{label}</span>
+    </div>
+  );
+}
+
+
+// --- Demo datasets: W3C BAD "Home" (before vs after) ---
+// Source pages users can open to verify: BAD Before Report / BAD After Report.
+// These are curated to mirror common issues listed for the BAD demo.
+// (Demo transparency: numbers here are for the sample report; your real scan will differ.)
+// --- Human review script library (renders the Human checks tab) ---
+const HUMAN_SCRIPT_LIBRARY = {
+  'keyboard-flow': {
+    title: 'Keyboard flow (no traps)',
+    body: 'Tab/Shift+Tab across the page. Focus never disappears and you can exit modals and widgets using only the keyboard. Esc closes dialogs and returns focus to the trigger.'
+  },
+  'link-purpose': {
+    title: 'Link purpose in context',
+    body: 'Each link makes sense from surrounding text. Replace “Click here”/“Read more” with descriptive text or add off-screen context for repeated links.'
+  },
+  'focus-order': {
+    title: 'Focus order',
+    body: 'Tab/read order matches the visual order. When modals or menus open, focus moves into them; on close, focus returns to the trigger.'
+  },
+  'visible-focus': {
+    title: 'Visible focus',
+    body: 'Keyboard focus is always visible. Do not remove outlines; ensure a clear focus indicator around links, buttons, and form fields.'
+  }
+};
+
+const DEMO_DATA = {
+  before: {
+    name: 'W3C BAD — Before',
+    url: 'https://www.w3.org/WAI/demos/bad/before/home.html',
+    // each issue: severity, category, selector/snippet, wcag, auto-fixable?
+    issues: [
+      // 8 machine-detected issues: 5 automatable (Copy fix), 3 guided (wizard)
+
+      // Copy-fix (automatable) — 5
+      { sev:'critical', cat:'Color contrast',         sel:'.btn-primary',              wcag:'1.4.3', copy:'.btn-primary{color:#111;background:#2d3b8f}', auto:true },
+      { sev:'moderate', cat:'Empty links/buttons',    sel:'a.icon-only',               wcag:'4.1.2', copy:'Provide accessible name via text or aria-label', auto:true },
+      { sev:'moderate', cat:'Empty links/buttons',    sel:'button.icon-only',          wcag:'4.1.2', copy:'Provide accessible name via text or aria-label', auto:true },
+      { sev:'moderate', cat:'Missing page title',     sel:'<title>',                   wcag:'2.4.2', copy:'<title>CityLights — Home</title>', auto:true },
+      { sev:'moderate', cat:'Missing page language',  sel:'<html>',                    wcag:'3.1.1', copy:'<html lang="en">', auto:true },
+
+      // “Guide me” (wizard) — 3
+  { sev:'serious',  cat:'Images without alt',     sel:'img.hero',                  wcag:'1.1.1', fix:'Provide descriptive alt for informative images; use empty alt for decorative.', auto:false },
+  { sev:'serious',  cat:'Form inputs unlabeled',  sel:'input[type="email"]',      wcag:'3.3.2', fix:'Use <label for> or aria-labelledby/aria-label so inputs have accessible names.', auto:false },
+  { sev:'serious',  cat:'Form inputs unlabeled',  sel:'input[type="search"]',     wcag:'3.3.2', fix:'Use <label for> or aria-labelledby/aria-label so inputs have accessible names.', auto:false },
+
+  // Human-review — 4
+  { sev:'serious',  cat:'Keyboard flow (no traps)', sel:'#nav, #modal',                   wcag:'2.1.2', needsHuman:true, humanKey:'keyboard-flow' },
+  { sev:'moderate', cat:'Link purpose in context',  sel:'a:contains("Read more"), .icon', wcag:'2.4.4', needsHuman:true, humanKey:'link-purpose' },
+  { sev:'moderate', cat:'Focus order',              sel:'header > nav > a, main h1, .cta', wcag:'2.4.3', needsHuman:true, humanKey:'focus-order' },
+  { sev:'moderate', cat:'Visible focus',            sel:'a, button, input',               wcag:'2.4.7', needsHuman:true, humanKey:'visible-focus' },
+    ]
+,
+  },
+  after: {
+    name: 'W3C BAD — After',
+    url: 'https://www.w3.org/WAI/demos/bad/after/home.html',
+    issues: [
+      // After demo fixes: unresolved machine-detected items (guided)
+  { sev:'serious',  cat:'Images without alt',     sel:'img.hero',                  wcag:'1.1.1', fix:'Confirm alt text (or empty alt for decorative).', auto:false },
+  { sev:'serious',  cat:'Form inputs unlabeled',  sel:'input[type="email"]',       wcag:'3.3.2', fix:'Confirm labels/aria-labelledby present', auto:false },
+  { sev:'serious',  cat:'Form inputs unlabeled',  sel:'input[type="search"]',      wcag:'3.3.2', fix:'Confirm labels/aria-labelledby present', auto:false },
+  { sev:'moderate', cat:'Link purpose in context',  sel:'a:contains("Read more"), .icon', wcag:'2.4.4', needsHuman:true, humanKey:'link-purpose' },
+  { sev:'moderate', cat:'Focus order',              sel:'header > nav > a, main h1, .cta', wcag:'2.4.3', needsHuman:true, humanKey:'focus-order' },
+    ],
+  },
+};
+
+
+
+function countsBySeverity(issues){
+  const c = { critical:0, serious:0, moderate:0, minor:0 };
+  issues.forEach(it => { c[it.sev] = (c[it.sev]||0)+1; });
+  return c;
+}
+function automatableCount(issues){
+  return issues.filter(i => i.auto).length;
+}
+// Effort model (tweak later): minutes per item
+const EFFORT = { auto: 2, critical: 30, serious: 20, moderate: 10, minor: 5 };
+
+function estimateEffort(issues){
+  const autos = issues.filter(i=>i.auto).length * EFFORT.auto;
+  const manual = issues
+    .filter(i=>!i.auto)
+    .reduce((sum,i)=>sum + (EFFORT[i.sev]||EFFORT.moderate), 0);
+  return { autos, manual, total: autos + manual };
+}
+
+function uniqueCats(list){ return [...new Set(list.map(i=>i.cat))]; }
+function diffResolved(beforeIssues, afterIssues){
+  const afterSet = new Set(uniqueCats(afterIssues));
+  return uniqueCats(beforeIssues).filter(cat => !afterSet.has(cat));
+}
+function buildFixPack(issues){
+  const blocks = issues.filter(i=>i.auto && i.copy).map(i=>`// ${i.cat}\n${i.copy}`);
+  return blocks.length ? blocks.join('\n\n') : '// No quick-fix snippets in this view.';
+}
+
+
+function ReportTabs({ navigate, dataset, setDataset }) {
+
+  const [tab, setTab] = useState('issues')
+
+// Jump to Human checks: activate tab, scroll, and focus the panel (APG-friendly)
+const goToHumanChecks = React.useCallback(() => {
+  setTab('human');
+  // After state updates, scroll & focus the tabpanel
+  setTimeout(() => {
+    const panel = document.getElementById('panel-human');
+    if (panel) {
+      try { panel.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch {}
+      try { panel.focus(); } catch {}
+    }
+  }, 0);
+}, []);
+
+  // Severity filter chips state (Critical/Serious/Moderate/Minor)
+  const [sevSel, setSevSel] = useState({ critical: true, serious: true, moderate: true, minor: true });
+  const toggleSev = useCallback((k) => setSevSel((s) => ({ ...s, [k]: !s[k] })), []);
+  const clearSev  = useCallback(() => setSevSel({ critical: true, serious: true, moderate: true, minor: true }), []);
+
+  // Top 5 vs Show all
+  const [showAll, setShowAll] = useState(false);
+  
+
+
+const data = DEMO_DATA[dataset];
+const other = DEMO_DATA[dataset === 'before' ? 'after' : 'before'];
+// Build from selected dataset
+const issues = useMemo(() => (data && Array.isArray(data.issues) ? data.issues : []), [data]);
+
+const filteredIssues = useMemo(() => issues.filter(it => sevSel[it.sev]), [issues, sevSel]);
+
+const SEV_ORDER = { critical: 0, serious: 1, moderate: 2, minor: 3 };
+const sortedFiltered = useMemo(
+  () => filteredIssues.slice().sort((a, b) => SEV_ORDER[a.sev] - SEV_ORDER[b.sev]),
+  [filteredIssues]
+);
+const totalFiltered = sortedFiltered.length;
+const visibleIssues = useMemo(
+  () => (showAll ? sortedFiltered : sortedFiltered.slice(0, 5)),
+  [sortedFiltered, showAll]
+);
+const hasAutoFixes = useMemo(() => issues.some(i => i.auto && i.copy), [issues]);
+
+
+const counts = countsBySeverity(issues);
+const rows = issues.map(it => {
+  const rule = RULE_MAP[it.cat] || it.cat.toLowerCase().replace(/\s+/g, '-');
+  return {
+    title: it.cat,                           // human-friendly
+    rule,
+    sev: it.sev,
+    desc: sanitize(it.fix || it.cat),        // sanitize text
+    help: AXE_RULE_URL(rule),
+    sel: sanitize(it.sel || ""),             // sanitize selector/snippet
+    wcag: it.wcag,
+  fix: (window.demoFixes?.[rule]?.snippets?.html 
+     || window.demoFixes?.[rule]?.snippets?.css 
+     || window.demoFixes?.[rule]?.snippets?.react 
+     || it.copy 
+     || ""),
+    auto: !!it.auto,
+    needsHuman: !!it.needsHuman,
+    humanKey: it.humanKey || null
+  };
+});
+
+
+// For comparison strip (Before vs After)
+const beforeCounts = countsBySeverity(DEMO_DATA.before.issues);
+const afterCounts  = countsBySeverity(DEMO_DATA.after.issues);
+const beforeTotal  = DEMO_DATA.before.issues.length;
+const afterTotal   = DEMO_DATA.after.issues.length;
+const improved     = Math.max(0, beforeTotal - afterTotal);
+// Consistent summary numbers based on Before → After
+const fixedThisPass   = Math.max(0, beforeTotal - afterTotal); // e.g., 5
+const leftAfterFixes  = afterTotal;                             // e.g., 2
+
+// Mock score history (last 5 scans) for sparkline
+const scoreHistory = React.useMemo(() => {
+  const end = beforeTotal > 0 ? Math.round((fixedThisPass / beforeTotal) * 100) : 0;
+  return dataset === 'after'
+    ? [Math.max(0, end - 20), Math.max(0, end - 14), Math.max(0, end - 9), Math.max(0, end - 4), end]
+    : [20, 28, 33, 37, 41];
+}, [dataset, fixedThisPass, beforeTotal]);
+
+  useEffect(() => {
+    try {
+      const el = document.getElementById('report-status');
+      if (!el) return;
+      if (dataset === 'after') {
+        el.textContent = `Demo fixes applied. ${fixedThisPass} resolved, ${afterTotal} remaining.`;
+      } else {
+        el.textContent = `Showing Before: ${beforeTotal} total issues. Switch to After to hear the reduction.`;
+      }
+    } catch {}
+  }, [dataset, fixedThisPass, afterTotal, beforeTotal]);
+
+// Demo: per-dataset scan duration (seconds) — different for Before/After per spec 1.1
+const durationSeconds = dataset === 'after' ? 2.6 : 3.2;
+
+
+// Expose to PDF/JSON according to selected dataset
+window.__demoReport = {
+  brand: 'AccessScan',
+  engine: 'axe-core',
+  engineVersion: '4.10',
+  url: data.url,
+  datasetName: dataset === 'after' ? 'After' : 'Before',  // <— NEW
+  generatedAt: new Date().toISOString(),
+  durationSeconds,
+  scoreHistory: scoreHistory,
+  score: null,
+  counts,
+  rows
+};
+
+
+  
+  // Build report meta now so the PDF is always ready on first click
+
+
+
+const scanUrl = data.url;
+
+
+
+
+const resolvedCats = diffResolved(DEMO_DATA.before.issues, DEMO_DATA.after.issues);
+// Demo: things tools can't confirm (kept separate from machine-tested counts)
+const HUMAN_CHECKS = 4;
+
+const total = issues.length || 1;
+
+// Format "Last generated" (en-GB, Europe/London) for the note under the grey banner
+const genNote = React.useMemo(() => {
+  const ts = (window.__demoReport && window.__demoReport.generatedAt) || Date.now();
+  const d = new Date(ts);
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZoneName: 'short',
+      timeZone: 'Europe/London',
+      hour12: false
+    }).format(d);
+  } catch {
+    return d.toUTCString();
+  }
+}, [dataset]);
+
+
+  return (
+    <div className="rounded-3xl glass-strong border border-white/30 p-6 shadow-xl">
+      <p id="report-status" role="status" className="sr-only"></p>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="text-center">
+  <div className="text-xs text-gray-500">{data.name}</div>
+  <div className="text-3xl font-extrabold text-gray-900">{total} issues</div>
+</div>
+
+        <div className="flex items-center gap-4">
+          <Donut value={fixedThisPass} total={beforeTotal} label="fewer issues" />
+          <Sparkline values={scoreHistory} width={120} height={36} />
+        </div>
+
+        <div className="flex items-center gap-2 text-xs">
+          <span className="rounded bg-red-100 px-2 py-0.5 text-red-700">Critical</span>
+          <span className="rounded bg-orange-100 px-2 py-0.5 text-orange-700">Serious</span>
+          <span className="rounded bg-yellow-100 px-2 py-0.5 text-yellow-800">Moderate</span>
+          <span className="rounded bg-gray-200 px-2 py-0.5 text-gray-700">Minor</span>
+        </div>
+      </div>
+      <p className="mt-2 text-xs text-gray-500">
+  Automated tools surface candidates; <a className="underline decoration-dotted" href="https://www.w3.org/WAI/test-evaluate/tools/selecting/" target="_blank" rel="noreferrer">human judgement is required</a> to confirm conformance.
+</p>
+
+<p className="mt-1 text-xs text-gray-500" role="note">
+  Scan completed in {durationSeconds.toFixed(1)} s • Last generated: {genNote}
+</p>
+
+          {/* What automation covers vs needs a human (spec 6.1) */}
+          <div
+            className="grid md:grid-cols-2 gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3"
+            aria-label="Automation coverage"
+          >
+            <div>
+              <div className="font-semibold text-gray-900 mb-1">Automated (tools)</div>
+              <ul className="list-disc pl-5 text-gray-700">
+                <li>Colour contrast</li>
+                <li>Form labels / programmatic name</li>
+                <li>Empty links &amp; buttons</li>
+                <li>Page title &amp; <code>lang</code></li>
+                <li>Basic heading structure</li>
+              </ul>
+            </div>
+            <div>
+              <div className="font-semibold text-gray-900 mb-1">Needs a human</div>
+              <ul className="list-disc pl-5 text-gray-700">
+                <li>Keyboard flow (no traps)</li>
+                <li>Link purpose in context</li>
+                <li>Focus order &amp; visible focus</li>
+                <li>Alt text quality</li>
+                <li>Complex widgets &amp; media captions</li>
+              </ul>
+            </div>
+          </div>
+
+          
+
+      {/* Executive summary */}
+<div className="mt-3 grid gap-2 sm:grid-cols-3 text-sm">
+  <div className="rounded-2xl bg-white/80 border border-gray-200 p-3">
+    <div className="font-semibold">Fixed in this pass</div>
+<div className="text-gray-700">{fixedThisPass} resolved</div>
+
+
+  </div>
+  <div className="rounded-2xl bg-white/80 border border-gray-200 p-3">
+  <div className="font-semibold">Remaining (machine-tests)</div>
+<div className="text-gray-700">{afterTotal} remaining</div>
+
+  </div>
+  <div className="rounded-2xl bg-white/80 border border-gray-200 p-3">
+    <div className="font-semibold">Expected outcome</div>
+<div className="text-gray-700">Before → After: {beforeTotal} → {afterTotal}</div>
+<div className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-green-700">
+  <span className="font-semibold">{improved}</span>
+  <span>fewer issues</span>
+</div>
+
+<button
+  type="button"
+  onClick={goToHumanChecks}
+  aria-controls="panel-human"
+  className="mt-1 text-xs text-indigo-700 underline decoration-dotted focus:outline-none focus:ring-2 focus:ring-indigo-500/40 rounded"
+>
+  Human checks pending: <span className="font-medium">{HUMAN_CHECKS}</span>. Review now
+</button>
+
+  </div>
+</div>
+
+      {/* Before/After switch + delta */}
+<div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
+    <div className="inline-flex rounded-xl overflow-hidden border border-gray-200 bg-white/80 backdrop-blur">
+    <button
+      className={`px-3 py-1.5 disabled:opacity-60 disabled:cursor-not-allowed ${dataset==='before'?'bg-indigo-50 text-indigo-700 font-semibold':''}`}
+      onClick={()=>setDataset('before')}
+      aria-pressed={dataset==='before'}
+      disabled={dataset==='before'}
+      title={dataset==='before' ? 'Already showing Before' : undefined}
+    >Before</button>
+    <button
+      className={`px-3 py-1.5 disabled:opacity-60 disabled:cursor-not-allowed ${dataset==='after'?'bg-indigo-50 text-indigo-700 font-semibold':''}`}
+      onClick={()=>setDataset('after')}
+      aria-pressed={dataset==='after'}
+      disabled={dataset==='after'}
+      title={dataset==='after' ? 'Already showing After' : undefined}
+    >After</button>
+  </div>
+  <button
+    className="px-3 py-1.5 rounded border border-indigo-200 text-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+    onClick={() => setDataset('after')}
+    disabled={dataset==='after'}
+    title={dataset==='after' ? 'Already showing After' : 'Switch to After demo dataset'}
+  >
+  Show After (demo)
+  </button>
+</div>
+
+
+
+      <div className="mt-6 border-b border-gray-200/60 text-sm">
+        <nav aria-label="Report tabs" role="tablist" className="flex gap-4">
+
+          {[
+  { k: 'issues',   t: `Issues (${issues.length})` },
+  { k: 'overview', t: 'Overview' },
+  { k: 'human',    t: `Human checks (${HUMAN_CHECKS})` },
+].map((x) => (
+  <button
+    key={x.k}
+    role="tab"
+    id={`tab-${x.k}`}
+    aria-selected={tab === x.k}
+    aria-controls={`panel-${x.k}`}
+    onClick={() => setTab(x.k)}
+    className={`px-3 py-2 rounded-t-md ${
+      tab === x.k
+        ? 'border-b-2 border-indigo-600 font-semibold text-indigo-700 bg-indigo-50'
+        : 'text-gray-600'
+    }`}
+  >
+    {x.t}
+  </button>
+))}
+
+        </nav>
+      </div>
+
+      {tab === 'issues' && (
+  <div className="mt-3 flex flex-wrap items-center gap-2" aria-label="Filter by severity">
+    {[
+      ['critical','Critical'],
+      ['serious','Serious'],
+      ['moderate','Moderate'],
+      ['minor','Minor']
+    ].map(([k,label]) => (
+      <button
+        key={k}
+        type="button"
+        aria-pressed={sevSel[k]}
+        onClick={() => toggleSev(k)}
+        className={`px-2 py-1 rounded-full text-xs border ${sevSel[k] ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-gray-300 text-gray-700'}`}
+      >
+        {label}
+      </button>
+    ))}
+    <button type="button" onClick={clearSev} className="ml-1 text-xs underline text-indigo-700">Clear</button>
+  </div>
+)}
+
+      {tab === 'overview' && (
+  <div role="tabpanel" id="panel-overview" aria-labelledby="tab-overview" className="mt-4 text-sm text-gray-800 space-y-3">
+
+          <p>Some checks can’t be automated. We show exactly what needs a human review, with short test scripts so you can verify quickly.</p>
+          <p className="text-sm text-gray-700">
+  Tip: Open the <button className="underline text-indigo-700" onClick={()=>setTab('issues')}>Issues</button> tab to see all {issues.length} items with how-to-fix steps.
+</p>
+
+          {/* Resolved vs remaining */}
+{dataset==='after' && (
+  <div className="rounded-xl bg-green-50 border border-green-200 p-3">
+    <div className="font-semibold text-green-800 mb-1">Resolved since “Before”</div>
+    <ul className="list-disc pl-5 text-green-800">
+      {resolvedCats.length ? resolvedCats.map((c,i)=><li key={i}>{c}</li>) : <li>No changes detected in this demo set.</li>}
+    </ul>
+  </div>
+)}
+
+{/* Quick-fix pack */}
+<div className="rounded-xl bg-white/80 border border-gray-200 p-3">
+  <div className="flex items-center justify-between">
+    <div className="font-semibold">Copy quick-fix pack</div>
+    <button
+      className="text-xs px-2 py-1 rounded border border-indigo-200 text-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+      onClick={async ()=>{
+  const txt = buildFixPack(issues);
+  await window.copyTextWithStatus(txt, 'Quick-fix pack copied');
+}}
+      disabled={!hasAutoFixes}
+      title={!hasAutoFixes ? 'No automatable fixes in this view' : undefined}
+
+    >Copy</button>
+  </div>
+  <p className="text-gray-600 mt-1">CSS/HTML snippets for automatable items (demo). Paste into your codebase, then re-scan.</p>
+</div>
+
+{/* Methodology & limits */}
+<p className="text-xs text-gray-500">
+  Demo uses W3C BAD pages. Automated checks highlight issues, but human evaluation is required to confirm WCAG conformance.
+  See <a className="underline decoration-dotted" target="_blank" rel="noreferrer" href="https://www.w3.org/WAI/demos/bad/">W3C BAD</a>,
+  <a className="underline decoration-dotted ml-1" target="_blank" rel="noreferrer" href="https://www.w3.org/WAI/WCAG22/quickref/">WCAG QuickRef</a>,
+  and <a className="underline decoration-dotted ml-1" target="_blank" rel="noreferrer" href="https://wave.webaim.org/help">WebAIM WAVE</a>.
+</p>
+
+        </div>
+      )}
+
+      {tab === 'issues' && (
+  <div role="tabpanel" id="panel-issues" aria-labelledby="tab-issues" className="mt-4 overflow-auto">
+
+          <div className="mb-2 flex items-center justify-between text-xs">
+            <div aria-live="polite">
+              { (showAll ? totalFiltered : Math.min(5, totalFiltered)) } of { totalFiltered } shown
+            </div>
+            {totalFiltered > 5 && (
+              <button
+                type="button"
+                onClick={() => setShowAll(s => !s)}
+                className="px-2 py-1 rounded border border-indigo-200 text-indigo-700"
+              >
+                {showAll ? 'Show top 5' : 'Show all'}
+              </button>
+            )}
+          </div>
+
+          <table className="min-w-full text-sm">
+            <thead className="text-left text-gray-600">
+              <tr>
+                <th className="py-2 pr-4">Severity</th>
+                <th className="py-2 pr-4">Issue</th>
+                <th className="py-2 pr-4">Element</th>
+                <th className="py-2 pr-4">Selector/Snippet</th>
+                <th className="py-2 pr-4">WCAG</th>
+                <th className="py-2 pr-4">How to fix</th>
+              </tr>
+            </thead>
+            <tbody className="align-top text-gray-900">
+              {visibleIssues.map((it, i) => (
+                <tr key={i} className="border-t border-gray-100/70">
+                  <td className="py-2 pr-4"><Chip tone={it.sev}>{it.sev}</Chip></td>
+                  <td className="py-2 pr-4">{it.cat}</td>
+                  <td className="py-2 pr-4">
+                    <img
+                      src={buildThumbSrc(it)}
+                      alt=""
+                      width="64"
+                      height="48"
+                      loading="lazy"
+                      decoding="async"
+                      className="w-16 h-12 rounded border border-gray-200 bg-white object-cover"
+                    />
+                  </td>
+
+                  <td className="py-2 pr-4 font-mono text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate block max-w-[220px]">{it.sel}</span>
+                      <button
+                        type="button"
+                        className="px-2 py-1 text-xs rounded border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                        onClick={async () => { await window.copyLocateString(it); }}
+                        title="Copy locate-in-code string"
+                      >
+                        Locate in code
+                      </button>
+                    </div>
+                  </td>
+                  <td className="py-2 pr-4 max-w-[520px]">
+                    <div className="space-y-1">
+                      {it.auto ? (() => {
+                        const ruleId = RULE_MAP[it.cat] || it.cat.toLowerCase().replace(/\s+/g,'-');
+                        const fx = (window.demoFixes && window.demoFixes[ruleId]) || null;
+                        const prefer = ruleId === 'color-contrast' ? 'css' : 'html';
+                        const snippet = fx && fx.snippets
+                          ? (fx.snippets[prefer] || fx.snippets.html || fx.snippets.react || fx.snippets.css || it.copy || '')
+                          : (it.copy || '');
+
+                        return (
+                          <div>
+                            <pre className="rounded bg-zinc-50 p-2 text-xs overflow-x-auto"><code>{snippet}</code></pre>
+                            <div className="mt-1 flex items-center gap-2">
+                              <button
+                                type="button"
+                                className="px-2 py-1 text-xs rounded border border-indigo-200 text-indigo-700"
+                                onClick={async () => { await window.copyTextWithStatus(snippet, 'Snippet copied'); }}
+                              >
+                                Copy
+                              </button>
+                              <a
+                                className="text-xs underline text-indigo-700"
+                                href={AXE_RULE_URL(ruleId)}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                Rule help ↗
+                              </a>
+                            </div>
+                          </div>
+                        );
+                      })() : (
+                        <div className="flex items-start gap-2">
+                          <p>{it.fix}</p>
+                          {/* Guided wizard action (human judgement) */}
+                          {(() => {
+                            const ruleId = RULE_MAP[it.cat] || it.cat.toLowerCase().replace(/\s+/g,'-');
+                            const guided = ruleId === 'image-alt' || ruleId === 'label';
+                            return guided ? (
+                              <button
+                                className="px-2 py-1 text-xs rounded ring-1 ring-inset ml-2"
+                                data-action="guide"
+                                data-rule-id={ruleId}
+                                aria-controls="guideModal"
+                                onClick={(e) => window.openGuideWizard(ruleId, it.sel || '', e.currentTarget)}
+                              >
+                                Guide me
+                              </button>
+                            ) : null;
+                          })()}
+                          {it.needsHuman ? (
+                            <span className="ml-2 inline-block text-xs rounded px-2 py-1 bg-yellow-100 text-yellow-800">Needs human review</span>
+                          ) : null}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {tab === 'human' && (
+  <div role="tabpanel" id="panel-human" aria-labelledby="tab-human" tabIndex={0} className="mt-4 text-sm text-gray-800 space-y-3">
+
+          <h3 className="font-semibold text-gray-900">Human review scripts</h3>
+      <ul className="list-disc pl-5 space-y-2">
+        {Array.from(new Set((DEMO_DATA.before?.issues||[]).filter(i=>i.needsHuman).map(i=>i.humanKey)))
+          .map(k => HUMAN_SCRIPT_LIBRARY[k])
+          .filter(Boolean)
+          .map((s,idx) => (
+            <li key={idx}><strong>{s.title}:</strong> {s.body}</li>
+          ))
+        }
+      </ul>
+      <p className="text-xs text-gray-600">Note: This list is derived from the demo dataset and the count matches the “Human checks” badge.</p>
+
+        </div>
+      )}
+
+      
+
+      <div className="sticky bottom-3 mt-6">
+  <div className="rounded-xl bg-white/80 backdrop-blur border border-white/30 p-3 shadow flex flex-wrap items-center gap-2">
+    <Button
+      variant='secondary'
+      className="bg-white text-indigo-700 ring-1 ring-inset px-3 py-2"
+      onClick={() => { t('report_copy_link'); window.copyTextWithStatus(window.location.href + '?share=fakeToken123', 'Report link copied'); }}
+    >
+      Share this report
+    </Button>
+    <Button
+      variant='secondary'
+      className="bg-white text-indigo-700 ring-1 ring-inset px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+      title={issues.length === 0 ? 'No issues to export' : undefined}
+      disabled={issues.length === 0}
+      onClick={() => { if (issues.length === 0) return; t('report_print'); window.generateReportPDF(); }}
+    >
+      Download PDF
+    </Button>
+    <Button
+      variant='secondary'
+      className="bg-white text-indigo-700 ring-1 ring-inset px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+      title={issues.length === 0 ? 'No issues to export' : undefined}
+      disabled={issues.length === 0}
+      onClick={() => { if (issues.length === 0) return; t('report_json_download'); window.downloadReportJSON(); }}
+    >
+      Download JSON
+    </Button>
+
+    <Button
+      variant='secondary'
+      className="bg-white text-indigo-700 ring-1 ring-inset px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+      title={issues.length === 0 ? 'No issues to export' : undefined}
+      disabled={issues.length === 0}
+      onClick={() => { if (issues.length === 0) return; t('report_csv_download'); window.downloadDevCSV(); }}
+    >
+      Create dev tickets (CSV)
+    </Button>
+    <span className="ml-auto"></span>
+    <Button as='a' href="#pricing" onClick={(e) => { e.preventDefault(); navigate('/pricing') }} variant='ghost'>
+      See plans
+    </Button>
+  </div>
+</div>
+
+    </div>
+  )
+}
+
+// ----------------------------
+// Baseline form with inline + summary errors
+// ----------------------------
+function BaselineForm({ navigate }) {
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [url, setUrl] = useState('')
+  const [consent, setConsent] = useState(false)
+  const [marketing, setMarketing] = useState(false)
+  const [errors, setErrors] = useState([])
+  // Add near the top of BaselineForm:
+useEffect(() => {
+  const p = new URLSearchParams(location.search || '');
+  if (p.get('name')) setName(p.get('name'));
+  if (p.get('email')) setEmail(p.get('email'));
+  if (p.get('website')) setUrl(p.get('website'));
+}, []);
+
+
+  const nameRef = useRef(null)
+  const emailRef = useRef(null)
+  const urlRef = useRef(null)
+  const consentRef = useRef(null)
+  const summaryRef = useRef(null)
+  const startedRef = useRef(false)
+  const markFormStart = () => { if (!startedRef.current) { startedRef.current = true; try { t('form_start') } catch { /* noop */ } } }
+
+  function validate() {
+    const errs = []
+    if (!name.trim()) errs.push('Name is required')
+    if (!isValidEmail(email)) errs.push('Enter a valid work email')
+    if (!isValidHttpsUrl(url)) errs.push('URL must start with https://…')
+    if (!consent) errs.push('Consent is required')
+    setErrors(errs)
+    return errs
+  }
+
+  function save(payload) {
+    try {
+      const raw = localStorage.getItem('baselineRequests')
+      const arr = raw ? JSON.parse(raw) : []
+      arr.push(payload)
+      localStorage.setItem('baselineRequests', JSON.stringify(arr))
+      // Make values available for Tally prefill in our embeds
+try {
+  localStorage.setItem('lead_name', payload.name || '');
+  localStorage.setItem('lead_email', payload.email || '');
+  localStorage.setItem('lead_website', payload.url || '');
+} catch {}
+
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function onSubmit(e) {
+    e.preventDefault()
+    const errs = validate()
+    if (errs.length) {
+      if (!name.trim()) nameRef.current?.focus()
+      else if (!isValidEmail(email)) emailRef.current?.focus()
+      else if (!isValidHttpsUrl(url)) urlRef.current?.focus()
+      else if (!consent) consentRef.current?.focus()
+      else summaryRef.current?.focus()
+      return
+    }
+    const nurl = normalizeUrl(url)
+    const payload = { name, email, url: nurl, consent, marketing, ts: Date.now() }
+    save(payload)
+    try { t('form_submit_success') } catch { /* noop */ }
+    // Identify this person in PostHog and capture lead_submit
+try {
+  if (window.posthog) {
+    window.posthog.identify(email, { email, name, site_url: nurl });
+    window.posthog.capture('lead_submit', { email, name, site_url: nurl });
+  }
+} catch {}
+
+// Open Tally popup prefilled (user clicks Submit to confirm lead)
+try {
+  const q = new URLSearchParams(location.search || '');
+  // Capture & persist UTMs once
+(function persistUTMs(){
+  const q = new URLSearchParams(location.search);
+  const keys = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content'];
+  let changed = false;
+  keys.forEach(k => {
+    const v = q.get(k);
+    if (v) { localStorage.setItem(k, v); changed = true; }
+  });
+  // optional: carry UTMs forward on internal nav
+  // (not strictly required now that we store them)
+})();
+// ADD right before openTallyLead(...)
+localStorage.setItem('name', name);
+localStorage.setItem('email', email);
+localStorage.setItem('website', nurl);
+
+  openTallyLead({ name, workEmail: email, website: nurl });
+
+} catch {}
+
+    setTimeout(() => navigate('/baseline/queued'), 400)
+
+  }
+
+  const nameErr = errors.includes('Name is required')
+  const emailErr = errors.includes('Enter a valid work email')
+  const urlErr = errors.includes('URL must start with https://…')
+  const consentErr = errors.includes('Consent is required')
+
+  return (
+    <form onSubmit={onSubmit} noValidate className="space-y-5">
+      <div className="flex flex-col gap-1">
+        <label htmlFor="name" className="text-sm font-medium text-gray-900">Name <span className="text-red-600">*</span></label>
+        <input id="name" ref={nameRef} onFocus={markFormStart} value={name} onChange={(e) => setName(e.target.value)} className="rounded-xl border border-gray-300 px-3 py-2 bg-white/90 backdrop-blur" aria-invalid={nameErr} aria-describedby={nameErr ? 'name-error' : undefined} required />
+        {nameErr && <p id="name-error" className="text-xs text-red-700">Name is required</p>}
+      </div>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="email" className="text-sm font-medium text-gray-900">Work email <span className="text-red-600">*</span></label>
+        <input id="email" ref={emailRef} onFocus={markFormStart} type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="rounded-xl border border-gray-300 px-3 py-2 bg-white/90 backdrop-blur" aria-invalid={emailErr} aria-describedby={emailErr ? 'email-error email-hint' : 'email-hint'} required />
+        <p id="email-hint" className="text-xs text-gray-600">We’ll send your report link here</p>
+        {emailErr && <p id="email-error" className="text-xs text-red-700">Enter a valid work email</p>}
+      </div>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="url" className="text-sm font-medium text-gray-900">Website URL <span className="text-red-600">*</span></label>
+        <input id="url" ref={urlRef} onFocus={markFormStart} value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://example.com" className="rounded-xl border border-gray-300 px-3 py-2 bg-white/90 backdrop-blur" aria-invalid={urlErr} aria-describedby={urlErr ? 'url-error' : undefined} required />
+        {urlErr && <p id="url-error" className="text-xs text-red-700">URL must start with https://</p>}
+      </div>
+      <div className="flex gap-2 items-start">
+        <input id="consent" ref={consentRef} type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 h-4 w-4 rounded border-gray-300" aria-invalid={consentErr} aria-describedby={consentErr ? 'consent-error' : undefined} required />
+        <label htmlFor="consent" className="text-sm text-gray-700">Send me the baseline report link and service emails about my request.</label>
+      </div>
+      {consentErr && <p id="consent-error" className="-mt-3 text-xs text-red-700">Consent is required</p>}
+
+      {errors.length > 0 && (
+        <div ref={summaryRef} tabIndex={-1} className="a11y-error-summary border border-red-200 bg-red-50 text-red-900 rounded-xl p-4" aria-labelledby="error-heading" role="alert">
+          <h2 id="error-heading" className="font-semibold">Please fix the following:</h2>
+          <ul className="list-disc pl-5 mt-2">
+            {errors.map((e, i) => (<li key={i}>{e}</li>))}
+          </ul>
+        </div>
+      )}
+
+      <div className="flex items-center gap-3">
+        <Button type="submit">Start free baseline</Button>
+        <p className="text-xs text-gray-600">We’ll email your baseline link and service updates about this request.</p>
+      </div>
+    </form>
+  )
+}
+
+// ----------------------------
+// Pages
+// ----------------------------
+function HomeView({ navigate }) {
+  return (
+    <>
+      <Hero navigate={navigate} />
+
+      {/* 3-step walkthrough strip directly under hero */}
+      <section id="how-it-works" aria-labelledby="howitworks-title" className="mx-auto max-w-7xl px-4 lg:px-6 py-10">
+        <h2 id="howitworks-title" className="text-xl font-semibold mb-4">How it works</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+          {[
+            { icon: '🔗', text: 'Paste your URL — run a scan (minutes).' },
+            { icon: '✅', text: 'See top 10 issues with WCAG links and how-to-fix snippets.' },
+            { icon: '📈', text: '(Paid) weekly or nightly rescans and score trend.' },
+          ].map((s, i) => (
+            <div key={i} className="glass-card rounded-2xl p-5 min-h-24">
+              <div className="text-2xl mb-2" aria-hidden="true">{s.icon}</div>
+              <p className="text-slate-800">{s.text}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section id="pricing" aria-labelledby="pricing-preview" className="border-t border-white/20 py-12 sm:py-16">
+        <Container>
+          <h2 id="pricing-preview" className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 mb-6">Simple pricing</h2>
+          <Pricing compact navigate={navigate} />
+        </Container>
+      </section>
+      <FeatureGrid />
+      <section id="faq" aria-labelledby="faq-title" className="border-t border-white/20 py-12 sm:py-16">
+        <Container>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="glass-card rounded-2xl p-6">
+              <h3 className="font-semibold text-gray-900">Do you guarantee compliance?</h3>
+              <p className="mt-2 text-gray-700">No single tool can. We cover common issues automatically and guide the rest.</p>
+            </div>
+            <div className="glass-card rounded-2xl p-6">
+              <h3 className="font-semibold text-gray-900">Do you inject an overlay?</h3>
+              <p className="mt-2 text-gray-700">No. We scan and report; we don’t modify your live DOM.</p>
+            </div>
+          </div>
+        </Container>
+      </section>
+    </>
+  )
+}
+// Put this near your other helpers in index.html
+function getLastBaselineLead() {
+  try {
+    const arr = JSON.parse(localStorage.getItem('baselineRequests') || '[]');
+    return Array.isArray(arr) && arr.length ? arr[arr.length - 1] : {};
+  } catch { return {}; }
+}
+
+// REPLACE your existing makeTallyEmbedSrc() with this:
+function makeTallyEmbedSrc() {
+  const formId = 'w46VlY'; // your Tally form id
+  const url = new URL(`https://tally.so/embed/${formId}`);
+
+  // Recommended embed flags (per Tally docs)
+  url.searchParams.set('alignLeft', '1');
+  url.searchParams.set('hideTitle', '1');
+  url.searchParams.set('transparentBackground', '1');
+  url.searchParams.set('dynamicHeight', '1');
+
+  // Track where the user was when they opened the form
+  url.searchParams.set('originPage', location.pathname + location.search + location.hash);
+
+  // Pull from current page URL
+  const qs = new URLSearchParams(location.search || '');
+
+  // Also pull from your last saved lead (from localStorage)
+  let last = {};
+  try {
+    const arr = JSON.parse(localStorage.getItem('baselineRequests') || '[]');
+    if (Array.isArray(arr) && arr.length) last = arr[arr.length - 1] || {};
+  } catch {}
+
+  // Helper to choose the best available value
+  const pick = (k) => qs.get(k) || last[k] || '';
+
+  // Visible fields (must match Hidden field names in Tally)
+  // Only pass email to the form (no name, no website)
+[['email','email']].forEach(([hidden]) => {
+  const v = pick(hidden);
+  if (v) url.searchParams.set(hidden, v);
+});
+
+
+  // UTM fields
+  ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].forEach((k) => {
+    const v = qs.get(k) || localStorage.getItem(k) || '';
+    if (v) url.searchParams.set(k, v);
+  });
+
+  return url.toString();
+}
+
+
+
+
+
+function StartBaselineView({ navigate }) {
+  React.useEffect(() => {
+  try { t('start_baseline_view') } catch {}
+
+  // Load the Tally embed (official pattern)
+  const load = () => {
+    if (window.Tally && typeof window.Tally.loadEmbeds === 'function') {
+      window.Tally.loadEmbeds();
+    } else {
+      document
+        .querySelectorAll('iframe[data-tally-src]:not([src])')
+        .forEach((iframeEl) => {
+          iframeEl.src = iframeEl.dataset.tallySrc;
+        });
+    }
+  };
+  load();
+
+  // Listen for Tally form submission from the iframe
+  const onTallySubmit = (e) => {
+    try {
+      // Tally docs: e.data is a JSON string that includes 'Tally.FormSubmitted'
+      if (typeof e.data === 'string' && e.data.includes('Tally.FormSubmitted')) {
+        // Optional analytics (captures selected plan from URL)
+        try {
+          const plan = new URLSearchParams(location.search || '').get('plan') || '';
+          t && t('tally_form_submitted', __ctx({ plan }));
+        } catch {}
+        // Go to the queued page (same UI you already have)
+        navigate('/baseline/queued');
+      }
+    } catch {}
+  };
+  window.addEventListener('message', onTallySubmit);
+
+  return () => {
+    window.removeEventListener('message', onTallySubmit);
+  };
+}, []);
+
+  return (
+    <section className="py-12 sm:py-16">
+      <Container>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="md:col-span-2 glass-strong rounded-2xl p-6 border border-white/30 shadow-lg">
+            <h1 className="text-3xl font-bold text-gray-900">Start your free baseline</h1>
+            <iframe
+  data-tally-src={makeTallyEmbedSrc()}
+  loading="lazy"
+  width="100%"
+  height="600"
+  frameBorder={0}
+  marginHeight={0}
+  marginWidth={0}
+  title="AccessScan Early Access"
+></iframe>
+
+
+          </div>
+          <aside className="glass-card rounded-2xl p-6 border border-white/30 shadow">
+            <h2 className="font-semibold text-gray-900">What happens next</h2>
+            <ol className="mt-2 text-sm text-gray-700 space-y-2 list-decimal pl-5">
+              <li>We’ll queue a scan.</li>
+
+              <li>We’ll email you a link to your report + a PDF.</li>
+              <li>Fix a few items and request a rescan.</li>
+            </ol>
+          </aside>
+        </div>
+      </Container>
+    </section>
+  )
+}
+
+function QueuedView({ navigate }) {
+  const [progress, setProgress] = useState(10)
+  const [status, setStatus] = useState('Queued')
+  const DEMO_SCAN_SECONDS = 3.0
+  useEffect(() => {
+    const steps = ['Queued', 'Fetching page', 'Running checks', 'Generating top 10', 'Preparing PDF', 'Complete']
+    let i = 0
+    const id = setInterval(() => {
+      i = Math.min(i + 1, steps.length - 1)
+      setStatus(steps[i])
+      setProgress((p) => Math.min(100, p + 18))
+      if (steps[i] === 'Complete') clearInterval(id)
+    }, 900)
+    return () => clearInterval(id)
+  }, [])
+  return (
+    <section className="py-12 sm:py-16">
+      <Container>
+        <div className="glass-strong rounded-2xl border border-white/30 p-6 shadow-lg">
+          <h1 className="text-2xl font-bold text-gray-900">
+  You’re queued — thank you. We’ll email your baseline link when it’s ready. You can close this tab.
+</h1>
+
+          <div
+            className="mt-4 h-3 w-full bg-gray-100 rounded-full overflow-hidden"
+            aria-label="Progress"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progress}
+            aria-describedby="queue-status"
+          >
+            <div className="h-full bg-indigo-600" style={{ width: `${progress}%` }} />
+          </div>
+          <p id="queue-status" className="mt-2 text-sm text-gray-700" aria-live="polite">Status: {status}</p>
+          <ul className="mt-3 list-disc pl-5 text-sm text-gray-700">
+  <li>We’ll run the scan (takes ~{DEMO_SCAN_SECONDS.toFixed(1)} s in this demo).</li>
+  <li>We’ll email you a dashboard link and a PDF.</li>
+  <li>You can re-scan anytime from your dashboard.</li>
+</ul>
+          <p className="mt-3 text-sm text-gray-700">
+  Preview the email you’ll receive: <a className="underline" href="/email/preview" onClick={(e)=>{e.preventDefault(); navigate('/email/preview')}}>open mock email</a>.
+</p>
+          <div className="mt-6 flex gap-3">
+            <Button onClick={() => navigate('/report/demo')}>View sample report now</Button>
+            <Button variant='ghost' onClick={() => navigate('/')}>Back to home</Button>
+          </div>
+        </div>
+      </Container>
+    </section>
+  )
+}
+
+function ReportDemoView({ navigate }) {
+  const [dataset, setDataset] = React.useState('before');
+
+  // Build a readable local timestamp from the report (fallback: now)
+  const BRAND_LOCALE = 'en-GB';
+const TZ = 'Europe/London';
+
+const genText = React.useMemo(() => {
+  
+
+
+  const ts = (window.__demoReport && window.__demoReport.generatedAt) || Date.now();
+  const d = new Date(ts);
+  try {
+    // Modern format (fast path)
+    return new Intl.DateTimeFormat(BRAND_LOCALE, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZoneName: 'short',
+      timeZone: TZ,
+      hour12: false,
+    }).format(d);
+  } catch {
+    try {
+      // Fallback for engines without dateStyle/timeStyle
+      return new Intl.DateTimeFormat(BRAND_LOCALE, {
+        year: 'numeric', month: 'short', day: '2-digit',
+        hour: '2-digit', minute: '2-digit',
+        hour12: false, timeZone: TZ,
+      }).format(d);
+    } catch {
+      // Final, always-works fallback
+      return d.toUTCString();
+    }
+  }
+}, []);
+
+
+
+
+  return (
+
+    <section className="py-12 sm:py-16">
+      <Container>
+        <div className="space-y-6">
+          <div className="glass-card rounded-2xl border border-white/30 p-6 shadow">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                
+                {/* Replace the H1 link URL and label */}
+                
+<h1 className="text-xl sm:text-2xl font-semibold text-gray-900 break-all">
+  <a
+    className="underline decoration-dotted underline-offset-4"
+    href={dataset === 'after'
+      ? 'https://www.w3.org/WAI/demos/bad/after/home.html'
+      : 'https://www.w3.org/WAI/demos/bad/before/home.html'}
+    target="_blank"
+    rel="noopener"
+  >
+    {dataset === 'after'
+      ? 'W3C BAD — Accessible “Home” (after)'
+      : 'W3C BAD — Inaccessible “Home” (before)'}
+  </a>
+</h1>
+
+
+{/* Add these 2 helper links near the header/meta area */}
+<p className="text-sm text-gray-700 mt-2 space-x-4">
+  <a className="underline decoration-dotted underline-offset-4"
+     href="https://www.w3.org/WAI/demos/bad/before/reports/home.html"
+     target="_blank" rel="noopener">See W3C’s official “before” report</a>
+  <span aria-hidden="true">·</span>
+  <a className="underline decoration-dotted underline-offset-4"
+     href="https://www.w3.org/WAI/demos/bad/after/home.html"
+     target="_blank" rel="noopener">Compare with the accessible version</a>
+</p>
+
+                
+                <p className="text-xs text-gray-600">
+  Engine: axe-core • WCAG 2.2 aligned • EAA applies (June 2025)
+</p>
+
+              </div>
+            </div>
+          </div>
+          {/* Value snapshot */}
+<div className="glass-card rounded-2xl border border-white/30 p-4 shadow text-sm">
+  <ul className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+    <li className="flex items-start gap-2">
+      <span aria-hidden="true">✅</span>
+      <span><strong>Prioritized issues</strong> with <a className="underline decoration-dotted" href="https://www.w3.org/WAI/WCAG22/quickref/" target="_blank" rel="noreferrer">WCAG links</a> and short “how to fix”.</span>
+    </li>
+    <li className="flex items-start gap-2">
+      <span aria-hidden="true">📉</span>
+      <span><strong>Before → After reduction</strong>: see what dropped between scans.</span>
+    </li>
+    <li className="flex items-start gap-2">
+      <span aria-hidden="true">📤</span>
+      <span><strong>Shareable evidence</strong>: one-click PDF, JSON, and CSV for dev tickets.</span>
+    </li>
+  </ul>
+</div>
+
+          <ReportTabs navigate={navigate} dataset={dataset} setDataset={setDataset} />
+
+        </div>
+      </Container>
+    </section>
+  )
+}
+
+// ----------------------------
+// Email preview (demo)
+// ----------------------------
+function EmailPreviewView({ navigate }) {
+  const beforeTotal = DEMO_DATA.before.issues.length;   // 12
+  const afterTotal  = DEMO_DATA.after.issues.length;     // 5
+  const fixedThisPass = beforeTotal - afterTotal;        // 7
+  const scoreDelta = Math.round((fixedThisPass / Math.max(1, beforeTotal)) * 100); // e.g., 58
+
+  const dashboardUrl = '/dashboard/welcome';
+
+  function handlePdfLink(e) {
+    e.preventDefault();
+    // Navigate to the demo report, then trigger the existing "Download PDF" button.
+    navigate('/report/demo');
+    setTimeout(() => {
+      const btn = [...document.querySelectorAll('button')].find(b => (b.textContent || '').includes('Download PDF'));
+      btn?.click();
+    }, 400);
+  }
+
+  return (
+    <section className="py-12 sm:py-16" aria-labelledby="emailHeading">
+      <Container>
+        <div className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-lg">
+          <p className="text-xs uppercase tracking-wide text-slate-500">Demo email preview</p>
+          <h1 id="emailHeading" className="mt-1 text-2xl font-semibold text-slate-900">Your baseline scan is ready</h1>
+          <p className="mt-2 text-slate-700">
+            Summary: <strong>{beforeTotal} → {afterTotal} issues</strong>;
+            <span className="ml-1 font-semibold text-emerald-700">+{scoreDelta} score</span>.
+          </p>
+
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Button as="a" href={dashboardUrl}>Open dashboard</Button>
+            <Button as="a" href="/report/demo#pdf" variant="ghost" onClick={handlePdfLink}>Download PDF</Button>
+          </div>
+
+          <p className="mt-3 text-xs text-slate-500">
+            These links match the live demo: the dashboard opens the welcome screen; the PDF action opens the demo report and starts the existing PDF export.
+          </p>
+        </div>
+      </Container>
+    </section>
+  );
+}
+
+function FeatureGrid() {
+  const items = [
+    { t: 'Top issues, prioritized' },
+    { t: 'Actionable fixes (copy CSS / markup)' },
+    { t: 'Score & trend + PDF' },
+    { t: 'Transparent “Needs human review” in every report' },
+  ]
+  return (
+    <section aria-labelledby="features-title" className="border-t border-white/20 py-12 sm:py-16">
+      <Container>
+        <h2 id="features-title" className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 mb-6">Why teams use AccessScan</h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {items.map((f, i) => (
+            <div key={i} className="glass-card rounded-2xl p-6">
+              <p className="text-gray-800">{f.t}</p>
+            </div>
+          ))}
+        </div>
+      </Container>
+    </section>
+  )
+}
+
+function Pricing({ compact = false, navigate }) {
+  const [annual, setAnnual] = useState(false)
+  const plans = useMemo(() => ([
+  { key: 'free', name: 'Free baseline', callout: true, sites: 1, scans: '1 page', features: ['Score + Top-10', 'WCAG links', 'PDF by email'] },
+
+  { key: 'starter', name: 'Starter', monthly: 39, sites: 1, scans: 'weekly',
+    features: ['up to 75 pages per crawl', 'full issue list', 'PDF exports', 'email summaries'],
+    seats: 1 },
+
+  { key: 'pro', name: 'Pro', monthly: 119, sites: 3, scans: 'weekly',
+    features: ['up to 250 pages per crawl (total)', 'shareable links', 'priority queue', '3 team seats'],
+    seats: 3 },
+
+  { key: 'agency', name: 'Agency', monthly: 349, sites: 10, scans: 'nightly',
+    features: ['up to 1,000 pages per nightly crawl (total)', 'CSV/PDF exports', 'priority support', '10 seats'],
+    seats: 10 },
+]), [])
+
+
+  return (
+    <div>
+      <div className="flex items-center justify-center gap-3 mb-6">
+        <span className="text-sm text-gray-700">Monthly</span>
+        <button aria-pressed={annual} onClick={() => setAnnual((v) => !v)} className="relative inline-flex h-6 w-11 items-center rounded-full border border-gray-200 bg-gray-100 focus:outline-none">
+          <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${annual ? 'translate-x-6' : 'translate-x-1'}`} />
+        </button>
+        <span className="text-sm text-gray-700">Annual <span className="rounded bg-green-100 px-2 py-0.5 text-green-700 text-xs">2 months free</span></span>
+      </div>
+      <div className={`grid gap-6 ${compact ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-4'}`}>
+        {plans.map((p) => {
+          const price = p.callout ? 0 : (annual ? Math.round(p.monthly * 10) : p.monthly)
+          return (
+            <div key={p.key} data-plan={p.key} className="glass-card rounded-2xl p-6 shadow flex flex-col border border-white/30">
+              <div className="flex-1">
+                <div className="flex items-baseline gap-2">
+                  <h3 className="text-xl font-bold text-gray-900">{p.name}</h3>
+                  <span className="text-xs text-gray-500">{p.sites} site{p.sites > 1 ? 's' : ''} • {p.scans} {p.callout ? '' : 'scans'}</span>
+                </div>
+               
+
+                
+
+                <div className="mt-2 text-3xl font-extrabold text-gray-900">{p.callout ? 'Free' : `£${price}`}<span className="text-base font-normal text-gray-500">{p.callout ? '' : `/${annual ? 'yr' : 'mo'}`}</span></div>
+                <ul className="mt-4 space-y-2 text-sm text-gray-700 list-disc pl-5">
+                  {p.features.map((f, i) => (<li key={i}>{f}</li>))}
+                </ul>
+                <p className="mt-2 text-xs text-gray-500">Typically saves ~5–7 dev-hours per site/month (triage + regressions).</p>
+              </div>
+              {p.callout ? (
+                <Button variant='secondary' className="bg-white text-indigo-700 ring-1 ring-inset px-3 py-2 mt-6" onClick={() => navigate('/start-baseline')}>Start free baseline</Button>
+              ) : (
+  <Button
+    className="mt-6"
+    onClick={() => { t('pricing_click', { plan: p.key }); navigate(`/start-baseline?plan=${p.key}`) }}
+  >
+    Choose {p.name}
+  </Button>
+)}
+
+
+            </div>
+          )
+        })}
+      </div>
+      <p className="mt-3 text-xs text-gray-500">
+  * Pages counted per unique URL fetched in a crawl. PDFs and query strings are ignored by default; excludes authenticated pages.
+</p>
+
+    </div>
+  )
+}
+function PlanLeadView({ navigate }) {
+  const [planName, setPlanName] = React.useState(null);
+
+  React.useEffect(() => {
+    try {
+      const p = new URLSearchParams(location.search || '');
+      const key = (p.get('plan') || '').toLowerCase();
+      const map = { starter: 'Starter', pro: 'Pro', agency: 'Agency' };
+      setPlanName(map[key] || null);
+    } catch {}
+  }, []);
+
+  return (
+    <section className="py-12 sm:py-16">
+      <Container>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="md:col-span-2 glass-strong rounded-2xl p-6 border border-white/30 shadow-lg">
+            <div className="flex items-center justify-between gap-3">
+              <h1 className="text-3xl font-bold text-gray-900">Tell us where to scan</h1>
+              {planName && (
+                <span
+                  className="inline-flex items-center rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold px-3 py-1"
+                  aria-label={`Selected plan: ${planName}`}
+                >
+                  Selected plan: {planName}
+                </span>
+              )}
+            </div>
+
+            <p className="mt-2 text-sm text-gray-700">
+              We’ll queue your site and email your baseline link and PDF when it’s ready.
+            </p>
+
+            <div className="mt-4">
+              {/* Reuse your existing form exactly as-is */}
+              <BaselineForm navigate={navigate} />
+            </div>
+          </div>
+
+          <aside className="glass-card rounded-2xl p-6 border border-white/30 shadow text-sm text-gray-800">
+            <h2 className="font-semibold text-gray-900">What happens next</h2>
+            <ul className="mt-2 space-y-2 list-disc pl-5">
+              <li>We batch new sites regularly and schedule a baseline scan.</li>
+              <li>You’ll get one email when the scan is scheduled and another when your PDF is ready.</li>
+              <li>
+                <button className="underline text-indigo-700" onClick={()=>navigate('/report/demo')}>
+                  Open a sample report
+                </button>
+                &nbsp;to see the format.
+              </li>
+            </ul>
+          </aside>
+        </div>
+      </Container>
+    </section>
+  );
+}
+
+function PricingView({ navigate }) {
+  return (
+    <section className="py-12 sm:py-16">
+      <Container>
+        <div className="space-y-8">
+          <div className="glass-card rounded-2xl border border-white/30 p-6 shadow">
+            <h1 className="text-3xl font-bold text-gray-900">Plans & features</h1>
+            <p className="mt-2 text-gray-700">Choose a plan that fits. Upgrade anytime.</p>
+          </div>
+          <Pricing navigate={navigate} />
+        </div>
+      </Container>
+    </section>
+  )
+}
+
+function AccessibilityView() {
+  return (
+    <section className="py-12 sm:py-16">
+      <Container>
+        <h1 className="text-3xl font-bold text-gray-900">Accessibility statement</h1>
+        <div className="mt-4 glass-card rounded-2xl border border-white/30 p-6 shadow text-sm text-gray-800 space-y-4">
+          <p>This statement applies to this demo site and targets <strong>WCAG 2.2 Level AA</strong>. Some parts may not fully conform as this is a demonstration.</p>
+          <h2 className="text-xl font-semibold">Measures to support accessibility</h2>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>Accessibility is embedded in design/development reviews.</li>
+            <li>Automated testing for common issues.</li>
+            <li>Manual testing of key flows with keyboard and screen readers.</li>
+          </ul>
+          <h2 className="text-xl font-semibold">Conformance status</h2>
+          <p>We aim for WCAG 2.2 Level AA. Known gaps are tracked and prioritized.</p>
+          <h2 className="text-xl font-semibold">Feedback</h2>
+          <p>If you encounter accessibility barriers, email <a className="underline" href="mailto:idievabuali@gmail.com">idievabuali@gmail.com</a>. We try to respond within 5 business days.</p>
+
+          <h2 className="text-xl font-semibold">Technical specifications</h2>
+          <p>Technology used: HTML, WAI‑ARIA, CSS, JavaScript.</p>
+          <h2 className="text-xl font-semibold">Assessment approach</h2>
+          <p>Self-evaluation using automated checks and manual verification.</p>
+          <h2 className="text-xl font-semibold">Date</h2>
+          <p>This statement was last reviewed on {new Date().toLocaleDateString()}.</p>
+        </div>
+      </Container>
+    </section>
+  )
+}
+
+function SimpleDoc({ title, children }) {
+  return (
+    <section className="py-12 sm:py-16">
+      <Container>
+        <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
+        <div className="mt-4 glass-card rounded-2xl border border-white/30 p-6 shadow text-sm text-gray-800">
+          {children}
+        </div>
+      </Container>
+    </section>
+  )
+}
+
+function PrivacyPage() {
+  return (
+    <SimpleDoc title="Privacy Policy">
+      <p>For the free baseline demo we collect your name, email and target URL to send you the baseline link and status messages. We do not set analytics cookies. Contact: <a className="underline" href="mailto:idievabuali@gmail.com">idievabuali@gmail.com</a>.</p>
+    </SimpleDoc>
+  )
+}
+
+function TermsPage() {
+  return (
+    <SimpleDoc title="Terms of Service">
+      <p>This demo is provided “as is” without warranties, including legal compliance. Do not rely on this demo for full conformance. By using it, you agree to reasonable use and no reverse engineering.</p>
+    </SimpleDoc>
+  )
+}
+
+function CookiesPage() {
+  return (
+    <SimpleDoc title="Cookies">
+      <p>We use <a className="underline" href="https://plausible.io" target="_blank" rel="noreferrer">Plausible Analytics</a>, which is cookieless. No consent banner is shown in this mode. Learn how Plausible handles data in their <a className="underline" href="https://plausible.io/data-policy" target="_blank" rel="noreferrer">Data Policy</a>. If we switch to Google Analytics in the future, we will add a cookie banner and Consent Mode v2 for UK/EU.</p>
+    </SimpleDoc>
+  )
+}
+
+function DashboardWelcome({ navigate }) {
+  return (
+    <section className="py-12 sm:py-16">
+      <Container>
+        <div className="glass-strong rounded-2xl border border-white/30 p-6 shadow-lg">
+          <h1 className="text-3xl font-bold text-gray-900">Welcome to AccessScan</h1>
+          <p className="mt-2 text-gray-700">Let’s finish setup so we can queue your first scheduled scan.</p>
+          <ol className="mt-4 list-decimal pl-5 space-y-2 text-sm text-gray-800">
+            <li>Organization name</li>
+            <li>Project name</li>
+            <li>Target URL(s) & schedule (weekly/nightly by plan)</li>
+          </ol>
+          <div className="mt-4 flex gap-3">
+            <Button onClick={() => alert('Demo: onboarding not implemented.')}>Complete onboarding</Button>
+            <Button variant='ghost' onClick={() => navigate('/report/demo')}>Open sample report</Button>
+          </div>
+        </div>
+      </Container>
+    </section>
+  )
+}
+
+// ----------------------------
+// Dev mini test suite (runs in console)
+// ----------------------------
+function assert(cond, msg) { if (!cond) { throw new Error(msg) } }
+function runDevTests() {
+  try {
+    // Title map
+    assert(TITLE_MAP['/pricing'].includes('Pricing'), 'title map pricing failed')
+    assert((TITLE_MAP['/'] || '').startsWith('AccessScan'), 'title map root failed')
+    assert(TITLE_MAP['/report/demo'].includes('Demo'), 'title map demo failed')
+    assert(TITLE_MAP['/cookies'].includes('Cookies'), 'title map cookies failed')
+    assert(TITLE_MAP['/dashboard/welcome'].includes('Welcome'), 'title map welcome failed')
+    // Helpers
+    assert(normalizeUrl('example.com').startsWith('https://'), 'normalizeUrl failed')
+    assert(normalizeUrl('https://ok.co') === 'https://ok.co', 'normalizeUrl should keep https input')
+    assert(normalizeUrl('') === '', 'normalizeUrl empty string failed')
+    assert(isValidEmail('a@b.co'), 'email validator failed')
+    assert(!isValidEmail('a@'), 'email validator should reject incomplete')
+    assert(isValidHttpsUrl('https://a.co'), 'https validator should accept https')
+    assert(!isValidHttpsUrl('http://example.com'), 'https validator should require https')
+    // WCAG quickref helper
+    assert(wcagHref('1.4.3').includes('#contrast-minimum'), 'wcagHref map 1.4.3 failed')
+    assert(wcagHref('1.1.1').includes('#non-text-content'), 'wcagHref map 1.1.1 failed')
+    assert(wcagHref('2.4.4').includes('#link-purpose-in-context'), 'wcagHref map 2.4.4 failed')
+    assert(wcagHref('9.9.9').endsWith('#9.9.9'), 'wcagHref fallback failed')
+    // Tracking helper existence
+    assert(typeof track === 'function', 'track helper not defined')
+    console.log('✅ Self-tests passed')
+  } catch (e) { console.error('❌ Self-tests failed:', e.message) }
+}
+
+
+// --- Error Boundary: prevents blank screen if any child throws
+class ErrorBoundary extends React.Component {
+  constructor(p){ super(p); this.state = { err: null }; }
+  static getDerivedStateFromError(error){ return { err: error }; }
+  componentDidCatch(error, info){ try { console.error(error, info); } catch {} }
+  render(){
+  if (this.state.err) {
+    const msg = (this.state.err && (this.state.err.message || String(this.state.err))) || 'Unknown error';
+    const stack = (this.state.err && this.state.err.stack) || '';
+    return (
+      <section className="py-12 sm:py-16">
+        <div className="container mx-auto max-w-[1150px] px-4">
+          <div className="glass-card rounded-2xl border border-red-200 bg-red-50 p-6 shadow">
+            <h1 className="text-xl font-bold text-red-800">Something went wrong on this page.</h1>
+            <p className="mt-2 text-sm text-red-700">We caught the error to avoid a blank screen.</p>
+
+            <details className="mt-3 text-xs text-red-800">
+              <summary className="cursor-pointer underline">Show technical details</summary>
+              <pre className="mt-2 whitespace-pre-wrap">{msg + '\n' + stack}</pre>
+            </details>
+          </div>
+        </div>
+      </section>
+    );
+  }
+  return this.props.children;
+}
+
+}
+
+// ----------------------------
+// App bootstrap (default export for Canvas)
+// ----------------------------
+function App() {
+  const { route, navigate } = useRouter()
+  usePlausible()
+  useEffect(() => { try { runDevTests() } catch { /* ignore */ } }, [])
+
+  const title = TITLE_MAP[route] || 'AccessScan'
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-indigo-50 text-slate-900">
+      <Layout title={title} navigate={navigate}>
+  <ErrorBoundary>
+    {route === '/' && <HomeView navigate={navigate} />}
+    {route === '/start-baseline' && <StartBaselineView navigate={navigate} />}
+    {route === '/lead' && <PlanLeadView navigate={navigate} />}
+
+    {route === '/baseline/queued' && <QueuedView navigate={navigate} />}
+    {route === '/report/demo' && <ReportDemoView navigate={navigate} />}
+    {route === '/pricing' && <PricingView navigate={navigate} />}
+    {route === '/accessibility' && <AccessibilityView />}
+    {route === '/privacy' && <PrivacyPage />}
+    {route === '/terms' && <TermsPage />}
+    {route === '/cookies' && <CookiesPage />}
+    {route === '/dashboard/welcome' && <DashboardWelcome navigate={navigate} />}
+  {route === '/email/preview' && <EmailPreviewView navigate={navigate} />}
+  </ErrorBoundary>
+</Layout>
+
+    </div>
+  )
+}
+
+  // --- developer-friendly on-page error banner (fires once)
+if (!window.__errorOverlayInstalled) {
+  window.__errorOverlayInstalled = true;
+  window.addEventListener('error', (ev) => {
+    const pre = document.createElement('pre');
+    const msg = (ev && ev.message) || 'Script error';
+    const loc = ev && ev.filename ? `\n${ev.filename}:${ev.lineno || 0}:${ev.colno || 0}` : '';
+    pre.textContent = `⚠️ JavaScript error: ${msg}${loc}`;
+    pre.style.cssText = 'position:fixed;left:0;right:0;bottom:0;margin:0;padding:12px;border-top:1px solid #fca;background:#fee;color:#7f1d1d;font:12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;z-index:99999;white-space:pre-wrap';
+    document.body.appendChild(pre);
+  }, { once: true });
+}
+
+
+    /* ======= PASTE YOUR ENTIRE CANVAS APP HERE =======
+       - Remove ALL lines like:   import React, { ... } from 'react'
+       - Remove any:              export default App
+       - Ensure you defined:      function App(){ ... } and components
+       - Make header links call navigate, e.g. onClick={e=>{e.preventDefault(); navigate('/');}}
+    */
+
+    // ------------ PASTE START ------------
+    // function App(){ ... }   // your full SPA
+    // ... all components ...
+    // ------------ PASTE END --------------
+
+    // Mount
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+  <!-- removed duplicate FixModal controller -->
+
+<!-- --- BEGIN CopyFix modal controller --- -->
+<script>
+(function () {
+  const dlg   = document.getElementById('fixModal');
+  const sr    = document.getElementById('sr-status');
+  const copyB = document.getElementById('copySnippet');
+  const tabs  = ['html','react','css'];
+  let opener  = null;
+  let current = null;
+  let active  = null;
+
+  // --- A11y: trap focus inside modal & support Esc (Spec 5.1) ---
+  const FOCUSABLE = 'a[href],area[href],input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),button:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
+  function getFocusableInDialog() {
+    return Array.from(dlg.querySelectorAll(FOCUSABLE))
+      .filter(el => !el.hasAttribute('hidden') && el.tabIndex !== -1);
+  }
+
+  // Keep Tab / Shift+Tab cycling within the modal (APG: modal contains its tab sequence)
+  dlg.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    const nodes = getFocusableInDialog();
+    if (!nodes.length) return;
+
+    const first = nodes[0];
+    const last  = nodes[nodes.length - 1];
+
+    // wrap focus
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault(); last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault(); first.focus();
+    }
+  });
+
+  // Ensure Esc closes the dialog so our 'close' handler restores focus to the opener
+  dlg.addEventListener('cancel', (e) => {
+    e.preventDefault();             // normalize behavior
+    dlg.close('cancel');            // triggers existing 'close' listener
+  });
+
+  function announce(msg){ sr.textContent = msg; }
+
+  function setTab(name){
+    active = name;
+    tabs.forEach(t => {
+      const btn = document.getElementById('tab-'+t);
+      const pnl = document.getElementById('panel-'+t);
+      const has = current && current.snippets && current.snippets[t];
+      btn.hidden = !has;
+      pnl.hidden = !(has && t===name);
+      btn.setAttribute('aria-selected', (has && t===name) ? 'true' : 'false');
+      btn.tabIndex = (has && t===name) ? 0 : -1;
+    });
+    // if focus sits on a hidden tab, move to the active one
+    const activeBtn = document.getElementById('tab-'+name);
+    if (document.activeElement && document.activeElement.getAttribute('role') === 'tab' && document.activeElement.tabIndex === -1) {
+      activeBtn.focus();
+    }
+  }
+
+  function defaultTabFor(ruleId){
+    if (ruleId === 'color-contrast') return 'css';                 // CSS first
+    if (ruleId === 'document-title' || ruleId === 'html-has-lang') return 'html'; // HTML first
+    if (ruleId === 'link-name') return 'html';                     // Names → HTML/React first
+    const first = tabs.find(t => current?.snippets?.[t]);
+    return first || 'html';
+  }
+
+  function updateContent(ruleId, anchorText){
+    current = window.demoFixes?.[ruleId] || null;
+    if (!current) return;
+    const sel = anchorText || current.anchors?.[0] || '';
+    document.getElementById('fixModalTitle').textContent = `${current.title.split(' — ')[0]} — ${sel}`;
+    document.getElementById('fixModalAnchor').textContent = sel;
+
+    const wcag = current.wcag?.[0] || null;
+    const wcagEl = document.getElementById('fixModalWcag');
+    if (wcag) { wcagEl.textContent = `WCAG ${wcag.id}`; wcagEl.href = wcag.url; }
+    else { wcagEl.textContent = 'WCAG'; wcagEl.removeAttribute('href'); }
+
+    // code panes
+    tabs.forEach(t => { document.getElementById('code-'+t).textContent = current.snippets?.[t] || ''; });
+    // verify list
+    const ul = document.getElementById('fixModalVerify'); ul.innerHTML = '';
+    (current.verify || []).forEach(v => { const li = document.createElement('li'); li.textContent = v; ul.appendChild(li); });
+
+    setTab(defaultTabFor(ruleId));
+  }
+
+  // Tab clicks and arrow-key navigation (APG tabs)
+  tabs.forEach(t => document.getElementById('tab-'+t).addEventListener('click', () => setTab(t)));
+  document.getElementById('fixTabs').addEventListener('keydown', (e) => {
+    const visible = tabs.filter(t => !document.getElementById('tab-'+t).hidden);
+    const i = visible.indexOf(active);
+    if (e.key === 'ArrowRight'){ e.preventDefault(); setTab(visible[(i+1) % visible.length]); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); setTab(visible[(i-1+visible.length) % visible.length]); }
+    if (e.key === 'Home')      { e.preventDefault(); setTab(visible[0]); }
+    if (e.key === 'End')       { e.preventDefault(); setTab(visible[visible.length-1]); }
+  });
+
+  // Copy visible snippet (HTTPS required)
+  copyB.addEventListener('click', async () => {
+    if (!current) return;
+    const txt = current.snippets?.[active] || '';
+    try {
+      await navigator.clipboard.writeText(txt);
+announce('Copied!');
+const ok = document.getElementById('copyOk');
+if (ok) { ok.classList.remove('opacity-0'); setTimeout(()=>ok.classList.add('opacity-0'), 1400); }
+
+    } catch {
+      announce('Copy failed — Clipboard API needs HTTPS.');
+    }
+  });
+
+  // Close → restore focus to opener
+  dlg.addEventListener('close', () => { opener?.focus?.(); });
+
+  // Public entry used by table buttons
+  window.openFixModal = function(ruleId, anchorText, openerEl){
+    if (!window.demoFixes?.[ruleId]) { announce('No snippet available for this rule'); return; }
+    opener = openerEl || document.activeElement;
+    updateContent(ruleId, anchorText);
+    if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open','');
+    setTimeout(() => document.getElementById('copySnippet').focus(), 0);
+  };
+})();
+</script>
+<!-- --- END CopyFix modal controller --- -->
+<!-- --- BEGIN GuideMe wizard controller --- -->
+<script>
+(function(){
+  const dlg   = document.getElementById('guideModal');
+  const sr    = document.getElementById('guide-status');
+  const body  = document.getElementById('guideBody');
+  const stepL = document.getElementById('guideStepLabel');
+  const backB = document.getElementById('guideBack');
+  const nextB = document.getElementById('guideNext');
+  const okMsg = document.getElementById('guideCopyOk');
+  const decisionA = document.getElementById('guideDecision');
+  let opener = null, rule = null, state = {}, step = 0, total = 3, attemptedNext = false;
+
+  // --- A11y: trap focus inside modal & support Esc (Spec 5.1) ---
+  const FOCUSABLE = 'a[href],area[href],input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),button:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
+  function getFocusableInDialog() {
+    return Array.from(dlg.querySelectorAll(FOCUSABLE))
+      .filter(el => !el.hasAttribute('hidden') && el.tabIndex !== -1);
+  }
+
+  // Keep Tab / Shift+Tab cycling within the modal (APG: modal contains its tab sequence)
+  dlg.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    const nodes = getFocusableInDialog();
+    if (!nodes.length) return;
+
+    const first = nodes[0];
+    const last  = nodes[nodes.length - 1];
+
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault(); last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault(); first.focus();
+    }
+  });
+
+  // Ensure Esc closes the dialog so our 'close' handler restores focus to the opener
+  dlg.addEventListener('cancel', (e) => {
+    e.preventDefault();
+    dlg.close('cancel');
+  });
+
+  const DECISION_TREE_URL = 'https://www.w3.org/WAI/tutorials/images/decision-tree/'; // W3C Alt-text Decision Tree
+  // Clipboard API note: requires secure context (HTTPS). :contentReference[oaicite:2]{index=2}
+
+  function announceStep() {
+    const msg = `Step ${step+1} of ${total}`;
+    stepL.textContent = msg;
+    sr.textContent = msg; // polite live region announcement (role=status)
+  }
+
+    function setVerify(list) {
+    const wrap = document.getElementById('guideVerifyWrap');
+    const ul   = document.getElementById('guideVerify');
+    ul.innerHTML = '';
+    (list || []).forEach(v => { const li = document.createElement('li'); li.textContent = v; ul.appendChild(li); });
+    // Show only on Step 3 (final step) and only when we have items
+    wrap.hidden = !(Array.isArray(list) && list.length && step === total - 1);
+  }
+
+
+  function setHeader(meta) {
+    document.getElementById('guideTitle').textContent = meta.title || 'Guide me';
+    document.getElementById('guideAnchor').textContent = state.anchor || '';
+    const wc = meta.wcag || {};
+    const wcagA = document.getElementById('guideWcag');
+    wcagA.textContent = wc.id ? `WCAG ${wc.id}` : 'WCAG';
+    if (wc.url) wcagA.href = wc.url; else wcagA.removeAttribute('href');
+
+    // Show Decision Tree link only for the image alt rule (recommended by W3C). :contentReference[oaicite:3]{index=3}
+    if (rule === 'image-alt') { decisionA.hidden = false; decisionA.href = DECISION_TREE_URL; }
+    else { decisionA.hidden = true; decisionA.removeAttribute('href'); }
+  }
+      // Extract id from offending selector/snippet so Step 1 can prefill
+      function extractIdFromAnchor(s = '') {
+        const m1 = s.match(/id="([A-Za-z][\w:-]*)"/);
+        if (m1) return m1[1];
+        const m2 = s.match(/#([A-Za-z][\w:-]*)/);
+        if (m2) return m2[1];
+        const m3 = s.match(/name="([A-Za-z][\w:-]*)"/);
+        if (m3) return m3[1];
+        return '';
+      }
+
+      function deriveLabelFromIdOrName(s = '') {
+        if (!s) return '';
+        return s
+          .replace(/(^[A-Za-z])/, m => m.toUpperCase()) // leading capital
+          .replace(/[-_]+/g, ' ')                       // dashes/underscores → spaces
+          .trim();
+      }
+
+  function html(input){ const d=document.createElement('div'); d.innerHTML=input; return d.firstElementChild; }
+
+  // Inline error helper
+  function setFieldError(inputEl, msg) {
+    let p = inputEl.nextElementSibling;
+    if (!p || !p.classList || !p.classList.contains('a11y-err')) {
+      p = document.createElement('p');
+      p.className = 'a11y-err text-xs text-red-700 mt-1';
+      inputEl.insertAdjacentElement('afterend', p);
+    }
+    inputEl.setAttribute('aria-invalid', 'true');
+    p.textContent = msg || '';
+    p.hidden = !msg;
+  }
+  function clearFieldError(inputEl) {
+    inputEl.removeAttribute('aria-invalid');
+    const p = inputEl.nextElementSibling;
+    if (p && p.classList && p.classList.contains('a11y-err')) p.hidden = true;
+  }
+
+  // Validate current step; also disables Next when needed
+  function applyValidation() {
+    let ok = true;
+    if (rule === 'image-alt') {
+      if (step === 0) {
+        ok = !!dlg.querySelector('input[name="kind"]:checked');
+      }
+      if (step === 1) {
+        const k = (state.kind || 'informative');
+        if (k === 'informative') {
+          const el = dlg.querySelector('#altDesc');
+          const good = !!(el && el.value.trim());
+          if (el) (good ? clearFieldError(el) : setFieldError(el, 'Please enter a concise alt.'));
+          ok = good;
+        }
+                if (k === 'functional') {
+          const hasText = dlg.querySelector('input[name="hasText"]:checked')?.value === 'yes';
+          state.hasText = hasText ? 'yes' : 'no';
+          if (hasText) {
+            ok = true; // alt="" will be used
+          } else {
+            const el = dlg.querySelector('#altAction');
+            const good = !!(el && el.value.trim());
+            if (el) (good ? clearFieldError(el) : setFieldError(el, 'Describe the action (e.g., “Search”).'));
+            ok = good;
+          }
+        }
+        if (k === 'complex') {
+          const brief = dlg.querySelector('#altBrief');
+          const long  = dlg.querySelector('#longDesc');
+          const ok1 = !!(brief && brief.value.trim());
+          const ok2 = !!(long && long.value.trim());
+          if (brief) (ok1 ? clearFieldError(brief) : setFieldError(brief, 'Enter a short alt.'));
+          if (long)  (ok2 ? clearFieldError(long)  : setFieldError(long, 'Add a longer description.'));
+          ok = ok1 && ok2;
+        }
+
+      }
+    }
+    if (rule === 'label') {
+      if (step === 0) {
+                const lbl = dlg.querySelector('#lblText');
+        const id  = dlg.querySelector('#lblId');
+        const ok1 = !!(lbl && lbl.value.trim());
+        let   ok2 = !!(id && id.value.trim());
+      if (lbl) (ok1 ? clearFieldError(lbl) : (attemptedNext && setFieldError(lbl, 'Visible label is required.')));
+      if (id)  (ok2 ? clearFieldError(id)  : (attemptedNext && setFieldError(id,  'Provide a stable id.')));        // id: no spaces, starts with a letter, only [A-Za-z0-9_:-]
+        const idVal = (id?.value || '').trim();
+      const formatOK = /^[A-Za-z][\w:-]*$/.test(idVal);
+      if (id && ok2 && !formatOK) {
+        if (attemptedNext) setFieldError(id, 'Use a valid id (start with a letter; no spaces).');
+        else clearFieldError(id);
+        ok2 = false;
+      }        // Basic id guard — allow 0 or 1 existing element; error only on duplicates or wrong type
+        if (id && ok2) {
+          const matches = document.querySelectorAll(`#${CSS.escape(idVal)}`);
+          const count = matches.length;
+          if (count > 1) {
+            if (attemptedNext) setFieldError(id, 'Duplicate id found on the page. Choose a unique id.');
+            else clearFieldError(id);
+            ok2 = false;
+          } else if (count === 1) {
+            const el = matches[0];
+            const isFormControl = /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(el.tagName);
+            if (!isFormControl) {
+              if (attemptedNext) setFieldError(id, 'This id is used by a non-form element. Choose a different id or change the element id.');
+              else clearFieldError(id);
+              ok2 = false;
+            }
+          }
+          // else count === 0 → fine (you may create a new input with this id)
+        }
+
+        ok = ok1 && ok2;
+
+      }
+    }
+    nextB.disabled = !ok;
+  }
+
+  // Build Step 3 with APG Tabs semantics (role=tablist/tab/tabpanel). :contentReference[oaicite:4]{index=4}
+  function renderSummaryTabs(sum) {
+    const hasHtml  = !!sum.html;
+    const hasReact = !!sum.react;
+    const tabs = [];
+    if (hasHtml)  tabs.push('html');
+    if (hasReact) tabs.push('react');
+
+    const header = html(`
+      <div class="flex items-center gap-2 text-xs mb-2" role="tablist" aria-label="Code format">
+        ${tabs.map((t,i)=>`<button id="gm-tab-${t}" role="tab" aria-controls="gm-panel-${t}" aria-selected="${i===0?'true':'false'}" tabindex="${i===0?'0':'-1'}" class="px-2 py-1 rounded border">${t === 'react' ? 'React/JSX' : 'HTML'}</button>`).join('')}
+      </div>
+    `);
+    const panels = html(`<div class="space-y-3"></div>`);
+    tabs.forEach((t,i) => {
+      const wrap = html(`
+        <div id="gm-panel-${t}" role="tabpanel" aria-labelledby="gm-tab-${t}" ${i!==0?'hidden':''}>
+          <pre class="rounded bg-zinc-50 p-3 text-xs overflow-auto" id="gm-code-${t}"></pre>
+          <div class="mt-1">
+            <button type="button" class="gm-copy px-2 py-1 rounded border border-indigo-200 text-indigo-700" data-for="${t}">Copy</button>
+            <span class="ml-2 text-xs text-indigo-700 opacity-0 transition-opacity" id="gm-copied-${t}" aria-hidden="true">Copied!</span>
+          </div>
+        </div>
+      `);
+      panels.appendChild(wrap);
+    });
+
+    body.appendChild(header);
+    body.appendChild(panels);
+
+    if (hasHtml)  body.querySelector('#gm-code-html').textContent  = sum.html;
+    if (hasReact) body.querySelector('#gm-code-react').textContent = sum.react;
+
+    // Tab clicks + arrow-key nav
+    function setTab(name){
+      tabs.forEach(t=>{
+        const btn = body.querySelector('#gm-tab-'+t);
+        const pnl = body.querySelector('#gm-panel-'+t);
+        const on = (t===name);
+        btn.setAttribute('aria-selected', on?'true':'false');
+        btn.tabIndex = on?0:-1;
+        pnl.hidden = !on;
+      });
+    }
+    tabs.forEach(t=> body.querySelector('#gm-tab-'+t).addEventListener('click', ()=>setTab(t)));
+    header.addEventListener('keydown', (e)=>{
+      const vis = tabs;
+      const cur = vis.findIndex(t => body.querySelector('#gm-tab-'+t).getAttribute('aria-selected')==='true');
+      if (e.key==='ArrowRight'){ e.preventDefault(); setTab(vis[(cur+1)%vis.length]); }
+      if (e.key==='ArrowLeft'){ e.preventDefault(); setTab(vis[(cur-1+vis.length)%vis.length]); }
+      if (e.key==='Home'){ e.preventDefault(); setTab(vis[0]); }
+      if (e.key==='End'){ e.preventDefault(); setTab(vis[vis.length-1]); }
+    });
+
+    // Per-tab Copy
+    body.querySelectorAll('.gm-copy').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+                const which = btn.getAttribute('data-for');
+        const txt =
+          which === 'react' ? (sum.react || '') :
+          which === 'alt'   ? (sum.altOnly || '') :
+          (sum.html || '');
+
+        try {
+          await navigator.clipboard.writeText(txt);
+          const flag = body.querySelector('#gm-copied-'+which);
+          if (flag) { flag.classList.remove('opacity-0'); setTimeout(()=>flag.classList.add('opacity-0'), 1300); }
+          sr.textContent = 'Copied';
+        } catch {
+          sr.textContent = 'Copy failed — Clipboard needs HTTPS.';
+        }
+      });
+    });
+    // Optional: Copy alt="…" only (images wizard convenience)
+    if (sum.altOnly) {
+      const altBox = html(`
+        <div class="flex items-center gap-2 text-xs">
+          <button type="button" class="gm-copy px-2 py-1 rounded border" data-for="alt">Copy alt only</button>
+          <span id="gm-copied-alt" class="text-zinc-500 transition-opacity opacity-0">Copied</span>
+          ${!window.isSecureContext ? '<span class="ml-2 text-[11px] text-zinc-500">Note: Copy may be blocked outside HTTPS.</span>' : ''}
+        </div>
+      `);
+      body.append(altBox);
+    }
+
+    // Notes + WCAG link near output
+    const notes = Array.isArray(sum.notes) ? sum.notes.slice(0,2) : [];
+    const meta  = window.guidedFixes[rule]?.wcag || {};
+    if (notes.length) {
+      body.append(
+        html(`<div class="text-sm font-semibold mt-3">Notes</div>`),
+        html(`<ul class="list-disc pl-5 text-sm text-zinc-700 mt-1">${notes.map(n=>`<li>${n}</li>`).join('')}</ul>`)
+      );
+    }
+    if (meta.url) {
+      body.append(
+        html(`<p class="text-xs text-zinc-600 mt-2"><a class="underline text-indigo-700" href="${meta.url}" target="_blank" rel="noreferrer">WCAG ${meta.id}</a></p>`)
+      );
+    }
+
+  }
+
+  // Render steps based on state
+  function render() {
+    body.innerHTML = '';
+    backB.disabled = (step === 0);
+    okMsg.classList.add('opacity-0');
+    announceStep();
+
+    if (rule === 'image-alt') {
+      total = 3;
+      if (step === 0) {
+        body.append(
+          html(`<h3 class="text-base font-semibold">What type of image is this?</h3>`),
+          html(`
+            <fieldset class="space-y-2">
+              <legend class="sr-only">Image type</legend>
+              ${[
+                ['decorative','Decorative (purely visual) — e.g., a divider'],
+                ['informative','Informative — conveys meaning (photo/icon/illustration)'],
+                ['functional','Functional — inside a link or button'],
+                ['complex','Complex — charts, diagrams, infographics']
+              ].map(([v,l])=>`
+                <label class="flex items-center gap-2">
+                  <input type="radio" name="kind" value="${v}" ${state.kind===v?'checked':''}>
+                  <span>${l}</span>
+                </label>`).join('')}
+            </fieldset>
+          `)
+        );
+      } else if (step === 1) {
+        const k = state.kind || 'informative';
+        if (k === 'decorative') {
+          body.append(
+            html(`<h3 class="text-base font-semibold">Decorative</h3>`),
+            html(`<p>Use an empty <code>alt=""</code> so screen readers ignore it.</p>`)
+          );
+        } else if (k === 'informative') {
+          body.append(
+            html(`<h3 class="text-base font-semibold">What should the alt say?</h3>`),
+            html(`<label class="block">Alt text
+              <input id="altDesc" class="mt-1 w-full rounded border px-2 py-1" placeholder="Describe purpose (not ‘image of…’)" value="${state.desc||''}">
+            </label>`)
+          );
+                } else if (k === 'functional') {
+          body.append(
+            html(`<h3 class="text-base font-semibold">Functional (linked image)</h3>`),
+            html(`
+              <fieldset class="space-y-2">
+                <legend class="sr-only">Is there visible link text?</legend>
+                <label class="flex items-center gap-2">
+                  <input type="radio" name="hasText" value="yes" ${state.hasText==='yes'?'checked':''}>
+                  <span>Yes — there is visible link text near the image</span>
+                </label>
+                <label class="flex items-center gap-2">
+                  <input type="radio" name="hasText" value="no" ${state.hasText!=='yes'?'checked':''}>
+                  <span>No — the image alone must name the action</span>
+                </label>
+              </fieldset>
+            `),
+            html(`<label class="block mt-2" ${state.hasText==='yes'?'hidden':''}>
+              Action (alt)
+              <input id="altAction" class="mt-1 w-full rounded border px-2 py-1" placeholder="e.g., Search" value="${state.action||''}">
+            </label>`)
+          );
+
+                } else { // complex
+          body.append(
+            html(`<h3 class="text-base font-semibold">Complex graphic</h3>`),
+            html(`<label class="block">Short alt (purpose/identifier)
+              <input id="altBrief" class="mt-1 w-full rounded border px-2 py-1" placeholder="e.g., Sales by quarter, 2024" value="${state.altBrief||''}">
+            </label>`),
+            html(`<label class="block">Longer description (figcaption)
+              <textarea id="longDesc" rows="3" class="mt-1 w-full rounded border px-2 py-1" placeholder="Summarize what the chart shows and any key takeaways.">${state.longDesc||''}</textarea>
+            </label>`)
+          );
+
+        }
+      } else {
+        // Summary
+        const sum = window.guidedFixes['image-alt'].build(state);
+        body.append(html(`<h3 class="text-base font-semibold">Summary</h3>`));
+        renderSummaryTabs({ html: sum.html, react: sum.react, notes: sum.notes });
+        setVerify([
+          "Turn off images / use SR preview; confirm the alt conveys purpose.",
+          "Decorative images have empty alt; complex graphics provide longer description."
+        ]);
+      }
+    }
+
+    if (rule === 'label') {
+      total = 3;
+      if (step === 0) {
+        body.append(
+          html(`<h3 class="text-base font-semibold">Enter the visible label and an id</h3>`),
+          html(`<div class="grid sm:grid-cols-2 gap-3">
+            <label class="block">
+              Visible label text
+              <input id="lblText" class="mt-1 w-full rounded border px-2 py-1"
+                     aria-describedby="lblText-hint"
+                     placeholder="${state.id ? deriveLabelFromIdOrName(state.id) : 'Email'}"
+                     value="${state.labelText || (state.id ? deriveLabelFromIdOrName(state.id) : '')}">
+              <p id="lblText-hint" class="mt-1 text-sm text-zinc-500">
+                Example: "Email" or "First name". This is what users see.
+              </p>
+            </label>
+            <label class="block">
+              id attribute to use
+              <input id="lblId" class="mt-1 w-full rounded border px-2 py-1"
+                     aria-describedby="lblId-hint"
+                     placeholder="${state.id || 'email'}"
+                     value="${state.id || ''}">
+              <p id="lblId-hint" class="mt-1 text-sm text-zinc-500">
+                Use a <code>kebab-case</code> or <code>snake_case</code> id starting with a letter (no spaces).
+              </p>
+            </label>
+          </div>`)
+        );
+      } else if (step === 1) {
+        body.append(
+          html(`<h3 class="text-base font-semibold">Choose a pattern</h3>`),
+          html(`
+            <fieldset class="space-y-2">
+              <legend class="sr-only">Pattern</legend>
+              <label class="flex items-center gap-2">
+                <input type="radio" name="pattern" value="textlabel" ${state.pattern!=='icon'?'checked':''}>
+                <span>Text label next to input (for/id)</span>
+              </label>
+              <label class="flex items-center gap-2">
+                <input type="radio" name="pattern" value="icon" ${state.pattern==='icon'?'checked':''}>
+                <span>Icon-only control (aria-label or aria-labelledby)</span>
+              </label>
+            </fieldset>
+          `)
+        );
+      } else {
+        const sum = window.guidedFixes['label'].build(state);
+        body.append(html(`<h3 class="text-base font-semibold">Summary</h3>`));
+        renderSummaryTabs({ html: sum.html, react: sum.react, notes: sum.notes });
+        setVerify([
+            "Clicking the visible label focuses the input.",
+            "Screen reader announces the label for the input.",
+            "Visible label matches the programmatic name."
+          ]);
+      }
+    }
+
+    // Footer controls state + listeners
+    backB.disabled = (step === 0);
+    nextB.hidden = (step === total-1);
+    applyValidation();
+
+    // Live listeners for validation & auto-rebuild summary when fields change
+    dlg.querySelectorAll('input, textarea, select').forEach(el => {
+      el.addEventListener('input', () => {
+        // capture values live
+        if (el.name === 'kind') state.kind = dlg.querySelector('input[name="kind"]:checked')?.value || state.kind;
+        if (el.id === 'altDesc') state.desc = el.value;
+        if (el.id === 'altAction') state.action = el.value;
+                if (el.name === 'hasText') state.hasText = dlg.querySelector('input[name="hasText"]:checked')?.value || state.hasText;
+        if (el.id === 'altBrief') state.altBrief = el.value;
+        if (el.id === 'longDesc') state.longDesc = el.value;
+
+        if (el.id === 'lblText') {
+          state.labelText = el.value;
+          const idEl = dlg.querySelector('#lblId');
+          if (idEl && (!idEl.value || idEl.dataset.autofill === '1')) {
+            let sug = (el.value || '').trim().toLowerCase()
+              .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+            if (sug && !/^[a-z]/.test(sug)) sug = 'f-' + sug;
+            idEl.value = sug;
+            state.id = sug;
+            idEl.dataset.autofill = '1';
+          }
+        }
+        if (el.id === 'lblId') { state.id = el.value; const idEl = dlg.querySelector('#lblId'); if (idEl) idEl.dataset.autofill = ''; }
+        if (el.name === 'pattern') state.pattern = dlg.querySelector('input[name="pattern"]:checked')?.value || state.pattern;
+
+        applyValidation();
+        if (step === total-1) render(); // auto-rebuild summary if user changes choices after returning
+      }, { passive: true });
+    });
+  }
+
+  backB.addEventListener('click', () => { step = Math.max(0, step-1); render(); });
+  nextB.addEventListener('click', () => {
+    attemptedNext = true;
+    // Re-run validation to ensure errors are shown now
+    applyValidation();
+    if (nextB.disabled) {
+      sr.textContent = 'Complete required fields to continue.';
+      const firstErr = dlg.querySelector('[aria-invalid="true"]');
+      if (firstErr) firstErr.focus();
+      return;
+    }
+    step = Math.min(total - 1, step + 1);
+    attemptedNext = false; // reset for the new step
+    render();
+  });
+
+  dlg.addEventListener('close', () => { opener?.focus?.(); });
+
+  // Public entry
+  window.openGuideWizard = function(ruleId, anchorText, openerEl){
+    const meta = window.guidedFixes?.[ruleId];
+    if (!meta) return;
+    opener = openerEl || document.activeElement;
+    rule = ruleId;
+    state = { anchor: anchorText || '' };
+    if (ruleId === 'label') {
+      const g = extractIdFromAnchor(anchorText || '');
+      if (g) {
+        state.id = g;
+        state.labelText = deriveLabelFromIdOrName(g);
+      }
+    }
+    step = 0;
+    total = 3;
+    attemptedNext = false;
+    setHeader({ title: meta.title, wcag: meta.wcag });
+    setVerify([]);
+    render();
+    if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open','');
+    setTimeout(() => nextB.focus(), 0);
+  };
+})();
+</script>
+<!-- --- END GuideMe wizard controller --- -->
+
+
+
+  <script>
+  window.addEventListener('load', function() {
+    if (window.Tally && typeof Tally.loadEmbeds === 'function') {
+      Tally.loadEmbeds();
+    }
+  });
+</script>
+
+</body>
+</html>

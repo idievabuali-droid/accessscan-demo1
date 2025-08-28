@@ -1,0 +1,152 @@
+Skip to content
+A
+AccessScan
+How it works
+Sample report
+Pricing
+Accessibility
+Start free baseline
+W3C BAD — Inaccessible “Home” (before)
+
+See W3C’s official “before” report·Compare with the accessible version
+
+Demo data • Last generated: 28 Aug 2025, 18:59
+
+Engine: axe-core • WCAG 2.2 aligned • EAA applies (June 2025)
+
+✅
+Prioritized issues with WCAG links and short “how to fix”.
+📉
+Before → After reduction: see what dropped between scans.
+📤
+Shareable evidence: one-click PDF, JSON, and CSV for dev tickets.
+
+Showing Before: 12 total issues. Switch to After to hear the reduction.
+
+W3C BAD — Before
+12 issues
+7 of 12 (58%) fewer issues
+Critical
+Serious
+Moderate
+Minor
+
+Automated tools surface candidates; human judgement is required to confirm conformance.
+
+Fixed in this pass
+7 resolved
+Remaining (machine-tests)
+5 remaining
+Expected outcome
+Before → After: 12 → 5
+7
+fewer issues
+
+Human checks pending: 4. See the “Human checks” tab.
+
+Before
+After
+Show After (demo)
+Issues (12)
+Overview
+Human checks (4)
+Severity	Issue	Selector/Snippet	WCAG	How to fix
+critical	Color contrast	.btn-primary	1.4.3
+↗
+	
+
+Copy fix
+
+moderate	Empty links/buttons	a.icon-only	4.1.2
+↗
+	
+
+Copy fix
+
+moderate	Empty links/buttons	button.icon-only	4.1.2
+↗
+	
+
+Copy fix
+
+moderate	Missing page title	<title>	2.4.2
+↗
+	
+
+Copy fix
+
+moderate	Missing page language	<html>	3.1.1
+↗
+	
+
+Copy fix
+
+serious	Images without alt	img.hero	1.1.1
+↗
+	
+
+Provide descriptive alt for informative images; use empty alt for decorative.
+
+Guide me
+
+serious	Form inputs unlabeled	input[type="email"]	3.3.2
+↗
+	
+
+Use <label for> or aria-labelledby/aria-label so inputs have accessible names.
+
+Guide me
+
+serious	Form inputs unlabeled	input[type="search"]	3.3.2
+↗
+	
+
+Use <label for> or aria-labelledby/aria-label so inputs have accessible names.
+
+Guide me
+
+serious	Keyboard flow (no traps)	#nav, #modal	2.1.2
+↗
+	
+
+Needs human review
+
+moderate	Link purpose in context	a:contains("Read more"), .icon	2.4.4
+↗
+	
+
+Needs human review
+
+moderate	Focus order	header > nav > a, main h1, .cta	2.4.3
+↗
+	
+
+Needs human review
+
+moderate	Visible focus	a, button, input	2.4.7
+↗
+	
+
+Needs human review
+Share this report
+Download sample PDF
+Download JSON
+Create dev tickets (CSV)
+See plans
+A
+AccessScan
+
+Transparent automated accessibility audits with human‑check guidance. No overlays, no hype.
+
+Transparent by design: tools can’t check everything; humans still matter.
+
+Product
+Pricing
+Sample report
+Accessibility
+Legal
+Privacy
+Terms
+Cookies
+Contact
+idievabuali@gmail.com
