@@ -290,6 +290,17 @@ function sanitize(s = "") {
 window.sanitize = sanitize;
    
 
+// Global helper: copy text and announce for screen readers
+window.copyTextWithStatus = async function(txt = '', ok = 'Copied') {
+  try {
+    await navigator.clipboard.writeText(String(txt));
+    const sr = document.getElementById('sr-status');
+    if (sr) sr.textContent = ok;
+  } catch (e) {
+    try { alert('Copy failed — Clipboard API requires HTTPS.'); } catch {}
+  }
+};
+
 // === VALIDATION INSTRUMENTATION PACK (extends existing track()) ===
 (function () {
   // ----- visitor & session ids -----
@@ -380,7 +391,8 @@ window.downloadReportJSON = function downloadReportJSON(){
     a.href = URL.createObjectURL(blob);
     a.download = 'accessscan-sample-report.json';
     a.click();
-    URL.revokeObjectURL(a.href);
+  URL.revokeObjectURL(a.href);
+  const sr = document.getElementById('sr-status'); if (sr) sr.textContent = 'JSON downloaded';
   } catch (e) { alert('Failed to download JSON'); }
 };
 
@@ -399,7 +411,9 @@ window.generateReportPDF = function generateReportPDF() {
     const URL_STR = R.url || "https://example.com";
     const ENGINE = R.engine || "axe-core";
     const ENGINE_VER = R.engineVersion ? `${R.engine} ${R.engineVersion}` : ENGINE;
-    const GEN = new Date(R.generatedAt || Date.now());
+  const GEN = new Date(R.generatedAt || Date.now());
+  const DATASET = R.datasetName || "";
+  const DUR = typeof R.durationSeconds === "number" ? R.durationSeconds : Number(R.durationSeconds || 0);
 
     // Rows coming from your HTML report (kept as-is, only sanitized)
     const rowsAll = (R.rows || []).map(r => ({
@@ -410,14 +424,17 @@ window.generateReportPDF = function generateReportPDF() {
       wcag: r.wcag || "",
       sel:  sanitize(r.sel  || ""),
       help: r.help || "",
-      auto: !!r.auto
+      auto: !!r.auto,
+      fix:  sanitize(r.fix || r.copy || ""),
+      needsHuman: !!r.needsHuman,
+      humanKey: r.humanKey || null
     }));
 
     // ===== Derived data (Top-10, score, trend, automation vs human) =====
     const ORDER = ["critical","serious","moderate","minor"];
     const bySeverity = (a,b) => ORDER.indexOf(a.sev) - ORDER.indexOf(b.sev);
-    const sorted = rowsAll.slice().sort(bySeverity);
-    const topRows = sorted.slice(0, 10); // Top-10 (for listing)
+  const sorted = rowsAll.slice().sort(bySeverity);
+  const topRows = sorted; // All issues for PDF parity (spec 9.1)
 
     // Score: use Before → After reduction (transparent, bounded 0..100)
     let beforeCount = 0, afterCount = 0;
@@ -474,29 +491,74 @@ window.generateReportPDF = function generateReportPDF() {
     // Header + footer on each page when drawn
     function drawHeaderFooter(pageNum) {
       // header
-      setText(12, 17,24,39, "bold");
-      doc.text(`${BRAND} — Accessibility Report (WCAG 2.2)`, x0, 28);
-      setText(9, 80,80,80);
-      doc.text(`URL: ${URL_STR}`, x0, 42);
-      doc.text(`Engine: ${ENGINE_VER}`, pageW - x0, 42, { align:"right" });
+  setText(12, 17,24,39, "bold");
+  doc.text(`${BRAND} — Accessibility Report (WCAG 2.2)`, x0, 28);
+  setText(9, 80,80,80);
+  doc.text(`URL: ${URL_STR}`, x0, 42);
+  // Make URL in header clickable (rough bounding box around the text)
+  const __urlText = `URL: ${URL_STR}`;
+  const __urlWidth = doc.getTextWidth(__urlText);
+  doc.link(x0, 42 - 9, __urlWidth, 14, { url: URL_STR });
+  doc.text(`Engine: ${ENGINE_VER}`, pageW - x0, 42, { align:"right" });
+  // View / dataset label
+  doc.text(`View: ${DATASET || '—'}`, pageW - x0, 56, { align: "right" });
       // (footer is added after all content to get the correct total pages)
     }
 
     // Draw header for page 1
     drawHeaderFooter(1);
 
+    // Draw a small donut as an image and add to PDF (keeps code simple & robust)
+    function drawDonutScore(cx, cy, r, score) {
+      const size = Math.ceil(r * 2 + 10);
+      const can = document.createElement('canvas');
+      can.width = size; can.height = size;
+      const ctx = can.getContext('2d');
+
+      ctx.translate(size / 2, size / 2);
+      ctx.rotate(-Math.PI / 2);             // start from top (12 o’clock)
+
+      // Background ring
+      ctx.beginPath();
+      ctx.lineWidth = r * 0.35;
+      ctx.strokeStyle = '#E5E7EB';          // neutral ring
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Foreground arc
+      ctx.beginPath();
+      ctx.strokeStyle = '#4F46E5';          // indigo foreground
+      ctx.arc(0, 0, r, 0, Math.PI * 2 * (score / 100));
+      ctx.stroke();
+
+      // Move back upright for text
+      ctx.rotate(Math.PI / 2);
+
+      // Score number in the middle (purely visual; we’ll also write text for searchability)
+      ctx.fillStyle = '#111827';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = `${Math.max(10, r * 0.9)}px Inter, system-ui, sans-serif`;
+      ctx.fillText(String(score), 0, 1);
+
+      // Place PNG in PDF
+      const dataUrl = can.toDataURL('image/png');
+      const w = r * 2, h = r * 2;
+      doc.addImage(dataUrl, 'PNG', cx - r, cy - r, w, h);
+    }
+
     // Meta row: Score + Generated + Trend
     cursorY = 64;
     ensureSpace(40);
-    // Score pill
-    doc.setDrawColor(79,70,229); doc.setFillColor(243,244,255);
-    doc.roundedRect(x0, cursorY, 90, 28, 6, 6, "FD");
-    setText(12, 67,56,202, "bold"); doc.text(`${score}`, x0+14, cursorY+18);
-    setText(9, 67,56,202); doc.text("/ 100", x0+40, cursorY+18);
+  // Score donut (PDF parity with UI donut)
+  drawDonutScore(x0 + 18, cursorY + 14, 14, score);
+  // Also write selectable text for accessibility/search in the PDF
+  setText(12, 17,24,39, "bold"); doc.text(`${score}`, x0 + 44, cursorY + 18);
+  setText(9, 67,56,202);          doc.text("/ 100",  x0 + 60, cursorY + 18);
 
     // Generated + TZ
     setText(10, 33,37,41);
-    doc.text(`Generated: ${enGB(GEN)} (Europe/London)`, x0 + 110, cursorY + 18);
+  doc.text(`Completed in ${Number.isFinite(+DUR) && DUR > 0 ? DUR.toFixed(1) : '—'} s • Generated: ${enGB(GEN)} (Europe/London)`, x0 + 110, cursorY + 18);
     // Trend note (if any)
     if (trendText) {
       setText(10, 33,37,41);
@@ -533,10 +595,10 @@ window.generateReportPDF = function generateReportPDF() {
 
     // ===== Grouped Top-10 tables =====
     const baseColumns = [
-      { header: "Issue",    dataKey: "title"   },
-      { header: "WCAG",     dataKey: "wcag"    },
-      { header: "Selector", dataKey: "sel"     },
-      { header: "How to fix", dataKey: "desc"  }
+      { header: "Issue",        dataKey: "title" },
+      { header: "WCAG",         dataKey: "wcag"  },
+      { header: "Selector",     dataKey: "sel"   },
+      { header: "How to fix (code)", dataKey: "fix" }
     ];
     const sevLabel = { critical:"Critical", serious:"Serious", moderate:"Moderate", minor:"Minor" };
     const sevColor = { critical:[185,28,28], serious:[194,65,12], moderate:[161,98,7], minor:[75,85,99] };
@@ -556,7 +618,7 @@ window.generateReportPDF = function generateReportPDF() {
         title: sanitize(r.title),
         wcag:  r.wcag || "-",
         sel:   sanitize(r.sel),
-        desc:  sanitize(r.desc),
+        fix:   sanitize(r.fix || r.desc || ""),
         __help: r.help
       }));
 
@@ -574,8 +636,8 @@ window.generateReportPDF = function generateReportPDF() {
         columnStyles: {
           title: { cellWidth: 150, cellPadding: 6, textColor:[33,150,243] },
           wcag:  { cellWidth: 55, halign:"center", textColor:[33,150,243] },
-          sel:   { cellWidth: 140, font:'courier', fontStyle:'normal', fontSize:9 },
-          desc:  { cellWidth: 190 }
+          sel:   { cellWidth: 130, font:'courier', fontStyle:'normal', fontSize:9 },
+          fix:   { cellWidth: 200, font:'courier', fontStyle:'normal', fontSize:9 }
         },
         didDrawCell: (data) => {
           if (data.section !== "body") return;
@@ -596,6 +658,37 @@ window.generateReportPDF = function generateReportPDF() {
 
       cursorY = doc.lastAutoTable.finalY + 14;
     });
+
+    // === Human checks checklist (spec 9.1 parity) ===
+    try {
+      const humanKeys = [...new Set(rowsAll
+        .filter(r => r.needsHuman && r.humanKey)
+        .map(r => r.humanKey)
+      )];
+      if (humanKeys.length) {
+        ensureSpace(60);
+        setText(12, 33,37,41, "bold");
+        doc.text(`Human checks (${humanKeys.length})`, x0, cursorY);
+        cursorY += 18;
+
+        humanKeys.forEach((key) => {
+          const item = (typeof HUMAN_SCRIPT_LIBRARY !== 'undefined' && HUMAN_SCRIPT_LIBRARY[key]) || null;
+          if (!item) return;
+          // Bullet
+          setText(10, 22,101,52, "bold");
+          doc.circle(x0 + 6, cursorY + 6, 3, "F");
+          // Title
+          setText(10, 33,37,41);
+          doc.text(sanitize(item.title), x0 + 16, cursorY + 10, { maxWidth: pageW - x0*2 });
+          cursorY += 16;
+          // Body
+          setText(9, 90,90,90);
+          doc.text(sanitize(item.body), x0 + 16, cursorY + 10, { maxWidth: pageW - x0*2 });
+          cursorY += 28;
+          ensureSpace(24);
+        });
+      }
+    } catch {}
 
     // Footer (correct Page X of N)
     const pageCount = doc.internal.getNumberOfPages();
@@ -618,6 +711,7 @@ window.generateReportPDF = function generateReportPDF() {
     const D = new Date(); const P = (n)=>String(n).padStart(2,"0");
     const fname = `accessscan-sample-report-${host}-${D.getFullYear()}-${P(D.getMonth()+1)}-${P(D.getDate())}.pdf`;
     doc.save(fname);
+  const sr = document.getElementById('sr-status'); if (sr) sr.textContent = 'PDF downloaded';
   } catch (err) {
     console.error(err);
     alert("Failed to generate PDF");
@@ -646,7 +740,8 @@ window.downloadDevCSV = function downloadDevCSV () {
     a.href = URL.createObjectURL(blob);
     a.download = 'accessscan-dev-tickets.csv';
     a.click();
-    URL.revokeObjectURL(a.href);
+  URL.revokeObjectURL(a.href);
+  const sr = document.getElementById('sr-status'); if (sr) sr.textContent = 'CSV downloaded';
   } catch (e) {
     alert('Failed to build CSV');
   }
@@ -883,6 +978,43 @@ const RULE_MAP = {
   'Empty links/buttons': 'link-name',
   'Heading order': 'heading-order',              // closest general rule
   // You can extend when you add more issue types (landmarks, lang, etc.)
+};
+
+// Tiny 64×48 inline SVG placeholder for per-issue thumbnails (no external file needed)
+function buildThumbSrc(it) {
+  try {
+    const svg =
+      `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="48" viewBox="0 0 64 48">` +
+      `<rect width="64" height="48" rx="6" ry="6" fill="#f8fafc" stroke="#e5e7eb"/>` +
+      `<rect x="8" y="10" width="20" height="10" fill="#e5e7eb"/>` +
+      `<rect x="34" y="10" width="22" height="10" fill="#e5e7eb"/>` +
+      `<rect x="8" y="26" width="48" height="12" fill="#eef2ff"/>` +
+      `</svg>`;
+    return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+  } catch (e) {
+    return '';
+  }
+}
+
+// Build a compact "locate in code" search string for an issue row.
+// Keeps it simple for the demo: uses the selector if present, otherwise a short rule/title hint.
+function buildLocateString(it) {
+  try {
+    if (!it) return '';
+    const sel = (it.sel || '').trim();
+    const title = (it.title || it.rule || it.cat || '').toString().trim();
+    if (sel) return `${sel} — ${title}`;
+    return title;
+  } catch (e) {
+    return '';
+  }
+}
+window.buildLocateString = buildLocateString;
+
+// Copy a locate string to the clipboard and announce via the polite SR region.
+window.copyLocateString = async function(it) {
+  const txt = buildLocateString(it);
+  await window.copyTextWithStatus(txt, 'Locate string copied');
 };
 
 // --- BEGIN demoFixes (modal data) ---
@@ -1160,6 +1292,7 @@ const TITLE_MAP = {
   '/terms': 'Terms of Service – AccessScan',
   '/cookies': 'Cookies – AccessScan',
   '/dashboard/welcome': 'Welcome – AccessScan',
+  '/email/preview': 'Email Preview – AccessScan',
 }
 
 // ----------------------------
@@ -1384,6 +1517,38 @@ function Donut({ value, total, label = "fewer issues" }) {
 }
 
 
+function Sparkline({ values = [], width = 120, height = 36 }) {
+  const v = Array.isArray(values) && values.length ? values : [0];
+  const min = Math.min(...v), max = Math.max(...v);
+  // Avoid divide-by-zero; pad the range a touch for nicer visuals
+  const range = Math.max(1, max - min);
+  const pad = range * 0.08;
+  const yMin = min - pad, yMax = max + pad;
+
+  const stepX = width / Math.max(1, v.length - 1);
+  const points = v.map((val, i) => {
+    const x = Math.round(i * stepX);
+    const y = Math.round(height - ((val - yMin) / (yMax - yMin)) * height);
+    return [x, y];
+  });
+
+  const d = points.map((p, i) => (i === 0 ? 'M' : 'L') + p[0] + ' ' + p[1]).join(' ');
+
+  const label = 'Recent score trend: ' + v.join(', ');
+  return (
+    <div className="flex items-center gap-2" aria-label={label}>
+      <svg role="img" aria-label={label} width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+        <title>Recent score trend</title>
+        <polyline points={points.map(p=>p.join(',')).join(' ')} fill="none" stroke="#4F46E5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        {/* Optional baseline */}
+        <line x1="0" y1={height-1} x2={width} y2={height-1} stroke="#E5E7EB" strokeWidth="1" />
+      </svg>
+      <span className="sr-only">{label}</span>
+    </div>
+  );
+}
+
+
 // --- Demo datasets: W3C BAD "Home" (before vs after) ---
 // Source pages users can open to verify: BAD Before Report / BAD After Report.
 // These are curated to mirror common issues listed for the BAD demo.
@@ -1486,6 +1651,26 @@ function ReportTabs({ navigate, dataset, setDataset }) {
 
   const [tab, setTab] = useState('issues')
 
+// Jump to Human checks: activate tab, scroll, and focus the panel (APG-friendly)
+const goToHumanChecks = React.useCallback(() => {
+  setTab('human');
+  // After state updates, scroll & focus the tabpanel
+  setTimeout(() => {
+    const panel = document.getElementById('panel-human');
+    if (panel) {
+      try { panel.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch {}
+      try { panel.focus(); } catch {}
+    }
+  }, 0);
+}, []);
+
+  // Severity filter chips state (Critical/Serious/Moderate/Minor)
+  const [sevSel, setSevSel] = useState({ critical: true, serious: true, moderate: true, minor: true });
+  const toggleSev = useCallback((k) => setSevSel((s) => ({ ...s, [k]: !s[k] })), []);
+  const clearSev  = useCallback(() => setSevSel({ critical: true, serious: true, moderate: true, minor: true }), []);
+
+  // Top 5 vs Show all
+  const [showAll, setShowAll] = useState(false);
   
 
 
@@ -1493,6 +1678,20 @@ const data = DEMO_DATA[dataset];
 const other = DEMO_DATA[dataset === 'before' ? 'after' : 'before'];
 // Build from selected dataset
 const issues = useMemo(() => (data && Array.isArray(data.issues) ? data.issues : []), [data]);
+
+const filteredIssues = useMemo(() => issues.filter(it => sevSel[it.sev]), [issues, sevSel]);
+
+const SEV_ORDER = { critical: 0, serious: 1, moderate: 2, minor: 3 };
+const sortedFiltered = useMemo(
+  () => filteredIssues.slice().sort((a, b) => SEV_ORDER[a.sev] - SEV_ORDER[b.sev]),
+  [filteredIssues]
+);
+const totalFiltered = sortedFiltered.length;
+const visibleIssues = useMemo(
+  () => (showAll ? sortedFiltered : sortedFiltered.slice(0, 5)),
+  [sortedFiltered, showAll]
+);
+const hasAutoFixes = useMemo(() => issues.some(i => i.auto && i.copy), [issues]);
 
 
 const counts = countsBySeverity(issues);
@@ -1506,6 +1705,11 @@ const rows = issues.map(it => {
     help: AXE_RULE_URL(rule),
     sel: sanitize(it.sel || ""),             // sanitize selector/snippet
     wcag: it.wcag,
+  fix: (window.demoFixes?.[rule]?.snippets?.html 
+     || window.demoFixes?.[rule]?.snippets?.css 
+     || window.demoFixes?.[rule]?.snippets?.react 
+     || it.copy 
+     || ""),
     auto: !!it.auto,
     needsHuman: !!it.needsHuman,
     humanKey: it.humanKey || null
@@ -1523,6 +1727,14 @@ const improved     = Math.max(0, beforeTotal - afterTotal);
 const fixedThisPass   = Math.max(0, beforeTotal - afterTotal); // e.g., 5
 const leftAfterFixes  = afterTotal;                             // e.g., 2
 
+// Mock score history (last 5 scans) for sparkline
+const scoreHistory = React.useMemo(() => {
+  const end = beforeTotal > 0 ? Math.round((fixedThisPass / beforeTotal) * 100) : 0;
+  return dataset === 'after'
+    ? [Math.max(0, end - 20), Math.max(0, end - 14), Math.max(0, end - 9), Math.max(0, end - 4), end]
+    : [20, 28, 33, 37, 41];
+}, [dataset, fixedThisPass, beforeTotal]);
+
   useEffect(() => {
     try {
       const el = document.getElementById('report-status');
@@ -1535,6 +1747,9 @@ const leftAfterFixes  = afterTotal;                             // e.g., 2
     } catch {}
   }, [dataset, fixedThisPass, afterTotal, beforeTotal]);
 
+// Demo: per-dataset scan duration (seconds) — different for Before/After per spec 1.1
+const durationSeconds = dataset === 'after' ? 2.6 : 3.2;
+
 
 // Expose to PDF/JSON according to selected dataset
 window.__demoReport = {
@@ -1544,6 +1759,8 @@ window.__demoReport = {
   url: data.url,
   datasetName: dataset === 'after' ? 'After' : 'Before',  // <— NEW
   generatedAt: new Date().toISOString(),
+  durationSeconds,
+  scoreHistory: scoreHistory,
   score: null,
   counts,
   rows
@@ -1566,6 +1783,23 @@ const HUMAN_CHECKS = 4;
 
 const total = issues.length || 1;
 
+// Format "Last generated" (en-GB, Europe/London) for the note under the grey banner
+const genNote = React.useMemo(() => {
+  const ts = (window.__demoReport && window.__demoReport.generatedAt) || Date.now();
+  const d = new Date(ts);
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZoneName: 'short',
+      timeZone: 'Europe/London',
+      hour12: false
+    }).format(d);
+  } catch {
+    return d.toUTCString();
+  }
+}, [dataset]);
+
 
   return (
     <div className="rounded-3xl glass-strong border border-white/30 p-6 shadow-xl">
@@ -1576,7 +1810,10 @@ const total = issues.length || 1;
   <div className="text-3xl font-extrabold text-gray-900">{total} issues</div>
 </div>
 
-        <Donut value={fixedThisPass} total={beforeTotal} label="fewer issues" />
+        <div className="flex items-center gap-4">
+          <Donut value={fixedThisPass} total={beforeTotal} label="fewer issues" />
+          <Sparkline values={scoreHistory} width={120} height={36} />
+        </div>
 
         <div className="flex items-center gap-2 text-xs">
           <span className="rounded bg-red-100 px-2 py-0.5 text-red-700">Critical</span>
@@ -1588,6 +1825,39 @@ const total = issues.length || 1;
       <p className="mt-2 text-xs text-gray-500">
   Automated tools surface candidates; <a className="underline decoration-dotted" href="https://www.w3.org/WAI/test-evaluate/tools/selecting/" target="_blank" rel="noreferrer">human judgement is required</a> to confirm conformance.
 </p>
+
+<p className="mt-1 text-xs text-gray-500" role="note">
+  Scan completed in {durationSeconds.toFixed(1)} s • Last generated: {genNote}
+</p>
+
+          {/* What automation covers vs needs a human (spec 6.1) */}
+          <div
+            className="grid md:grid-cols-2 gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3"
+            aria-label="Automation coverage"
+          >
+            <div>
+              <div className="font-semibold text-gray-900 mb-1">Automated (tools)</div>
+              <ul className="list-disc pl-5 text-gray-700">
+                <li>Colour contrast</li>
+                <li>Form labels / programmatic name</li>
+                <li>Empty links &amp; buttons</li>
+                <li>Page title &amp; <code>lang</code></li>
+                <li>Basic heading structure</li>
+              </ul>
+            </div>
+            <div>
+              <div className="font-semibold text-gray-900 mb-1">Needs a human</div>
+              <ul className="list-disc pl-5 text-gray-700">
+                <li>Keyboard flow (no traps)</li>
+                <li>Link purpose in context</li>
+                <li>Focus order &amp; visible focus</li>
+                <li>Alt text quality</li>
+                <li>Complex widgets &amp; media captions</li>
+              </ul>
+            </div>
+          </div>
+
+          
 
       {/* Executive summary */}
 <div className="mt-3 grid gap-2 sm:grid-cols-3 text-sm">
@@ -1610,30 +1880,41 @@ const total = issues.length || 1;
   <span>fewer issues</span>
 </div>
 
-<p className="mt-1 text-xs text-gray-500">
-  Human checks pending: {HUMAN_CHECKS}. See the “Human checks” tab.
-</p>
+<button
+  type="button"
+  onClick={goToHumanChecks}
+  aria-controls="panel-human"
+  className="mt-1 text-xs text-indigo-700 underline decoration-dotted focus:outline-none focus:ring-2 focus:ring-indigo-500/40 rounded"
+>
+  Human checks pending: <span className="font-medium">{HUMAN_CHECKS}</span>. Review now
+</button>
 
   </div>
 </div>
 
       {/* Before/After switch + delta */}
 <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
-  <div className="inline-flex rounded-xl overflow-hidden border border-gray-200 bg-white/80 backdrop-blur">
+    <div className="inline-flex rounded-xl overflow-hidden border border-gray-200 bg-white/80 backdrop-blur">
     <button
-      className={`px-3 py-1.5 ${dataset==='before'?'bg-indigo-50 text-indigo-700 font-semibold':''}`}
+      className={`px-3 py-1.5 disabled:opacity-60 disabled:cursor-not-allowed ${dataset==='before'?'bg-indigo-50 text-indigo-700 font-semibold':''}`}
       onClick={()=>setDataset('before')}
       aria-pressed={dataset==='before'}
+      disabled={dataset==='before'}
+      title={dataset==='before' ? 'Already showing Before' : undefined}
     >Before</button>
     <button
-      className={`px-3 py-1.5 ${dataset==='after'?'bg-indigo-50 text-indigo-700 font-semibold':''}`}
+      className={`px-3 py-1.5 disabled:opacity-60 disabled:cursor-not-allowed ${dataset==='after'?'bg-indigo-50 text-indigo-700 font-semibold':''}`}
       onClick={()=>setDataset('after')}
       aria-pressed={dataset==='after'}
+      disabled={dataset==='after'}
+      title={dataset==='after' ? 'Already showing After' : undefined}
     >After</button>
   </div>
   <button
-    className="px-3 py-1.5 rounded border border-indigo-200 text-indigo-700"
+    className="px-3 py-1.5 rounded border border-indigo-200 text-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
     onClick={() => setDataset('after')}
+    disabled={dataset==='after'}
+    title={dataset==='after' ? 'Already showing After' : 'Switch to After demo dataset'}
   >
   Show After (demo)
   </button>
@@ -1669,6 +1950,28 @@ const total = issues.length || 1;
         </nav>
       </div>
 
+      {tab === 'issues' && (
+  <div className="mt-3 flex flex-wrap items-center gap-2" aria-label="Filter by severity">
+    {[
+      ['critical','Critical'],
+      ['serious','Serious'],
+      ['moderate','Moderate'],
+      ['minor','Minor']
+    ].map(([k,label]) => (
+      <button
+        key={k}
+        type="button"
+        aria-pressed={sevSel[k]}
+        onClick={() => toggleSev(k)}
+        className={`px-2 py-1 rounded-full text-xs border ${sevSel[k] ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-gray-300 text-gray-700'}`}
+      >
+        {label}
+      </button>
+    ))}
+    <button type="button" onClick={clearSev} className="ml-1 text-xs underline text-indigo-700">Clear</button>
+  </div>
+)}
+
       {tab === 'overview' && (
   <div role="tabpanel" id="panel-overview" aria-labelledby="tab-overview" className="mt-4 text-sm text-gray-800 space-y-3">
 
@@ -1692,11 +1995,13 @@ const total = issues.length || 1;
   <div className="flex items-center justify-between">
     <div className="font-semibold">Copy quick-fix pack</div>
     <button
-      className="text-xs px-2 py-1 rounded border border-indigo-200 text-indigo-700"
+      className="text-xs px-2 py-1 rounded border border-indigo-200 text-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
       onClick={async ()=>{
   const txt = buildFixPack(issues);
   await window.copyTextWithStatus(txt, 'Quick-fix pack copied');
 }}
+      disabled={!hasAutoFixes}
+      title={!hasAutoFixes ? 'No automatable fixes in this view' : undefined}
 
     >Copy</button>
   </div>
@@ -1717,72 +2022,118 @@ const total = issues.length || 1;
       {tab === 'issues' && (
   <div role="tabpanel" id="panel-issues" aria-labelledby="tab-issues" className="mt-4 overflow-auto">
 
+          <div className="mb-2 flex items-center justify-between text-xs">
+            <div aria-live="polite">
+              { (showAll ? totalFiltered : Math.min(5, totalFiltered)) } of { totalFiltered } shown
+            </div>
+            {totalFiltered > 5 && (
+              <button
+                type="button"
+                onClick={() => setShowAll(s => !s)}
+                className="px-2 py-1 rounded border border-indigo-200 text-indigo-700"
+              >
+                {showAll ? 'Show top 5' : 'Show all'}
+              </button>
+            )}
+          </div>
+
           <table className="min-w-full text-sm">
             <thead className="text-left text-gray-600">
               <tr>
                 <th className="py-2 pr-4">Severity</th>
                 <th className="py-2 pr-4">Issue</th>
+                <th className="py-2 pr-4">Element</th>
                 <th className="py-2 pr-4">Selector/Snippet</th>
                 <th className="py-2 pr-4">WCAG</th>
                 <th className="py-2 pr-4">How to fix</th>
               </tr>
             </thead>
             <tbody className="align-top text-gray-900">
-              {issues.map((it, i) => (
+              {visibleIssues.map((it, i) => (
                 <tr key={i} className="border-t border-gray-100/70">
                   <td className="py-2 pr-4"><Chip tone={it.sev}>{it.sev}</Chip></td>
                   <td className="py-2 pr-4">{it.cat}</td>
-                  <td className="py-2 pr-4 font-mono text-xs">{it.sel}</td>
                   <td className="py-2 pr-4">
-  <a
-    className="inline-flex items-center gap-1 underline underline-offset-2 decoration-dotted"
-    href={wcagHref(it.wcag)}
-    target="_blank"
-    rel="noreferrer"
-  >
-    {it.wcag} <span aria-hidden="true">↗</span>
-  </a>
-</td>
+                    <img
+                      src={buildThumbSrc(it)}
+                      alt=""
+                      width="64"
+                      height="48"
+                      loading="lazy"
+                      decoding="async"
+                      className="w-16 h-12 rounded border border-gray-200 bg-white object-cover"
+                    />
+                  </td>
 
+                  <td className="py-2 pr-4 font-mono text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate block max-w-[220px]">{it.sel}</span>
+                      <button
+                        type="button"
+                        className="px-2 py-1 text-xs rounded border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                        onClick={async () => { await window.copyLocateString(it); }}
+                        title="Copy locate-in-code string"
+                      >
+                        Locate in code
+                      </button>
+                    </div>
+                  </td>
                   <td className="py-2 pr-4 max-w-[520px]">
-                    <div className="flex items-start justify-between gap-2">
-                      <p>{it.fix}</p>
-{/* Automatable snippet action (opens modal with tabs) */}
-{it.auto ? (
-  <button
-    className="px-2 py-1 text-xs rounded ring-1 ring-inset"
-    data-rule-id={RULE_MAP[it.cat] || it.cat.toLowerCase().replace(/\s+/g,'-')}
-    aria-controls="fixModal"
-    onClick={(e) => {
-      const ruleId = RULE_MAP[it.cat] || it.cat.toLowerCase().replace(/\s+/g,'-');
-      window.openFixModal(ruleId, it.sel || '', e.currentTarget);
-    }}
-  >
-    Copy fix
-  </button>
-) : null}
-{/* Guided wizard action (human judgement) */}
-{!it.auto ? (() => {
-  const ruleId = RULE_MAP[it.cat] || it.cat.toLowerCase().replace(/\s+/g,'-');
-  const guided = ruleId === 'image-alt' || ruleId === 'label';
-  return guided ? (
-    <button
-      className="px-2 py-1 text-xs rounded ring-1 ring-inset ml-2"
-      data-action="guide"
-      data-rule-id={ruleId}
-      aria-controls="guideModal"
-      onClick={(e) => window.openGuideWizard(ruleId, it.sel || '', e.currentTarget)}
-    >
-      Guide me
-    </button>
-  ) : null;
-})() : null}
+                    <div className="space-y-1">
+                      {it.auto ? (() => {
+                        const ruleId = RULE_MAP[it.cat] || it.cat.toLowerCase().replace(/\s+/g,'-');
+                        const fx = (window.demoFixes && window.demoFixes[ruleId]) || null;
+                        const prefer = ruleId === 'color-contrast' ? 'css' : 'html';
+                        const snippet = fx && fx.snippets
+                          ? (fx.snippets[prefer] || fx.snippets.html || fx.snippets.react || fx.snippets.css || it.copy || '')
+                          : (it.copy || '');
 
-{!it.auto && it.needsHuman ? (
-  <span className="ml-2 inline-block text-xs rounded px-2 py-1 bg-yellow-100 text-yellow-800">Needs human review</span>
-) : null}
-
-
+                        return (
+                          <div>
+                            <pre className="rounded bg-zinc-50 p-2 text-xs overflow-x-auto"><code>{snippet}</code></pre>
+                            <div className="mt-1 flex items-center gap-2">
+                              <button
+                                type="button"
+                                className="px-2 py-1 text-xs rounded border border-indigo-200 text-indigo-700"
+                                onClick={async () => { await window.copyTextWithStatus(snippet, 'Snippet copied'); }}
+                              >
+                                Copy
+                              </button>
+                              <a
+                                className="text-xs underline text-indigo-700"
+                                href={AXE_RULE_URL(ruleId)}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                Rule help ↗
+                              </a>
+                            </div>
+                          </div>
+                        );
+                      })() : (
+                        <div className="flex items-start gap-2">
+                          <p>{it.fix}</p>
+                          {/* Guided wizard action (human judgement) */}
+                          {(() => {
+                            const ruleId = RULE_MAP[it.cat] || it.cat.toLowerCase().replace(/\s+/g,'-');
+                            const guided = ruleId === 'image-alt' || ruleId === 'label';
+                            return guided ? (
+                              <button
+                                className="px-2 py-1 text-xs rounded ring-1 ring-inset ml-2"
+                                data-action="guide"
+                                data-rule-id={ruleId}
+                                aria-controls="guideModal"
+                                onClick={(e) => window.openGuideWizard(ruleId, it.sel || '', e.currentTarget)}
+                              >
+                                Guide me
+                              </button>
+                            ) : null;
+                          })()}
+                          {it.needsHuman ? (
+                            <span className="ml-2 inline-block text-xs rounded px-2 py-1 bg-yellow-100 text-yellow-800">Needs human review</span>
+                          ) : null}
+                        </div>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -1793,7 +2144,7 @@ const total = issues.length || 1;
       )}
 
       {tab === 'human' && (
-  <div role="tabpanel" id="panel-human" aria-labelledby="tab-human" className="mt-4 text-sm text-gray-800 space-y-3">
+  <div role="tabpanel" id="panel-human" aria-labelledby="tab-human" tabIndex={0} className="mt-4 text-sm text-gray-800 space-y-3">
 
           <h3 className="font-semibold text-gray-900">Human review scripts</h3>
       <ul className="list-disc pl-5 space-y-2">
@@ -1817,30 +2168,35 @@ const total = issues.length || 1;
     <Button
       variant='secondary'
       className="bg-white text-indigo-700 ring-1 ring-inset px-3 py-2"
-      onClick={() => { t('report_copy_link'); navigator.clipboard.writeText(window.location.href + '?share=fakeToken123') }}
+      onClick={() => { t('report_copy_link'); window.copyTextWithStatus(window.location.href + '?share=fakeToken123', 'Report link copied'); }}
     >
       Share this report
     </Button>
     <Button
       variant='secondary'
-      className="bg-white text-indigo-700 ring-1 ring-inset px-3 py-2"
-      onClick={() => { t('report_print'); window.generateReportPDF(); }}
+      className="bg-white text-indigo-700 ring-1 ring-inset px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+      title={issues.length === 0 ? 'No issues to export' : undefined}
+      disabled={issues.length === 0}
+      onClick={() => { if (issues.length === 0) return; t('report_print'); window.generateReportPDF(); }}
     >
-      Download sample PDF
-
+      Download PDF
     </Button>
     <Button
-  variant='secondary'
-  className="bg-white text-indigo-700 ring-1 ring-inset px-3 py-2"
-  onClick={() => { t('report_json_download'); window.downloadReportJSON(); }}
->
-  Download JSON
-</Button>
+      variant='secondary'
+      className="bg-white text-indigo-700 ring-1 ring-inset px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+      title={issues.length === 0 ? 'No issues to export' : undefined}
+      disabled={issues.length === 0}
+      onClick={() => { if (issues.length === 0) return; t('report_json_download'); window.downloadReportJSON(); }}
+    >
+      Download JSON
+    </Button>
 
     <Button
       variant='secondary'
-      className="bg-white text-indigo-700 ring-1 ring-inset px-3 py-2"
-      onClick={() => { t('report_csv_download'); window.downloadDevCSV(); }}
+      className="bg-white text-indigo-700 ring-1 ring-inset px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+      title={issues.length === 0 ? 'No issues to export' : undefined}
+      disabled={issues.length === 0}
+      onClick={() => { if (issues.length === 0) return; t('report_csv_download'); window.downloadDevCSV(); }}
     >
       Create dev tickets (CSV)
     </Button>
@@ -2189,6 +2545,7 @@ function StartBaselineView({ navigate }) {
 function QueuedView({ navigate }) {
   const [progress, setProgress] = useState(10)
   const [status, setStatus] = useState('Queued')
+  const DEMO_SCAN_SECONDS = 3.0
   useEffect(() => {
     const steps = ['Queued', 'Fetching page', 'Running checks', 'Generating top 10', 'Preparing PDF', 'Complete']
     let i = 0
@@ -2220,6 +2577,14 @@ function QueuedView({ navigate }) {
             <div className="h-full bg-indigo-600" style={{ width: `${progress}%` }} />
           </div>
           <p id="queue-status" className="mt-2 text-sm text-gray-700" aria-live="polite">Status: {status}</p>
+          <ul className="mt-3 list-disc pl-5 text-sm text-gray-700">
+  <li>We’ll run the scan (takes ~{DEMO_SCAN_SECONDS.toFixed(1)} s in this demo).</li>
+  <li>We’ll email you a dashboard link and a PDF.</li>
+  <li>You can re-scan anytime from your dashboard.</li>
+</ul>
+          <p className="mt-3 text-sm text-gray-700">
+  Preview the email you’ll receive: <a className="underline" href="/email/preview" onClick={(e)=>{e.preventDefault(); navigate('/email/preview')}}>open mock email</a>.
+</p>
           <div className="mt-6 flex gap-3">
             <Button onClick={() => navigate('/report/demo')}>View sample report now</Button>
             <Button variant='ghost' onClick={() => navigate('/')}>Back to home</Button>
@@ -2308,8 +2673,7 @@ const genText = React.useMemo(() => {
      target="_blank" rel="noopener">Compare with the accessible version</a>
 </p>
 
-                <p className="text-sm text-gray-600">Demo data • Last generated: {genText}</p>
-
+                
                 <p className="text-xs text-gray-600">
   Engine: axe-core • WCAG 2.2 aligned • EAA applies (June 2025)
 </p>
@@ -2341,6 +2705,52 @@ const genText = React.useMemo(() => {
       </Container>
     </section>
   )
+}
+
+// ----------------------------
+// Email preview (demo)
+// ----------------------------
+function EmailPreviewView({ navigate }) {
+  const beforeTotal = DEMO_DATA.before.issues.length;   // 12
+  const afterTotal  = DEMO_DATA.after.issues.length;     // 5
+  const fixedThisPass = beforeTotal - afterTotal;        // 7
+  const scoreDelta = Math.round((fixedThisPass / Math.max(1, beforeTotal)) * 100); // e.g., 58
+
+  const dashboardUrl = '/dashboard/welcome';
+
+  function handlePdfLink(e) {
+    e.preventDefault();
+    // Navigate to the demo report, then trigger the existing "Download PDF" button.
+    navigate('/report/demo');
+    setTimeout(() => {
+      const btn = [...document.querySelectorAll('button')].find(b => (b.textContent || '').includes('Download PDF'));
+      btn?.click();
+    }, 400);
+  }
+
+  return (
+    <section className="py-12 sm:py-16" aria-labelledby="emailHeading">
+      <Container>
+        <div className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-lg">
+          <p className="text-xs uppercase tracking-wide text-slate-500">Demo email preview</p>
+          <h1 id="emailHeading" className="mt-1 text-2xl font-semibold text-slate-900">Your baseline scan is ready</h1>
+          <p className="mt-2 text-slate-700">
+            Summary: <strong>{beforeTotal} → {afterTotal} issues</strong>;
+            <span className="ml-1 font-semibold text-emerald-700">+{scoreDelta} score</span>.
+          </p>
+
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Button as="a" href={dashboardUrl}>Open dashboard</Button>
+            <Button as="a" href="/report/demo#pdf" variant="ghost" onClick={handlePdfLink}>Download PDF</Button>
+          </div>
+
+          <p className="mt-3 text-xs text-slate-500">
+            These links match the live demo: the dashboard opens the welcome screen; the PDF action opens the demo report and starts the existing PDF export.
+          </p>
+        </div>
+      </Container>
+    </section>
+  );
 }
 
 function FeatureGrid() {
@@ -2412,6 +2822,7 @@ function Pricing({ compact = false, navigate }) {
                 <ul className="mt-4 space-y-2 text-sm text-gray-700 list-disc pl-5">
                   {p.features.map((f, i) => (<li key={i}>{f}</li>))}
                 </ul>
+                <p className="mt-2 text-xs text-gray-500">Typically saves ~5–7 dev-hours per site/month (triage + regressions).</p>
               </div>
               {p.callout ? (
                 <Button variant='secondary' className="bg-white text-indigo-700 ring-1 ring-inset px-3 py-2 mt-6" onClick={() => navigate('/start-baseline')}>Start free baseline</Button>
@@ -2687,6 +3098,7 @@ function App() {
     {route === '/terms' && <TermsPage />}
     {route === '/cookies' && <CookiesPage />}
     {route === '/dashboard/welcome' && <DashboardWelcome navigate={navigate} />}
+  {route === '/email/preview' && <EmailPreviewView navigate={navigate} />}
   </ErrorBoundary>
 </Layout>
 
@@ -2736,6 +3148,37 @@ if (!window.__errorOverlayInstalled) {
   let opener  = null;
   let current = null;
   let active  = null;
+
+  // --- A11y: trap focus inside modal & support Esc (Spec 5.1) ---
+  const FOCUSABLE = 'a[href],area[href],input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),button:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
+  function getFocusableInDialog() {
+    return Array.from(dlg.querySelectorAll(FOCUSABLE))
+      .filter(el => !el.hasAttribute('hidden') && el.tabIndex !== -1);
+  }
+
+  // Keep Tab / Shift+Tab cycling within the modal (APG: modal contains its tab sequence)
+  dlg.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    const nodes = getFocusableInDialog();
+    if (!nodes.length) return;
+
+    const first = nodes[0];
+    const last  = nodes[nodes.length - 1];
+
+    // wrap focus
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault(); last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault(); first.focus();
+    }
+  });
+
+  // Ensure Esc closes the dialog so our 'close' handler restores focus to the opener
+  dlg.addEventListener('cancel', (e) => {
+    e.preventDefault();             // normalize behavior
+    dlg.close('cancel');            // triggers existing 'close' listener
+  });
 
   function announce(msg){ sr.textContent = msg; }
 
@@ -2838,6 +3281,36 @@ if (ok) { ok.classList.remove('opacity-0'); setTimeout(()=>ok.classList.add('opa
   const okMsg = document.getElementById('guideCopyOk');
   const decisionA = document.getElementById('guideDecision');
   let opener = null, rule = null, state = {}, step = 0, total = 3, attemptedNext = false;
+
+  // --- A11y: trap focus inside modal & support Esc (Spec 5.1) ---
+  const FOCUSABLE = 'a[href],area[href],input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),button:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
+  function getFocusableInDialog() {
+    return Array.from(dlg.querySelectorAll(FOCUSABLE))
+      .filter(el => !el.hasAttribute('hidden') && el.tabIndex !== -1);
+  }
+
+  // Keep Tab / Shift+Tab cycling within the modal (APG: modal contains its tab sequence)
+  dlg.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    const nodes = getFocusableInDialog();
+    if (!nodes.length) return;
+
+    const first = nodes[0];
+    const last  = nodes[nodes.length - 1];
+
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault(); last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault(); first.focus();
+    }
+  });
+
+  // Ensure Esc closes the dialog so our 'close' handler restores focus to the opener
+  dlg.addEventListener('cancel', (e) => {
+    e.preventDefault();
+    dlg.close('cancel');
+  });
 
   const DECISION_TREE_URL = 'https://www.w3.org/WAI/tutorials/images/decision-tree/'; // W3C Alt-text Decision Tree
   // Clipboard API note: requires secure context (HTTPS). :contentReference[oaicite:2]{index=2}

@@ -1,0 +1,26 @@
+{
+  "name": "accessscan-demo1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "guide-me-button.spec.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/idievabuali-droid/accessscan-demo1.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/idievabuali-droid/accessscan-demo1/issues"
+  },
+  "homepage": "https://github.com/idievabuali-droid/accessscan-demo1#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  },
+  "dependencies": {
+    "pdf-parse": "^1.1.1"
+  }
+}

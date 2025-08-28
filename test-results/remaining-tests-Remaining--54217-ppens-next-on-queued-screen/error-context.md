@@ -1,0 +1,66 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main"
+  - generic [ref=e4]:
+    - banner [ref=e5]:
+      - generic [ref=e7]:
+        - link "A AccessScan" [ref=e8] [cursor=pointer]:
+          - /url: "#home"
+          - generic [ref=e9] [cursor=pointer]: A
+          - generic [ref=e10] [cursor=pointer]: AccessScan
+        - navigation "Primary" [ref=e11]:
+          - link "How it works" [ref=e12] [cursor=pointer]:
+            - /url: "#how-it-works"
+          - link "Sample report" [ref=e13] [cursor=pointer]:
+            - /url: "#/report/demo"
+          - link "Pricing" [ref=e14] [cursor=pointer]:
+            - /url: /pricing
+          - link "Accessibility" [ref=e15] [cursor=pointer]:
+            - /url: "#accessibility"
+        - link "Start free baseline" [ref=e17] [cursor=pointer]:
+          - /url: "#start-baseline"
+    - main
+    - contentinfo [ref=e18]:
+      - generic [ref=e20]:
+        - generic [ref=e21]:
+          - generic [ref=e22]:
+            - generic [ref=e23]: A
+            - text: AccessScan
+          - paragraph [ref=e24]: Transparent automated accessibility audits with human‑check guidance. No overlays, no hype.
+          - paragraph [ref=e25]: "Transparent by design: tools can’t check everything; humans still matter."
+        - generic [ref=e26]:
+          - generic [ref=e27]: Product
+          - list [ref=e28]:
+            - listitem [ref=e29]:
+              - link "Pricing" [ref=e30] [cursor=pointer]:
+                - /url: "#pricing"
+            - listitem [ref=e31]:
+              - link "Sample report" [ref=e32] [cursor=pointer]:
+                - /url: "#/report/demo"
+            - listitem [ref=e33]:
+              - link "Accessibility" [ref=e34] [cursor=pointer]:
+                - /url: "#accessibility"
+        - generic [ref=e35]:
+          - generic [ref=e36]: Legal
+          - list [ref=e37]:
+            - listitem [ref=e38]:
+              - link "Privacy" [ref=e39] [cursor=pointer]:
+                - /url: "#privacy"
+            - listitem [ref=e40]:
+              - link "Terms" [ref=e41] [cursor=pointer]:
+                - /url: "#terms"
+            - listitem [ref=e42]:
+              - link "Cookies" [ref=e43] [cursor=pointer]:
+                - /url: "#cookies"
+        - generic [ref=e44]:
+          - generic [ref=e45]: Contact
+          - list [ref=e46]:
+            - listitem [ref=e47]:
+              - link "idievabuali@gmail.com" [ref=e48] [cursor=pointer]:
+                - /url: mailto:idievabuali@gmail.com
+  - status [ref=e49]
+  - status [ref=e50]
+```
