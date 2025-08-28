@@ -1,0 +1,330 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main"
+  - generic [ref=e4]:
+    - banner [ref=e5]:
+      - generic [ref=e7]:
+        - link "A AccessScan" [ref=e8] [cursor=pointer]:
+          - /url: "#home"
+          - generic [ref=e9] [cursor=pointer]: A
+          - generic [ref=e10] [cursor=pointer]: AccessScan
+        - navigation "Primary" [ref=e11]:
+          - link "How it works" [ref=e12] [cursor=pointer]:
+            - /url: "#how-it-works"
+          - link "Sample report" [ref=e13] [cursor=pointer]:
+            - /url: "#/report/demo"
+          - link "Pricing" [ref=e14] [cursor=pointer]:
+            - /url: /pricing
+          - link "Accessibility" [ref=e15] [cursor=pointer]:
+            - /url: "#accessibility"
+        - link "Start free baseline" [ref=e17] [cursor=pointer]:
+          - /url: "#start-baseline"
+    - main [ref=e18]:
+      - generic [ref=e21]:
+        - generic [ref=e24]:
+          - heading "W3C BAD — Inaccessible “Home” (before)" [level=1] [ref=e25]:
+            - link "W3C BAD — Inaccessible “Home” (before)" [ref=e26] [cursor=pointer]:
+              - /url: https://www.w3.org/WAI/demos/bad/before/home.html
+          - paragraph [ref=e27]:
+            - link "See W3C’s official “before” report" [ref=e28] [cursor=pointer]:
+              - /url: https://www.w3.org/WAI/demos/bad/before/reports/home.html
+            - generic [ref=e29]: ·
+            - link "Compare with the accessible version" [ref=e30] [cursor=pointer]:
+              - /url: https://www.w3.org/WAI/demos/bad/after/home.html
+          - paragraph [ref=e31]: "Demo data • Last generated: 28 Aug 2025, 21:44"
+          - paragraph [ref=e32]: "Engine: axe-core • WCAG 2.2 aligned • EAA applies (June 2025)"
+        - list [ref=e34]:
+          - listitem [ref=e35]:
+            - generic [ref=e36]: ✅
+            - generic [ref=e37]:
+              - strong [ref=e38]: Prioritized issues
+              - text: with
+              - link "WCAG links" [ref=e39] [cursor=pointer]:
+                - /url: https://www.w3.org/WAI/WCAG22/quickref/
+              - text: and short “how to fix”.
+          - listitem [ref=e40]:
+            - generic [ref=e41]: 📉
+            - generic [ref=e42]:
+              - strong [ref=e43]: Before → After reduction
+              - text: ": see what dropped between scans."
+          - listitem [ref=e44]:
+            - generic [ref=e45]: 📤
+            - generic [ref=e46]:
+              - strong [ref=e47]: Shareable evidence
+              - text: ": one-click PDF, JSON, and CSV for dev tickets."
+        - generic [ref=e48]:
+          - status [ref=e49]: "Showing Before: 12 total issues. Switch to After to hear the reduction."
+          - generic [ref=e50]:
+            - generic [ref=e51]:
+              - generic [ref=e52]: W3C BAD — Before
+              - generic [ref=e53]: 12 issues
+            - generic "58% fewer issues" [ref=e54]:
+              - img [ref=e55]
+              - generic [ref=e58]:
+                - strong [ref=e59]: "7"
+                - text: of
+                - strong [ref=e60]: "12"
+                - text: (58%) fewer issues
+            - generic [ref=e61]:
+              - generic [ref=e62]: Critical
+              - generic [ref=e63]: Serious
+              - generic [ref=e64]: Moderate
+              - generic [ref=e65]: Minor
+          - paragraph [ref=e66]:
+            - text: Automated tools surface candidates;
+            - link "human judgement is required" [ref=e67] [cursor=pointer]:
+              - /url: https://www.w3.org/WAI/test-evaluate/tools/selecting/
+            - text: to confirm conformance.
+          - generic [ref=e68]:
+            - generic [ref=e69]:
+              - generic [ref=e70]: Fixed in this pass
+              - generic [ref=e71]: 7 resolved
+            - generic [ref=e72]:
+              - generic [ref=e73]: Remaining (machine-tests)
+              - generic [ref=e74]: 5 remaining
+            - generic [ref=e75]:
+              - generic [ref=e76]: Expected outcome
+              - generic [ref=e77]: "Before → After: 12 → 5"
+              - generic [ref=e78]:
+                - generic [ref=e79]: "7"
+                - generic [ref=e80]: fewer issues
+              - paragraph [ref=e81]: "Human checks pending: 4. See the “Human checks” tab."
+          - generic [ref=e82]:
+            - generic [ref=e83]:
+              - button "Before" [pressed] [ref=e84] [cursor=pointer]
+              - button "After" [ref=e85] [cursor=pointer]
+            - button "Show After (demo)" [ref=e86] [cursor=pointer]
+          - tablist "Report tabs" [ref=e88]:
+            - tab "Issues (12)" [selected] [ref=e89] [cursor=pointer]
+            - tab "Overview" [ref=e90] [cursor=pointer]
+            - tab "Human checks (4)" [ref=e91] [cursor=pointer]
+          - tabpanel "Issues (12)" [ref=e92]:
+            - table [ref=e93]:
+              - rowgroup [ref=e94]:
+                - row "Severity Issue Selector/Snippet WCAG How to fix" [ref=e95]:
+                  - cell "Severity" [ref=e96]
+                  - cell "Issue" [ref=e97]
+                  - cell "Selector/Snippet" [ref=e98]
+                  - cell "WCAG" [ref=e99]
+                  - cell "How to fix" [ref=e100]
+              - rowgroup [ref=e101]:
+                - row "critical Color contrast .btn-primary 1.4.3 Copy fix" [ref=e102]:
+                  - cell "critical" [ref=e103]:
+                    - generic [ref=e104]: critical
+                  - cell "Color contrast" [ref=e105]
+                  - cell ".btn-primary" [ref=e106]
+                  - cell "1.4.3" [ref=e107]:
+                    - link "1.4.3" [ref=e108] [cursor=pointer]:
+                      - /url: https://www.w3.org/WAI/WCAG22/quickref/#contrast-minimum
+                      - text: 1.4.3
+                      - generic [ref=e109] [cursor=pointer]: ↗
+                  - cell "Copy fix" [ref=e110]:
+                    - generic [ref=e111]:
+                      - paragraph
+                      - button "Copy fix" [ref=e112] [cursor=pointer]
+                - row "moderate Empty links/buttons a.icon-only 4.1.2 Copy fix" [ref=e113]:
+                  - cell "moderate" [ref=e114]:
+                    - generic [ref=e115]: moderate
+                  - cell "Empty links/buttons" [ref=e116]
+                  - cell "a.icon-only" [ref=e117]
+                  - cell "4.1.2" [ref=e118]:
+                    - link "4.1.2" [ref=e119] [cursor=pointer]:
+                      - /url: https://www.w3.org/WAI/WCAG22/quickref/#4.1.2
+                      - text: 4.1.2
+                      - generic [ref=e120] [cursor=pointer]: ↗
+                  - cell "Copy fix" [ref=e121]:
+                    - generic [ref=e122]:
+                      - paragraph
+                      - button "Copy fix" [ref=e123] [cursor=pointer]
+                - row "moderate Empty links/buttons button.icon-only 4.1.2 Copy fix" [ref=e124]:
+                  - cell "moderate" [ref=e125]:
+                    - generic [ref=e126]: moderate
+                  - cell "Empty links/buttons" [ref=e127]
+                  - cell "button.icon-only" [ref=e128]
+                  - cell "4.1.2" [ref=e129]:
+                    - link "4.1.2" [ref=e130] [cursor=pointer]:
+                      - /url: https://www.w3.org/WAI/WCAG22/quickref/#4.1.2
+                      - text: 4.1.2
+                      - generic [ref=e131] [cursor=pointer]: ↗
+                  - cell "Copy fix" [ref=e132]:
+                    - generic [ref=e133]:
+                      - paragraph
+                      - button "Copy fix" [ref=e134] [cursor=pointer]
+                - row "moderate Missing page title <title> 2.4.2 Copy fix" [ref=e135]:
+                  - cell "moderate" [ref=e136]:
+                    - generic [ref=e137]: moderate
+                  - cell "Missing page title" [ref=e138]
+                  - cell "<title>" [ref=e139]
+                  - cell "2.4.2" [ref=e140]:
+                    - link "2.4.2" [ref=e141] [cursor=pointer]:
+                      - /url: https://www.w3.org/WAI/WCAG22/quickref/#page-titled
+                      - text: 2.4.2
+                      - generic [ref=e142] [cursor=pointer]: ↗
+                  - cell "Copy fix" [ref=e143]:
+                    - generic [ref=e144]:
+                      - paragraph
+                      - button "Copy fix" [ref=e145] [cursor=pointer]
+                - row "moderate Missing page language <html> 3.1.1 Copy fix" [ref=e146]:
+                  - cell "moderate" [ref=e147]:
+                    - generic [ref=e148]: moderate
+                  - cell "Missing page language" [ref=e149]
+                  - cell "<html>" [ref=e150]
+                  - cell "3.1.1" [ref=e151]:
+                    - link "3.1.1" [ref=e152] [cursor=pointer]:
+                      - /url: https://www.w3.org/WAI/WCAG22/quickref/#language-of-page
+                      - text: 3.1.1
+                      - generic [ref=e153] [cursor=pointer]: ↗
+                  - cell "Copy fix" [ref=e154]:
+                    - generic [ref=e155]:
+                      - paragraph
+                      - button "Copy fix" [ref=e156] [cursor=pointer]
+                - row "serious Images without alt img.hero 1.1.1 Provide descriptive alt for informative images; use empty alt for decorative. Guide me" [ref=e157]:
+                  - cell "serious" [ref=e158]:
+                    - generic [ref=e159]: serious
+                  - cell "Images without alt" [ref=e160]
+                  - cell "img.hero" [ref=e161]
+                  - cell "1.1.1" [ref=e162]:
+                    - link "1.1.1" [ref=e163] [cursor=pointer]:
+                      - /url: https://www.w3.org/WAI/WCAG22/quickref/#non-text-content
+                      - text: 1.1.1
+                      - generic [ref=e164] [cursor=pointer]: ↗
+                  - cell "Provide descriptive alt for informative images; use empty alt for decorative. Guide me" [ref=e165]:
+                    - generic [ref=e166]:
+                      - paragraph [ref=e167]: Provide descriptive alt for informative images; use empty alt for decorative.
+                      - button "Guide me" [ref=e168] [cursor=pointer]
+                - row "serious Form inputs unlabeled input[type=\"email\"] 3.3.2 Use <label for> or aria-labelledby/aria-label so inputs have accessible names. Guide me" [ref=e169]:
+                  - cell "serious" [ref=e170]:
+                    - generic [ref=e171]: serious
+                  - cell "Form inputs unlabeled" [ref=e172]
+                  - cell "input[type=\"email\"]" [ref=e173]
+                  - cell "3.3.2" [ref=e174]:
+                    - link "3.3.2" [ref=e175] [cursor=pointer]:
+                      - /url: https://www.w3.org/WAI/WCAG22/quickref/#labels-or-instructions
+                      - text: 3.3.2
+                      - generic [ref=e176] [cursor=pointer]: ↗
+                  - cell "Use <label for> or aria-labelledby/aria-label so inputs have accessible names. Guide me" [ref=e177]:
+                    - generic [ref=e178]:
+                      - paragraph [ref=e179]: Use <label for> or aria-labelledby/aria-label so inputs have accessible names.
+                      - button "Guide me" [ref=e180] [cursor=pointer]
+                - row "serious Form inputs unlabeled input[type=\"search\"] 3.3.2 Use <label for> or aria-labelledby/aria-label so inputs have accessible names. Guide me" [ref=e181]:
+                  - cell "serious" [ref=e182]:
+                    - generic [ref=e183]: serious
+                  - cell "Form inputs unlabeled" [ref=e184]
+                  - cell "input[type=\"search\"]" [ref=e185]
+                  - cell "3.3.2" [ref=e186]:
+                    - link "3.3.2" [ref=e187] [cursor=pointer]:
+                      - /url: https://www.w3.org/WAI/WCAG22/quickref/#labels-or-instructions
+                      - text: 3.3.2
+                      - generic [ref=e188] [cursor=pointer]: ↗
+                  - cell "Use <label for> or aria-labelledby/aria-label so inputs have accessible names. Guide me" [ref=e189]:
+                    - generic [ref=e190]:
+                      - paragraph [ref=e191]: Use <label for> or aria-labelledby/aria-label so inputs have accessible names.
+                      - button "Guide me" [ref=e192] [cursor=pointer]
+                - 'row "serious Keyboard flow (no traps) #nav, #modal 2.1.2 Needs human review" [ref=e193]':
+                  - cell "serious" [ref=e194]:
+                    - generic [ref=e195]: serious
+                  - cell "Keyboard flow (no traps)" [ref=e196]
+                  - 'cell "#nav, #modal" [ref=e197]'
+                  - cell "2.1.2" [ref=e198]:
+                    - link "2.1.2" [ref=e199] [cursor=pointer]:
+                      - /url: https://www.w3.org/WAI/WCAG22/quickref/#no-keyboard-trap
+                      - text: 2.1.2
+                      - generic [ref=e200] [cursor=pointer]: ↗
+                  - cell "Needs human review" [ref=e201]:
+                    - generic [ref=e202]:
+                      - paragraph
+                      - generic [ref=e203]: Needs human review
+                - row "moderate Link purpose in context a:contains(\"Read more\"), .icon 2.4.4 Needs human review" [ref=e204]:
+                  - cell "moderate" [ref=e205]:
+                    - generic [ref=e206]: moderate
+                  - cell "Link purpose in context" [ref=e207]
+                  - cell "a:contains(\"Read more\"), .icon" [ref=e208]
+                  - cell "2.4.4" [ref=e209]:
+                    - link "2.4.4" [ref=e210] [cursor=pointer]:
+                      - /url: https://www.w3.org/WAI/WCAG22/quickref/#link-purpose-in-context
+                      - text: 2.4.4
+                      - generic [ref=e211] [cursor=pointer]: ↗
+                  - cell "Needs human review" [ref=e212]:
+                    - generic [ref=e213]:
+                      - paragraph
+                      - generic [ref=e214]: Needs human review
+                - row "moderate Focus order header > nav > a, main h1, .cta 2.4.3 Needs human review" [ref=e215]:
+                  - cell "moderate" [ref=e216]:
+                    - generic [ref=e217]: moderate
+                  - cell "Focus order" [ref=e218]
+                  - cell "header > nav > a, main h1, .cta" [ref=e219]
+                  - cell "2.4.3" [ref=e220]:
+                    - link "2.4.3" [ref=e221] [cursor=pointer]:
+                      - /url: https://www.w3.org/WAI/WCAG22/quickref/#focus-order
+                      - text: 2.4.3
+                      - generic [ref=e222] [cursor=pointer]: ↗
+                  - cell "Needs human review" [ref=e223]:
+                    - generic [ref=e224]:
+                      - paragraph
+                      - generic [ref=e225]: Needs human review
+                - row "moderate Visible focus a, button, input 2.4.7 Needs human review" [ref=e226]:
+                  - cell "moderate" [ref=e227]:
+                    - generic [ref=e228]: moderate
+                  - cell "Visible focus" [ref=e229]
+                  - cell "a, button, input" [ref=e230]
+                  - cell "2.4.7" [ref=e231]:
+                    - link "2.4.7" [ref=e232] [cursor=pointer]:
+                      - /url: https://www.w3.org/WAI/WCAG22/quickref/#focus-visible
+                      - text: 2.4.7
+                      - generic [ref=e233] [cursor=pointer]: ↗
+                  - cell "Needs human review" [ref=e234]:
+                    - generic [ref=e235]:
+                      - paragraph
+                      - generic [ref=e236]: Needs human review
+          - generic [ref=e238]:
+            - button "Share this report" [ref=e239] [cursor=pointer]
+            - button "Download sample PDF" [ref=e240] [cursor=pointer]
+            - button "Download JSON" [ref=e241] [cursor=pointer]
+            - button "Create dev tickets (CSV)" [ref=e242] [cursor=pointer]
+            - link "See plans" [ref=e243] [cursor=pointer]:
+              - /url: "#pricing"
+    - contentinfo [ref=e244]:
+      - generic [ref=e246]:
+        - generic [ref=e247]:
+          - generic [ref=e248]:
+            - generic [ref=e249]: A
+            - text: AccessScan
+          - paragraph [ref=e250]: Transparent automated accessibility audits with human‑check guidance. No overlays, no hype.
+          - paragraph [ref=e251]: "Transparent by design: tools can’t check everything; humans still matter."
+        - generic [ref=e252]:
+          - generic [ref=e253]: Product
+          - list [ref=e254]:
+            - listitem [ref=e255]:
+              - link "Pricing" [ref=e256] [cursor=pointer]:
+                - /url: "#pricing"
+            - listitem [ref=e257]:
+              - link "Sample report" [ref=e258] [cursor=pointer]:
+                - /url: "#/report/demo"
+            - listitem [ref=e259]:
+              - link "Accessibility" [ref=e260] [cursor=pointer]:
+                - /url: "#accessibility"
+        - generic [ref=e261]:
+          - generic [ref=e262]: Legal
+          - list [ref=e263]:
+            - listitem [ref=e264]:
+              - link "Privacy" [ref=e265] [cursor=pointer]:
+                - /url: "#privacy"
+            - listitem [ref=e266]:
+              - link "Terms" [ref=e267] [cursor=pointer]:
+                - /url: "#terms"
+            - listitem [ref=e268]:
+              - link "Cookies" [ref=e269] [cursor=pointer]:
+                - /url: "#cookies"
+        - generic [ref=e270]:
+          - generic [ref=e271]: Contact
+          - list [ref=e272]:
+            - listitem [ref=e273]:
+              - link "idievabuali@gmail.com" [ref=e274] [cursor=pointer]:
+                - /url: mailto:idievabuali@gmail.com
+  - status [ref=e275]
+  - status [ref=e276]
+  - generic [ref=e277]: "Test mode: Zero issues dataset active"
+```

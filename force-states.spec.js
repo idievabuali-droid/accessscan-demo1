@@ -9,47 +9,73 @@ test.describe('Force UI states to exercise skipped quick-tests', () => {
   });
 
   test('simulate zero issues and assert export buttons disabled', async ({ page }) => {
-    // Remove issue rows and set summary text
+    // Navigate to the empty dataset which has zero issues
+    const BASE = 'https://accessscan-demo1-1a36.vercel.app/#/report/demo';
+    await page.goto(BASE, { waitUntil: 'networkidle' });
+    
+    // Switch to the empty dataset that has zero issues
     await page.evaluate(() => {
-      const table = document.querySelector('table');
-      if (table) {
-        // remove all rows except header
-        const rows = table.querySelectorAll('tr');
-        rows.forEach((r, i) => { if (i > 0) r.remove(); });
+      // Find the dataset selector or force it programmatically
+      if (window.React && window.ReactDOM) {
+        // Access the React component and change dataset to 'empty'
+        const setDatasetFunctions = [];
+        
+        // Try to find React state setters
+        document.querySelectorAll('*').forEach(el => {
+          if (el._reactInternalFiber || el._reactInternalInstance) {
+            // Look for dataset state
+          }
+        });
+        
+        // As a fallback, override the data globally
+        if (window.DEMO_DATA && window.DEMO_DATA.empty) {
+          // Force both before and after to use empty data
+          window.DEMO_DATA.before = window.DEMO_DATA.empty;
+          window.DEMO_DATA.after = window.DEMO_DATA.empty;
+          
+          // Trigger a reload to apply changes
+          location.reload();
+        }
       }
-  const el = document.querySelector('body');
-      // insert a small summary element
+    });
+    
+    // Wait for page to reload with empty data
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+    
+    // Add test marker to confirm we're in test mode
+    await page.evaluate(() => {
       let s = document.querySelector('#test-zero-issues');
       if (!s) {
-        s = document.createElement('div'); s.id = 'test-zero-issues';
-        s.innerText = 'Showing Before: 0 total issues.'; document.body.prepend(s);
+        s = document.createElement('div');
+        s.id = 'test-zero-issues';
+        s.innerText = 'Test mode: Zero issues dataset active';
+        s.style.cssText = 'position: fixed; top: 10px; left: 10px; background: yellow; padding: 5px; z-index: 9999; border: 2px solid red;';
+        document.body.appendChild(s);
       }
-      // disable any export buttons found by matching common texts
-      const texts = ['Download sample PDF','Download PDF','Export PDF'];
-      document.querySelectorAll('button, a').forEach(el => {
-        const t = (el.innerText || '').trim();
-        if (texts.includes(t)) {
-          el.setAttribute('disabled','');
-          el.disabled = true;
-        }
-      });
-      // always create a known disabled test button for reliable assertion
-      let testBtn = document.querySelector('#test-download-btn');
-      if (testBtn) testBtn.remove();
-      const b = document.createElement('button'); 
-      b.innerText = 'Download sample PDF'; 
-      b.disabled = true; 
-      b.id='test-download-btn'; 
-      b.setAttribute('disabled', '');
-      document.body.appendChild(b);
     });
 
-    // assert our synthetic summary and disabled button
+    // Verify the test marker is visible
     const summary = await page.locator('#test-zero-issues');
     await expect(summary).toBeVisible();
-    const btn = page.locator('button#test-download-btn, button:has-text("Download sample PDF")').first();
-    await expect(btn).toBeVisible();
-    const isDisabled = await btn.evaluate(el => {
+    
+    // Find the actual Download PDF button (it's labeled "Download sample PDF")
+    let downloadBtn = page.locator('button:has-text("Download sample PDF")').first();
+    
+    // Debug: log what buttons are available
+    const allButtons = await page.locator('button').all();
+    console.log('Available buttons:', await Promise.all(allButtons.map(async btn => {
+      try {
+        return await btn.textContent();
+      } catch (e) {
+        return 'error reading text';
+      }
+    })));
+    
+    await expect(downloadBtn).toBeVisible();
+    
+    // Check if it's properly disabled
+    const isDisabled = await downloadBtn.evaluate(el => {
       return el.disabled === true || el.hasAttribute('disabled') || el.getAttribute('aria-disabled') === 'true';
     });
     expect(isDisabled).toBeTruthy();
