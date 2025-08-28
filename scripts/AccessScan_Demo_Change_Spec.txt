@@ -1,0 +1,226 @@
+AccessScan — Demo Website Change Specification
+(Code■Free)
+Generated: 2025-08-28 10:10 | Scope: Frontend-only demo (no backend)
+Purpose: Provide a precise, code■free checklist of UI/UX changes so any assistant can safely
+implement them in the demo without guessing. Each item specifies Page, Exact location (anchor
+text/visual marker), What to change, Why (business logic), How it should work in a demo (no
+backend), and Acceptance criteria.
+Assumptions for Demo
+
+There is no backend. Any dynamic data (e.g., scan duration, timestamps, scores) must be mocked
+in the front■end demo state or JSON fixtures.
+
+Anchors mentioned below (tab labels, banner text) should remain stable so future edits can target
+them reliably.
+
+PDF export should mirror the on■screen layout using the same components or a print■style
+variant.
+1) Report Page — Header & Summary
+1.1 Show scan speed and timestamp
+Page: Report (both Before and After views).
+Exact location: Immediately below the grey banner that says “Automated tools surface candidates;
+human judgement is required…”.
+What to change: Display a small note reading: “Scan completed in X s  Last generated: {date/time}”.
+Why: Demonstrates speed■to■value and freshness; reinforces fast & reliable positioning.
+How (demo): Use mock fields in demo state: durationSeconds (number) and generatedAt (timestamp).
+Show on both Before and After views.
+Acceptance: The note appears under the banner; values differ per mock scan; screen readers
+announce it as a descriptive note.
+1.2 Make “Expected outcome” actionable
+Location: The right■hand summary card titled “Expected outcome”.
+What to change: Add a small line “Human checks pending: N” that navigates to the Human checks tab
+when activated.
+Why: Connects automated results to the remaining work; reduces confusion and clicks.
+How (demo): Use a mock count (e.g., 4). Clicking this text switches the active tab to Human checks and
+scrolls to that section.
+Acceptance: Clicking the text reliably switches tabs and focuses the Human checks content; the count
+matches the tab badge.
+1.3 Add a tiny score trend next to the donut
+Location: Score donut area near the top of the report.
+What to change: Add a small sparkline showing the last 5 scan scores.
+Why: Communicates progress at a glance in UI and exported PDF; supports the “proof over time”
+promise.
+How (demo): Provide a 5■value mock array of scores and render a tiny inline chart with an accessible
+label (e.g., “Recent score trend”).
+Acceptance: Trend appears; values update when the mock data changes; announced properly to
+screen readers.
+2) Report Page — Issues Tab (Before & After)
+2.1 Severity filter chips
+Location: Directly under the tab row (Issues / Overview / Human checks).
+
+
+--- PAGE BREAK ---
+
+What to change: Provide four toggle chips: Critical, Serious, Moderate, Minor, plus “Clear”.
+Why: Lets users focus on what matters first; matches “prioritized fixes” promise.
+How (demo): Maintain demo state of selected severities; filter the visible rows accordingly; chips
+expose pressed state for accessibility.
+Acceptance: Selecting a chip filters rows correctly; keyboard activation toggles states; Clear restores
+all.
+2.2 Default to “Top 5” with a “Show all” toggle
+Location: Above the issues table.
+What to change: Show only the top 5 issues by default; provide a “Show all” toggle.
+Why: Reduces overwhelm for non■technical stakeholders while preserving full detail on demand.
+How (demo): Sort mock issues by severity rank; slice to 5 until expanded. Display a counter (e.g., “5 of
+12 shown”).
+Acceptance: Counts reflect state; toggling reveals/hides the remaining issues without layout jumps.
+2.3 Present “How to fix” as real code blocks with Copy (no code included here)
+Location: “How to fix” column for automatable items.
+What to change: Render the fix content as a clearly formatted code block with a Copy action; keep
+“Guide me” for non■automatable items.
+Why: Improves actionability and reduces copy errors; preserves guided flow when human input is
+required.
+How (demo): For automatable mock issues, show a styled code block with a Copy control (the actual
+code will come from your data). For non■automatable items, show a “Guide me” button that opens the
+stepper.
+Acceptance: Automatable rows display a copyable block; non■automatable rows display “Guide me”.
+2.4 Add a small element thumbnail per issue
+Location: At the start of each issue row, just before the selector/snippet.
+What to change: Show a 64×48 thumbnail image to give visual context (placeholder is fine in demo).
+Why: Helps developers confirm they’re editing the correct element; improves confidence.
+How (demo): Use a neutral placeholder for now; later replace with real per■issue screenshots.
+Acceptance: Every row shows a small thumbnail; decorative image (empty alt) so screen readers aren’t
+spammed.
+2.5 “Locate in code” helper
+Location: Next to the selector/snippet in each issue row.
+What to change: Provide a small action that copies a robust search string combining selector and a
+short snippet fragment.
+Why: Aids findability in large codebases and DevTools; reduces wrong■file edits.
+How (demo): Build the helper string from mock selector and first 60–80 characters of the snippet; place
+it on the clipboard when activated.
+Acceptance: Clicking the helper reliably copies the string; pasting in an editor search helps locate the
+element.
+3) Report Page — Human Checks Tab
+3.1 Replace prose with a concise 4■item checklist
+Location: Content area of the “Human checks” tab.
+What to change: Display a succinct list of four scripts: Keyboard flow (no traps), Link purpose in
+context, Focus order, Visible focus.
+Why: Clear honesty about automation limits; gives teams concrete next steps.
+How (demo): Static structured list with short instructions. Badge on the tab reflects the count (e.g.,
+“Human checks (4)”).
+Acceptance: Checklist is readable, printable in PDF, and matches the pending count referenced
+elsewhere.
+
+
+--- PAGE BREAK ---
+
+4) Report Page — Exports, Share, and Status
+4.1 Disable exports when empty and announce success
+Location: Footer actions row (Share, Download PDF/JSON, Create dev tickets CSV).
+What to change: Disable export buttons if there’s no data; announce success with a short,
+screen■reader friendly status message (e.g., “JSON downloaded”).
+Why: Avoids dead clicks and improves accessibility feedback.
+How (demo): Tie disabled state to mock dataset length; update a hidden status line after mock
+download is triggered.
+Acceptance: Buttons grey out when empty; status messages are announced to assistive tech.
+5) Guide Me / Modal Behaviour
+5.1 Accessible modal controls (focus trap and Esc)
+Location: Any Guide me or Copy■fix dialog/modal.
+What to change: On open, focus moves inside; Tab/Shift+Tab cycle within; Esc closes; focus returns to
+the opener.
+Why: Required for reliable keyboard use and expected accessibility behaviour.
+How (demo): Implement focus management purely on the client; no server needed.
+Acceptance: Keyboard■only tests pass; no a11y violations for modal usage.
+5.2 Guide Me step logic clarity
+Location: Inside the 3■step Guide me flow.
+What to change: Step 1 (goal + element shown), Step 2 (confirm or choose input if needed, with
+examples), Step 3 (show the fix and how to verify it).
+Why: Prevents blind pasting; teaches quick self■verification; reduces mis■edits.
+How (demo): Use mock data for selector/thumbnail and an example verification checklist.
+Acceptance: A user can complete the flow without long reading; verification directions are clear and
+doable.
+6) Overview Tab (Optional but Helpful)
+6.1 Short “What automation covers vs needs a human” box
+Location: Top of the Overview tab.
+What to change: Two concise lists: Automated (e.g., contrast, labels, empty links/buttons, page
+title/lang/basic headings) vs Human (e.g., keyboard flow, focus order, link purpose, alt quality, complex
+widgets, captions).
+Why: Sets expectations and reduces support questions; aligns with honest positioning.
+How (demo): Static content with WCAG references if desired.
+Acceptance: Box renders consistently on Before/After and prints cleanly in PDF.
+7) Pricing Page
+7.1 Add ROI helper line under each plan
+Location: Under each plan’s bullet list in the Plans & features section.
+What to change: Add a muted line: “Typically saves ~5–7 dev■hours per site/month (triage +
+regressions).”
+Why: Strengthens perceived value and supports pricing logic.
+How (demo): Static text under each plan; no backend required.
+Acceptance: Line appears under each plan; wraps cleanly on mobile.
+8) Onboarding & Dashboard Access
+8.1 “What happens next” after form submit
+Page: Landing → Free baseline form (name, email, URL).
+
+
+--- PAGE BREAK ---
+
+What to change: After successful submit, show three bullets describing the next steps: we run the scan
+(takes ~X s), email you a dashboard link + PDF, you can re■scan from your dashboard.
+Why: Reduces anxiety; clarifies time■to■value; fewer support requests.
+How (demo): Simulate success state and show this message immediately; optionally trigger a mock
+email preview.
+Acceptance: Message appears without delay; copy is concise and reassuring.
+8.2 Persistent dashboard link in emails (demo content)
+Page: Email preview/screenshot used in the demo.
+What to change: Show two clear actions: Open dashboard and Download PDF, plus a one■line
+summary like “12 → 5 issues; +17 score”.
+Why: Reinforces simplicity; invites users back to the report; makes outcomes obvious.
+How (demo): Use a static email mock that reflects the actual dashboard URL and a sample PDF link.
+Acceptance: Buttons are visible and labelled; numbers match the demo report values.
+9) PDF Export
+9.1 Mirror the report exactly (no surprises)
+Page: PDF output used in the demo.
+What to change: Ensure the PDF visually mirrors the on■screen report: header note, donut + trend,
+Top■5 vs Show all state (OK to show expanded in PDF), code■block fixes, Human■check checklist.
+Why: Stakeholders share PDFs; consistency builds trust and reduces questions.
+How (demo): Use the same components in print mode or a dedicated print layout that preserves
+structure and order; all powered by mock data.
+Acceptance: Side■by■side comparison shows parity; headings, lists, and fix sections are clear and
+legible.
+10) Reliability & Accessibility Polish
+10.1 Avoid actions that do nothing
+Pages: Any page with dependent actions (e.g., exports).
+What to change: Disable actions when their dataset is empty; show a brief tooltip like “No issues to
+export”.
+Why: Prevents confusion; makes the demo feel professional and intentional.
+How (demo): In the demo state, determine if arrays are empty and set disabled state; show a tiny
+helper tooltip.
+Acceptance: No dead clicks; disabled styles are clear; tooltip explains why.
+10.2 Consistent ARIA and keyboard order
+Pages: Tabs (Issues/Overview/Human), filter chips, action buttons, modals.
+What to change: Ensure tabs expose proper tab roles and selected states; chips act as toggle buttons
+with pressed states; focus order follows the visual order.
+Why: Your own demo should pass basic accessibility checks; keyboard users should succeed without a
+mouse.
+How (demo): Use standard ARIA roles/attributes in markup; verify with a keyboard■only pass and an
+automated checker.
+Acceptance: Keyboard navigation is smooth; automated checks report no tab or modal violations.
+11) Demo Data (to power behaviours without a backend)
+Add the following mock data to the front■end demo so UI features above can function without a server:
+
+Per scan: durationSeconds (number) and generatedAt (timestamp).
+
+Score history: an array with the last 5 scores (for the sparkline).
+
+Issues: for each row include severity, selector, short snippet text, optional screenshot URL, a flag
+whether it’s automatable, and a placeholder fix string (display■only).
+
+Human checks: a list of the four standard scripts referenced in this spec.
+
+
+--- PAGE BREAK ---
+
+
+Counts used by badges and summary cards (e.g., total issues, resolved this pass, remaining).
+Acceptance: All UI interactions above work purely from the mock data; nothing requires live calls.
+Rollout Order (Suggested)
+
+Polish demo first: items 1.1, 2.2, 2.3, 3.1, 4.1.
+
+Clarity pass: items 2.1 and 2.5; align Guide Me with 5.2.
+
+Proof/credibility: item 1.3 and 9.1 (trend + PDF parity).
+
+Pricing & onboarding: items 7.1, 8.1, 8.2.
+
+A11y reliability: items 5.1 and 10.2 (modals, ARIA).
+End of specification.

@@ -2581,6 +2581,8 @@ function QueuedView({ navigate }) {
   <li>We’ll run the scan (takes ~{DEMO_SCAN_SECONDS.toFixed(1)} s in this demo).</li>
   <li>We’ll email you a dashboard link and a PDF.</li>
   <li>You can re-scan anytime from your dashboard.</li>
+  <li>Results include automated fixes and human check guidance</li>
+  <li>PDF mirrors the dashboard for easy sharing</li>
 </ul>
           <p className="mt-3 text-sm text-gray-700">
   Preview the email you’ll receive: <a className="underline" href="/email/preview" onClick={(e)=>{e.preventDefault(); navigate('/email/preview')}}>open mock email</a>.
@@ -3091,6 +3093,7 @@ function App() {
     {route === '/lead' && <PlanLeadView navigate={navigate} />}
 
     {route === '/baseline/queued' && <QueuedView navigate={navigate} />}
+    {route === '/queue' && <QueuedView navigate={navigate} />}
     {route === '/report/demo' && <ReportDemoView navigate={navigate} />}
     {route === '/pricing' && <PricingView navigate={navigate} />}
     {route === '/accessibility' && <AccessibilityView />}

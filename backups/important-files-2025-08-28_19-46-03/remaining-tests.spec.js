@@ -61,7 +61,7 @@ test.describe('Remaining AccessScan quick tests', () => {
     await page.goto('https://accessscan-demo1-1a36.vercel.app/#/queue', { waitUntil: 'networkidle' });
     await page.waitForTimeout(1000);
     
-    const bullets = page.locator('ul li, ol li').first();
+    const bullets = page.locator('ul li, ol li');
     if (await bullets.count() === 0) {
       const nextSteps = page.locator('text=/next steps/i').first();
       if (await nextSteps.count() === 0) test.skip(true, 'Next steps bullets not found');
