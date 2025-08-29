@@ -58,6 +58,42 @@ dialog::backdrop { background: rgba(0,0,0,0.35); }
 
 </style>
 
+<style>
+/* Issues table: sticky header, zebra rows, gentle hover */
+.report-table thead th{
+  position: sticky;
+  top: 0;                  /* sticky within the scroll area */
+  background: rgba(255,255,255,0.96);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  z-index: 1;
+}
+.report-table tbody tr:nth-child(even){ background: rgba(249,250,251,0.6); }
+.report-table tbody tr:hover{ background: rgba(238,242,255,0.45); }
+</style>
+
+<style>
+  /* --- Preview column: fixed width + centered thumbnail --- */
+  /* Make column widths predictable and center the thumbnail */
+  .report-table { table-layout: fixed; }
+  .report-table .preview-cell { width: 84px; min-width: 84px; text-align: center; vertical-align: middle; }
+  .preview-thumb{
+    width: 64px; height: 48px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    display: grid; place-items: center;
+    overflow: hidden;
+    margin-inline: auto; /* keep centered */
+  }
+  .preview-thumb img{ width:100%; height:100%; object-fit: contain; }
+
+  /* Avoid selector/snippet column pushing preview around on tiny screens */
+  @media (max-width: 520px){
+    .report-table td:nth-child(4){ max-width: 220px; }
+  }
+</style>
+
 
 <script>
     !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init Re Ms Fs Pe Rs Cs capture Ve calculateEventProperties Ds register register_once register_for_session unregister unregister_for_session zs getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey canRenderSurveyAsync identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty Ls As createPersonProfile Ns Is Us opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing is_capturing clear_opt_in_out_capturing Os debug I js getPageViewId captureTraceFeedback captureTraceMetric".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
@@ -490,19 +526,28 @@ window.generateReportPDF = function generateReportPDF() {
 
     // Header + footer on each page when drawn
     function drawHeaderFooter(pageNum) {
-      // header
-  setText(12, 17,24,39, "bold");
-  doc.text(`${BRAND} — Accessibility Report (WCAG 2.2)`, x0, 28);
-  setText(9, 80,80,80);
-  doc.text(`URL: ${URL_STR}`, x0, 42);
-  // Make URL in header clickable (rough bounding box around the text)
-  const __urlText = `URL: ${URL_STR}`;
-  const __urlWidth = doc.getTextWidth(__urlText);
-  doc.link(x0, 42 - 9, __urlWidth, 14, { url: URL_STR });
-  doc.text(`Engine: ${ENGINE_VER}`, pageW - x0, 42, { align:"right" });
-  // View / dataset label
-  doc.text(`View: ${DATASET || '—'}`, pageW - x0, 56, { align: "right" });
-      // (footer is added after all content to get the correct total pages)
+      const x0 = 44, pageW = doc.internal.pageSize.getWidth();
+      // Title
+      setText(12, 17,24,39, "bold");
+      doc.text(`${BRAND} — Accessibility Report (WCAG 2.2)`, x0, 32);
+
+      // URL (clickable)
+      setText(9, 80,80,80);
+      const urlText = `URL: ${URL_STR}`;
+      doc.text(urlText, x0, 48);
+      const urlWidth = doc.getTextWidth(urlText);
+      doc.link(x0, 48 - 9, urlWidth, 14, { url: URL_STR });
+
+      // Engine (right, line 1)
+      setText(9, 80,80,80);
+      doc.text(`Engine: ${ENGINE_VER}`, pageW - x0, 48, { align: "right" });
+
+      // View/dataset (right, line 2)
+      doc.text(`View: ${DATASET || '—'}`, pageW - x0, 62, { align: "right" });
+
+      // Hairline divider
+      doc.setDrawColor(230); doc.setLineWidth(0.5);
+      doc.line(x0, 68, pageW - x0, 68);
     }
 
     // Draw header for page 1
@@ -547,8 +592,8 @@ window.generateReportPDF = function generateReportPDF() {
       doc.addImage(dataUrl, 'PNG', cx - r, cy - r, w, h);
     }
 
-    // Meta row: Score + Generated + Trend
-    cursorY = 64;
+  // Meta row: Score + Generated + Trend
+  cursorY = 76;
     ensureSpace(40);
   // Score donut (PDF parity with UI donut)
   drawDonutScore(x0 + 18, cursorY + 14, 14, score);
@@ -624,7 +669,7 @@ window.generateReportPDF = function generateReportPDF() {
 
       doc.autoTable({
         startY: cursorY,
-        margin: { left: x0, right: x0 },
+        margin: { top: 76, left: x0, right: x0 },
         columns: baseColumns,
         body,
         theme: "grid",
@@ -957,7 +1002,8 @@ const WCAG_ANCHORS = {
   '3.1.1': 'language-of-page',      // added
   '2.1.2': 'no-keyboard-trap',      // NEW — No Keyboard Trap
   '2.4.3': 'focus-order',           // NEW — Focus Order
-  '2.4.7': 'focus-visible'          // NEW — Focus Visible
+  '2.4.7': 'focus-visible',         // NEW — Focus Visible
+  '4.1.2': 'name-role-value',
 };
 
 function wcagHref(sc) {
@@ -980,20 +1026,74 @@ const RULE_MAP = {
   // You can extend when you add more issue types (landmarks, lang, etc.)
 };
 
-// Tiny 64×48 inline SVG placeholder for per-issue thumbnails (no external file needed)
+// Tiny 64×48 thumbnail that reflects the specific issue type
 function buildThumbSrc(it) {
-  try {
-    const svg =
-      `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="48" viewBox="0 0 64 48">` +
-      `<rect width="64" height="48" rx="6" ry="6" fill="#f8fafc" stroke="#e5e7eb"/>` +
-      `<rect x="8" y="10" width="20" height="10" fill="#e5e7eb"/>` +
-      `<rect x="34" y="10" width="22" height="10" fill="#e5e7eb"/>` +
-      `<rect x="8" y="26" width="48" height="12" fill="#eef2ff"/>` +
-      `</svg>`;
-    return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
-  } catch (e) {
-    return '';
-  }
+  const type = (it?.cat || '').toLowerCase();
+
+  // Generic card background
+  const frame = (inner) => `
+      <svg xmlns="http://www.w3.org/2000/svg" width="64" height="48" viewBox="0 0 64 48">
+        <rect width="64" height="48" rx="6" ry="6" fill="#fff" stroke="#e5e7eb"/>
+        ${inner}
+      </svg>`;
+
+  const thumbs = {
+    // Critical contrast: show poor swatch vs good swatch
+    'color contrast': frame(`
+        <rect x="6" y="8" width="24" height="14" rx="3" fill="#e5e7eb"/>
+        <text x="18" y="18" font-size="8" text-anchor="middle" fill="#9ca3af">Aa</text>
+        <rect x="34" y="8" width="24" height="14" rx="3" fill="#111827"/>
+        <text x="46" y="18" font-size="8" text-anchor="middle" fill="#ffffff">Aa</text>
+        <line x1="32" y1="8" x2="32" y2="22" stroke="#e5e7eb"/>
+        <rect x="8" y="30" width="48" height="8" rx="2" fill="#eef2ff"/>
+      `),
+
+    // Missing alt: camera + ALT? tag
+    'images without alt': frame(`
+        <rect x="6" y="10" width="52" height="28" rx="4" fill="#f1f5f9" stroke="#e5e7eb"/>
+        <circle cx="22" cy="24" r="8" fill="#e5e7eb"/>
+        <rect x="34" y="14" width="18" height="8" rx="2" fill="#fef3c7" stroke="#fde68a"/>
+        <text x="43" y="20" font-size="7" text-anchor="middle" fill="#92400e">ALT?</text>
+      `),
+
+    // Unlabeled inputs: input with a dashed "label?"
+    'form inputs unlabeled': frame(`
+        <rect x="10" y="12" width="44" height="10" rx="2" fill="#f8fafc" stroke="#e5e7eb"/>
+        <rect x="10" y="28" width="44" height="10" rx="2" fill="#ffffff" stroke="#cbd5e1"/>
+        <rect x="12" y="14" width="20" height="6" rx="2" fill="none" stroke="#94a3b8" stroke-dasharray="3 3"/>
+        <text x="22" y="18.5" font-size="6" text-anchor="middle" fill="#64748b">label?</text>
+      `),
+
+    // Empty link/button: icon chip with “?” hint
+    'empty links/buttons': frame(`
+        <rect x="10" y="10" width="44" height="10" rx="5" fill="#f8fafc" stroke="#e5e7eb"/>
+        <text x="32" y="18" font-size="8" text-anchor="middle" fill="#9ca3af">🔗 ?</text>
+        <rect x="12" y="28" width="40" height="8" rx="2" fill="#eef2ff"/>
+      `),
+
+    // Missing title: little document tab with “<title>?”
+    'missing page title': frame(`
+        <rect x="10" y="12" width="44" height="24" rx="4" fill="#f8fafc" stroke="#e5e7eb"/>
+        <rect x="14" y="16" width="22" height="8" rx="2" fill="#e2e8f0"/>
+        <text x="38" y="22" font-size="7" fill="#475569">&lt;title&gt;?</text>
+      `),
+
+    // Missing lang: HTML chip with “lang?”
+    'missing page language': frame(`
+        <rect x="10" y="12" width="44" height="24" rx="4" fill="#f8fafc" stroke="#e5e7eb"/>
+        <text x="20" y="22" font-size="8" fill="#64748b">&lt;html&gt;</text>
+        <rect x="24" y="26" width="20" height="8" rx="2" fill="#fef3c7" stroke="#fde68a"/>
+        <text x="34" y="32" font-size="7" text-anchor="middle" fill="#92400e">lang?</text>
+      `),
+  };
+
+  const svg = thumbs[type] || frame(`
+      <rect x="8" y="10" width="20" height="10" fill="#e5e7eb"/>
+      <rect x="34" y="10" width="22" height="10" fill="#e5e7eb"/>
+      <rect x="8" y="26" width="48" height="12" fill="#eef2ff"/>
+    `);
+
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
 }
 
 // Build a compact "locate in code" search string for an issue row.
@@ -1011,10 +1111,30 @@ function buildLocateString(it) {
 }
 window.buildLocateString = buildLocateString;
 
+// Small helper: title-case a severity label for display (e.g., 'critical' -> 'Critical')
+const labelSev = (s='') => s ? s[0].toUpperCase() + s.slice(1) : '';
+
 // Copy a locate string to the clipboard and announce via the polite SR region.
-window.copyLocateString = async function(it) {
-  const txt = buildLocateString(it);
-  await window.copyTextWithStatus(txt, 'Locate string copied');
+// Copy a locate string and give visible confirmation on the button
+window.copyLocateString = async function(it, btn) {
+  const txt = window.buildLocateString(it);
+  try {
+    await window.copyTextWithStatus(txt, 'Locate string copied'); // SR live region
+  } catch { /* noop: SR helper already handled fallback/alert */ }
+  // Visible feedback for sighted users
+  try {
+    if (btn) {
+      const prev = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Copied';
+      btn.classList.add('ring-1','ring-indigo-300');
+      setTimeout(() => {
+        btn.textContent = prev;
+        btn.classList.remove('ring-1','ring-indigo-300');
+        btn.disabled = false;
+      }, 1200);
+    }
+  } catch {}
 };
 
 // --- BEGIN demoFixes (modal data) ---
@@ -1575,32 +1695,35 @@ const HUMAN_SCRIPT_LIBRARY = {
 
 const DEMO_DATA = {
   before: {
-    name: 'W3C BAD — Before',
-    url: 'https://www.w3.org/WAI/demos/bad/before/home.html',
-    // each issue: severity, category, selector/snippet, wcag, auto-fixable?
-    issues: [
-      // 8 machine-detected issues: 5 automatable (Copy fix), 3 guided (wizard)
+  name: 'W3C BAD — Before',
+  url: 'https://www.w3.org/WAI/demos/bad/before/home.html',
+  // each issue: severity, category, selector/snippet, wcag, auto-fixable?
+  issues: [
+    // Copy-fix (automatable)
+    { sev:'critical', cat:'Color contrast',         sel:'.btn-primary',              wcag:'1.4.3', copy:'.btn-primary{color:#111;background:#2d3b8f}', auto:true },
 
-      // Copy-fix (automatable) — 5
-      { sev:'critical', cat:'Color contrast',         sel:'.btn-primary',              wcag:'1.4.3', copy:'.btn-primary{color:#111;background:#2d3b8f}', auto:true },
-      { sev:'moderate', cat:'Empty links/buttons',    sel:'a.icon-only',               wcag:'4.1.2', copy:'Provide accessible name via text or aria-label', auto:true },
-      { sev:'moderate', cat:'Empty links/buttons',    sel:'button.icon-only',          wcag:'4.1.2', copy:'Provide accessible name via text or aria-label', auto:true },
-      { sev:'moderate', cat:'Missing page title',     sel:'<title>',                   wcag:'2.4.2', copy:'<title>CityLights — Home</title>', auto:true },
-      { sev:'moderate', cat:'Missing page language',  sel:'<html>',                    wcag:'3.1.1', copy:'<html lang="en">', auto:true },
+    // ⬆️ Promoted from moderate -> serious (still “Fix”)
+    { sev:'serious',  cat:'Missing page title',     sel:'<title>',                   wcag:'2.4.2', copy:'<title>CityLights — Home</title>', auto:true },
+    { sev:'serious',  cat:'Missing page language',  sel:'<html>',                    wcag:'3.1.1', copy:'<html lang="en">', auto:true },
 
-      // “Guide me” (wizard) — 3
-  { sev:'serious',  cat:'Images without alt',     sel:'img.hero',                  wcag:'1.1.1', fix:'Provide descriptive alt for informative images; use empty alt for decorative.', auto:false },
-  { sev:'serious',  cat:'Form inputs unlabeled',  sel:'input[type="email"]',      wcag:'3.3.2', fix:'Use <label for> or aria-labelledby/aria-label so inputs have accessible names.', auto:false },
-  { sev:'serious',  cat:'Form inputs unlabeled',  sel:'input[type="search"]',     wcag:'3.3.2', fix:'Use <label for> or aria-labelledby/aria-label so inputs have accessible names.', auto:false },
+    // Moderate items
+    { sev:'moderate', cat:'Empty links/buttons',    sel:'a.icon-only',               wcag:'4.1.2', copy:'Provide accessible name via text or aria-label', auto:true },
+    { sev:'moderate', cat:'Empty links/buttons',    sel:'button.icon-only',          wcag:'4.1.2', copy:'Provide accessible name via text or aria-label', auto:true },
 
-  // Human-review — 4
-  { sev:'serious',  cat:'Keyboard flow (no traps)', sel:'#nav, #modal',                   wcag:'2.1.2', needsHuman:true, humanKey:'keyboard-flow' },
-  { sev:'moderate', cat:'Link purpose in context',  sel:'a:contains("Read more"), .icon', wcag:'2.4.4', needsHuman:true, humanKey:'link-purpose' },
-  { sev:'moderate', cat:'Focus order',              sel:'header > nav > a, main h1, .cta', wcag:'2.4.3', needsHuman:true, humanKey:'focus-order' },
-  { sev:'moderate', cat:'Visible focus',            sel:'a, button, input',               wcag:'2.4.7', needsHuman:true, humanKey:'visible-focus' },
-    ]
-,
-  },
+    // ⬇️ Demoted from serious -> moderate and made “Fix” (auto:true)
+    { sev:'moderate', cat:'Form inputs unlabeled',  sel:'input[type="email"]',       wcag:'3.3.2', auto:true },
+    { sev:'moderate', cat:'Form inputs unlabeled',  sel:'input[type="search"]',      wcag:'3.3.2', auto:true },
+
+    // Keep this one as the remaining serious “Guide me”
+    { sev:'serious',  cat:'Images without alt',     sel:'img.hero',                  wcag:'1.1.1', fix:'Provide descriptive alt for informative images; use empty alt for decorative.', auto:false },
+
+    // Human-review items (unchanged)
+    { sev:'serious',  cat:'Keyboard flow (no traps)', sel:'#nav, #modal',                   wcag:'2.1.2', needsHuman:true, humanKey:'keyboard-flow' },
+    { sev:'moderate', cat:'Link purpose in context',  sel:'a:contains("Read more"), .icon', wcag:'2.4.4', needsHuman:true, humanKey:'link-purpose' },
+    { sev:'moderate', cat:'Focus order',              sel:'header > nav > a, main h1, .cta', wcag:'2.4.3', needsHuman:true, humanKey:'focus-order' },
+    { sev:'moderate', cat:'Visible focus',            sel:'a, button, input',               wcag:'2.4.7', needsHuman:true, humanKey:'visible-focus' },
+  ],
+},
   after: {
     name: 'W3C BAD — After',
     url: 'https://www.w3.org/WAI/demos/bad/after/home.html',
@@ -1700,6 +1823,16 @@ const hasAutoFixes = useMemo(() => issues.some(i => i.auto && i.copy), [issues])
 
 
 const counts = countsBySeverity(issues);
+
+function buildLabelSnippet(sel = '') {
+  const isSearch = /type=["']search["']/.test(sel);
+  const isEmail  = /type=["']email["']/.test(sel);
+  const id   = isSearch ? 'search' : (isEmail ? 'email' : 'field');
+  const type = isSearch ? 'search' : (isEmail ? 'email' : 'text');
+  const text = isSearch ? 'Search' : (isEmail ? 'Email'  : 'Label');
+  return `<label for="${id}">${text}</label>\n<input id="${id}" name="${id}" type="${type}" />`;
+}
+
 const rows = issues.map(it => {
   const rule = RULE_MAP[it.cat] || it.cat.toLowerCase().replace(/\s+/g, '-');
   return {
@@ -1710,11 +1843,13 @@ const rows = issues.map(it => {
     help: AXE_RULE_URL(rule),
     sel: sanitize(it.sel || ""),             // sanitize selector/snippet
     wcag: it.wcag,
-  fix: (window.demoFixes?.[rule]?.snippets?.html 
-     || window.demoFixes?.[rule]?.snippets?.css 
-     || window.demoFixes?.[rule]?.snippets?.react 
-     || it.copy 
-     || ""),
+    fix: rule === 'label'
+     ? buildLabelSnippet(it.sel || '')
+     : (window.demoFixes?.[rule]?.snippets?.html
+        || window.demoFixes?.[rule]?.snippets?.css
+        || window.demoFixes?.[rule]?.snippets?.react
+        || it.copy
+        || ""),
     auto: !!it.auto,
     needsHuman: !!it.needsHuman,
     humanKey: it.humanKey || null
@@ -1897,32 +2032,29 @@ const genNote = React.useMemo(() => {
   </div>
 </div>
 
-      {/* Before/After switch + delta */}
-<div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
-    <div className="inline-flex rounded-xl overflow-hidden border border-gray-200 bg-white/80 backdrop-blur">
+      {/* Before/After switch (no duplicate button) */}
+<div className="mt-4 flex items-center gap-3 text-sm" role="group" aria-label="Select dataset">
+  <div className="inline-flex rounded-xl overflow-hidden border border-gray-200 bg-white/80 backdrop-blur">
     <button
       className={`px-3 py-1.5 disabled:opacity-60 disabled:cursor-not-allowed ${dataset==='before'?'bg-indigo-50 text-indigo-700 font-semibold':''}`}
       onClick={()=>setDataset('before')}
       aria-pressed={dataset==='before'}
       disabled={dataset==='before'}
-      title={dataset==='before' ? 'Already showing Before' : undefined}
-    >Before</button>
+      title={dataset==='before' ? 'Already showing Before' : 'Switch to Before demo dataset'}
+    >
+      Before
+    </button>
     <button
       className={`px-3 py-1.5 disabled:opacity-60 disabled:cursor-not-allowed ${dataset==='after'?'bg-indigo-50 text-indigo-700 font-semibold':''}`}
       onClick={()=>setDataset('after')}
       aria-pressed={dataset==='after'}
       disabled={dataset==='after'}
-      title={dataset==='after' ? 'Already showing After' : undefined}
-    >After</button>
+      title={dataset==='after' ? 'Already showing After' : 'Switch to After demo dataset'}
+    >
+      After
+    </button>
   </div>
-  <button
-    className="px-3 py-1.5 rounded border border-indigo-200 text-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-    onClick={() => setDataset('after')}
-    disabled={dataset==='after'}
-    title={dataset==='after' ? 'Already showing After' : 'Switch to After demo dataset'}
-  >
-  Show After (demo)
-  </button>
+  <span className="text-xs text-gray-600">Toggle to compare datasets.</span>
 </div>
 
 
@@ -1956,24 +2088,39 @@ const genNote = React.useMemo(() => {
       </div>
 
       {tab === 'issues' && (
-  <div className="mt-3 flex flex-wrap items-center gap-2" aria-label="Filter by severity">
-    {[
-      ['critical','Critical'],
-      ['serious','Serious'],
-      ['moderate','Moderate'],
-      ['minor','Minor']
-    ].map(([k,label]) => (
-      <button
-        key={k}
-        type="button"
-        aria-pressed={sevSel[k]}
-        onClick={() => toggleSev(k)}
-        className={`px-2 py-1 rounded-full text-xs border ${sevSel[k] ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-gray-300 text-gray-700'}`}
-      >
-        {label}
-      </button>
-    ))}
-    <button type="button" onClick={clearSev} className="ml-1 text-xs underline text-indigo-700">Clear</button>
+  <div className="mt-3 flex flex-wrap items-center gap-2" role="group" aria-label="Filter by severity">
+    {(() => {
+      const cAll = countsBySeverity(issues); // total per severity (unfiltered)
+      const items = [
+        ['critical','Critical'],
+        ['serious','Serious'],
+        ['moderate','Moderate'],
+        ['minor','Minor']
+      ];
+      return items.map(([k,label]) => (
+        <button
+          key={k}
+          type="button"
+          aria-pressed={sevSel[k]}
+          onClick={() => toggleSev(k)}
+          className={`px-3 py-1 rounded-full text-xs border inline-flex items-center gap-1 ${
+            sevSel[k] ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-gray-300 text-gray-700'
+          }`}
+          title={sevSel[k] ? `Hide ${label}` : `Show ${label}`}
+        >
+          <span>{label}</span>
+          <span className="text-[11px] text-gray-500">({cAll[k] || 0})</span>
+        </button>
+      ));
+    })()}
+    <button
+      type="button"
+      onClick={clearSev}
+      className="ml-1 text-xs underline text-indigo-700"
+      title="Reset all severity filters"
+    >
+      Reset filters
+    </button>
   </div>
 )}
 
@@ -2029,117 +2176,138 @@ const genNote = React.useMemo(() => {
 
           <div className="mb-2 flex items-center justify-between text-xs">
             <div aria-live="polite">
-              { (showAll ? totalFiltered : Math.min(5, totalFiltered)) } of { totalFiltered } shown
+              {(showAll ? totalFiltered : Math.min(5, totalFiltered))} of {totalFiltered} shown
             </div>
+
             {totalFiltered > 5 && (
               <button
                 type="button"
+                aria-pressed={showAll}
                 onClick={() => setShowAll(s => !s)}
                 className="px-2 py-1 rounded border border-indigo-200 text-indigo-700"
+                title={showAll ? 'Show top 5 items' : 'Show all items'}
               >
                 {showAll ? 'Show top 5' : 'Show all'}
               </button>
             )}
           </div>
 
-          <table className="min-w-full text-sm">
+          <table className="min-w-full text-sm report-table">
+            <caption className="sr-only">
+              Issues list for this scan: columns are Severity, Issue, Preview, Selector or Snippet, WCAG, and How to fix.
+            </caption>
             <thead className="text-left text-gray-600">
               <tr>
-                <th className="py-2 pr-4">Severity</th>
-                <th className="py-2 pr-4">Issue</th>
-                <th className="py-2 pr-4">Element</th>
-                <th className="py-2 pr-4">Selector/Snippet</th>
-                <th className="py-2 pr-4">WCAG</th>
-                <th className="py-2 pr-4">How to fix</th>
+                <th scope="col" className="py-2 pr-4">Severity</th>
+                <th scope="col" className="py-2 pr-4">Issue</th>
+                <th scope="col" className="py-2 pr-4 w-[84px] text-center">Preview</th>
+                <th scope="col" className="py-2 pr-4">Selector/Snippet</th>
+                <th scope="col" className="py-2 pr-4">WCAG</th>
+                <th scope="col" className="py-2 pr-4">How to fix</th>
               </tr>
             </thead>
+
             <tbody className="align-top text-gray-900">
               {visibleIssues.map((it, i) => (
                 <tr key={i} className="border-t border-gray-100/70">
-                  <td className="py-2 pr-4"><Chip tone={it.sev}>{it.sev}</Chip></td>
+                  <td className="py-2 pr-4"><Chip tone={it.sev}>{labelSev(it.sev)}</Chip></td>
                   <td className="py-2 pr-4">{it.cat}</td>
-                  <td className="py-2 pr-4">
-                    <img
-                      src={buildThumbSrc(it)}
-                      alt=""
-                      width="64"
-                      height="48"
-                      loading="lazy"
-                      decoding="async"
-                      className="w-16 h-12 rounded border border-gray-200 bg-white object-cover"
-                    />
+
+                  {/* Preview thumbnail (decorative) */}
+                  <td className="preview-cell py-2 pr-4 text-center align-middle">
+                    <div className="preview-thumb">
+                      <img
+                        src={buildThumbSrc(it)}
+                        alt="" width="64" height="48"
+                        loading="lazy" decoding="async"
+                      />
+                    </div>
                   </td>
 
+                  {/* Locate-in-code helper */}
                   <td className="py-2 pr-4 font-mono text-xs">
                     <div className="flex items-center gap-2">
                       <span className="truncate block max-w-[220px]">{it.sel}</span>
                       <button
                         type="button"
                         className="px-2 py-1 text-xs rounded border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
-                        onClick={async () => { await window.copyLocateString(it); }}
+                        onClick={async (e) => { await window.copyLocateString(it, e.currentTarget); }}
                         title="Copy locate-in-code string"
                       >
                         Locate in code
                       </button>
                     </div>
                   </td>
-                  <td className="py-2 pr-4 max-w-[520px]">
-                    <div className="space-y-1">
-                      {it.auto ? (() => {
-                        const ruleId = RULE_MAP[it.cat] || it.cat.toLowerCase().replace(/\s+/g,'-');
-                        const fx = (window.demoFixes && window.demoFixes[ruleId]) || null;
-                        const prefer = ruleId === 'color-contrast' ? 'css' : 'html';
-                        const snippet = fx && fx.snippets
-                          ? (fx.snippets[prefer] || fx.snippets.html || fx.snippets.react || fx.snippets.css || it.copy || '')
-                          : (it.copy || '');
 
+                  {/* WCAG link (as “1.4.3”)—click opens QuickRef */}
+                  <td className="py-2 pr-4">
+                    <a
+                      href={wcagHref(it.wcag || '')}
+                      target="_blank" rel="noreferrer"
+                      className="underline decoration-dotted"
+                      title={`Open WCAG ${it.wcag || ''} in QuickRef`}
+                    >
+                      {it.wcag || '—'}
+                    </a>
+                  </td>
+
+                  {/* How to fix: compact actions (Fix modal / Guide me) */}
+                  <td className="py-2 pr-4">
+                    {(() => {
+                      const ruleId = RULE_MAP[it.cat] || it.cat.toLowerCase().replace(/\s+/g, '-');
+
+                      if (it.auto) {
                         return (
-                          <div>
-                            <pre className="rounded bg-zinc-50 p-2 text-xs overflow-x-auto"><code>{snippet}</code></pre>
-                            <div className="mt-1 flex items-center gap-2">
-                              <button
-                                type="button"
-                                className="px-2 py-1 text-xs rounded border border-indigo-200 text-indigo-700"
-                                onClick={async () => { await window.copyTextWithStatus(snippet, 'Snippet copied'); }}
-                              >
-                                Copy
-                              </button>
-                              <a
-                                className="text-xs underline text-indigo-700"
-                                href={AXE_RULE_URL(ruleId)}
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                Rule help ↗
-                              </a>
-                            </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              className="px-2 py-1 text-xs rounded border border-indigo-200 text-indigo-700"
+                              aria-controls="fixModal"
+                              aria-label={`Open fix snippet for ${it.cat}`}
+                              onClick={(e) => {
+                                const anchor = window.buildLocateString(it);
+                                window.openFixModal(ruleId, anchor, e.currentTarget);
+                              }}
+                            >
+                              Fix
+                            </button>
+                            <a
+                              className="text-xs underline text-indigo-700"
+                              href={AXE_RULE_URL(ruleId)}
+                              target="_blank" rel="noreferrer"
+                              aria-label={`Open rule help for ${ruleId}`}
+                              title={`Rule help: ${ruleId}`}
+                            >
+                              Rule help ↗
+                            </a>
                           </div>
                         );
-                      })() : (
-                        <div className="flex items-start gap-2">
-                          <p>{it.fix}</p>
-                          {/* Guided wizard action (human judgement) */}
-                          {(() => {
-                            const ruleId = RULE_MAP[it.cat] || it.cat.toLowerCase().replace(/\s+/g,'-');
-                            const guided = ruleId === 'image-alt' || ruleId === 'label';
-                            return guided ? (
-                              <button
-                                className="px-2 py-1 text-xs rounded ring-1 ring-inset ml-2"
-                                data-action="guide"
-                                data-rule-id={ruleId}
-                                aria-controls="guideModal"
-                                onClick={(e) => window.openGuideWizard(ruleId, it.sel || '', e.currentTarget)}
-                              >
-                                Guide me
-                              </button>
-                            ) : null;
-                          })()}
-                          {it.needsHuman ? (
-                            <span className="ml-2 inline-block text-xs rounded px-2 py-1 bg-yellow-100 text-yellow-800">Needs human review</span>
-                          ) : null}
+                      }
+
+                      // Human-judgement / guided items
+                      const guided = ruleId === 'image-alt' || ruleId === 'label';
+                      return (
+                        <div className="flex items-center gap-2">
+                          {guided && (
+                            <button
+                              className="px-2 py-1 text-xs rounded border border-indigo-200 text-indigo-700"
+                              data-action="guide"
+                              data-rule-id={ruleId}
+                              aria-controls="guideModal"
+                              aria-label={`Open guided steps for ${it.cat}`}
+                              onClick={(e) => window.openGuideWizard(ruleId, it.sel || '', e.currentTarget)}
+                            >
+                              Guide me
+                            </button>
+                          )}
+                          {it.needsHuman && (
+                            <span className="inline-block text-xs rounded px-2 py-1 bg-yellow-100 text-yellow-800">
+                              Needs human review
+                            </span>
+                          )}
                         </div>
-                      )}
-                    </div>
+                      );
+                    })()}
                   </td>
                 </tr>
               ))}
@@ -2797,7 +2965,7 @@ function Pricing({ compact = false, navigate }) {
     seats: 3 },
 
   { key: 'agency', name: 'Agency', monthly: 349, sites: 10, scans: 'nightly',
-    features: ['up to 1,000 pages per nightly crawl (total)', 'CSV/PDF exports', 'priority support', '10 seats'],
+    features: ['up to 1,000 pages per crawl (total)', 'CSV/PDF exports', 'priority support', '10 seats'],
     seats: 10 },
 ]), [])
 
@@ -2829,7 +2997,15 @@ function Pricing({ compact = false, navigate }) {
                 <ul className="mt-4 space-y-2 text-sm text-gray-700 list-disc pl-5">
                   {p.features.map((f, i) => (<li key={i}>{f}</li>))}
                 </ul>
-                <p className="mt-2 text-xs text-gray-500">Typically saves ~5–7 dev-hours per site/month (triage + regressions).</p>
+                <p className="mt-2 text-xs text-gray-500">
+  {p.key === 'free'
+    ? 'Instant baseline for one URL (one-off snapshot).'
+    : p.key === 'starter'
+    ? 'Typically saves ~3–5 dev-hours per month (triage + regressions).'
+    : p.key === 'pro'
+    ? 'Typically saves ~5–7 dev-hours per month across up to 3 sites.'
+    : 'Typically saves ~8–12 dev-hours per month across multiple sites.'}
+</p>
               </div>
               {p.callout ? (
                 <Button variant='secondary' className="bg-white text-indigo-700 ring-1 ring-inset px-3 py-2 mt-6" onClick={() => navigate('/start-baseline')}>Start free baseline</Button>
