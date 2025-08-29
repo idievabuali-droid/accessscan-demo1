@@ -34,7 +34,7 @@
             - generic [ref=e29]: ·
             - link "Compare with the accessible version" [ref=e30] [cursor=pointer]:
               - /url: https://www.w3.org/WAI/demos/bad/after/home.html
-          - paragraph [ref=e31]: "Demo data • Last generated: 28 Aug 2025, 21:48"
+          - paragraph [ref=e31]: "Demo data • Last generated: 28 Aug 2025, 21:44"
           - paragraph [ref=e32]: "Engine: axe-core • WCAG 2.2 aligned • EAA applies (June 2025)"
         - list [ref=e34]:
           - listitem [ref=e35]:
