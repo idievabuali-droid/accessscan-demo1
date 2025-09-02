@@ -2862,6 +2862,12 @@ function ReserveSuccessView() {
               Card: {info.payment_method.brand} •••• {info.payment_method.last4} (exp {info.payment_method.exp_month}/{info.payment_method.exp_year})
             </p>
           )}
+          {/* NEW — echo the website that was saved */}
+          {info.website && (
+            <p className="mt-1 text-sm text-gray-700">
+              Site: <a href={info.website} target="_blank" rel="noreferrer" className="underline">{info.website}</a>
+            </p>
+          )}
           <p className="mt-2 text-sm text-gray-700">Confirmation sent to: <strong>{info.customer_email || 'your email'}</strong></p>
           <a href="#/" className="mt-4 inline-block underline">Back to home</a>
         </div>
