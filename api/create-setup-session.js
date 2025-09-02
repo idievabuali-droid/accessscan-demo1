@@ -6,9 +6,22 @@ export default async function handler(req, res) {
 
   try {
     const key = process.env.STRIPE_SECRET_KEY;
-    if (!key || !key.startsWith('sk_')) {
-      return res.status(500).json({ error: 'MISSING_STRIPE_SECRET_KEY' });
+    
+    // Enhanced debugging
+    if (!key) {
+      return res.status(500).json({ 
+        error: 'MISSING_STRIPE_SECRET_KEY',
+        debug: 'Environment variable STRIPE_SECRET_KEY is not set'
+      });
     }
+    
+    if (!key.startsWith('sk_')) {
+      return res.status(500).json({ 
+        error: 'INVALID_STRIPE_SECRET_KEY',
+        debug: `Key exists but invalid format. Starts with: ${key.substring(0, 3)}`
+      });
+    }
+    
     const stripe = new Stripe(key, { apiVersion: '2024-06-20' });
 
     const { name, email, website } = req.body || {};
