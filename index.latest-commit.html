@@ -1422,83 +1422,55 @@ function Layout({ title, children, navigate }) {
   useEffect(() => { document.title = title }, [title])
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white/60 backdrop-blur-xl shadow-sm" role="banner">
-        {/* Top announcement bar */}
-        <div className="border-b border-amber-200 bg-amber-50/95 text-amber-900">
-          <Container>
-            <div className="h-9 flex items-center justify-between text-sm">
-              <span>
-                🟡 <span className="font-semibold">Beta:</span> onboarding up to 10 sites/week
-              </span>
-              <Button
-                as="a"
-                href="#pricing"
-                onClick={(e)=>{e.preventDefault(); navigate('/pricing');}}
-                variant="ghost"
-                className="!px-3 !py-1.5 !shadow-none !text-xs !bg-amber-100/80 !text-amber-800 !border-amber-200 hover:!bg-amber-200/80"
-              >
-                Reserve Founder Access
-              </Button>
-            </div>
-          </Container>
-        </div>
+      <header className="sticky top-0 z-40 border-b border-white/20 bg-white/50 backdrop-blur-xl shadow-sm" role="banner">
+        <Container>
+          <div className="h-16 flex items-center justify-between">
+            <a href="#home" onClick={(e) => { e.preventDefault(); navigate('/') }} className="inline-flex items-center gap-2 font-bold">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white text-sm shadow-sm">A</span>
+              <span>AccessScan</span>
+            </a>
+            <nav aria-label="Primary" className="hidden sm:flex items-center gap-6 text-sm">
+              <a
+  href="#how-it-works"
+  onClick={(e) => {
+    e.preventDefault();
+    navigate('/'); // go to home
+    setTimeout(() => {
+      const el = document.getElementById('how-it-works');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      // removed: window.location.hash = '#how-it-works';
+    }, 0);
+  }}
+  className="hover:opacity-80"
+>
+  How it works
+</a>
 
-        {/* Main nav */}
-        <div className="border-b border-white/20">
-          <Container>
-            <div className="h-16 flex items-center justify-between">
-              <a href="#home" onClick={(e) => { e.preventDefault(); navigate('/') }} className="inline-flex items-center gap-2 font-bold">
-                <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white text-sm shadow-sm">A</span>
-                <span className="inline-flex items-center gap-2">
-                  AccessScan
-                  {/* BETA badge */}
-                  <span className="rounded-full bg-amber-100 text-amber-800 text-[10px] font-semibold px-2 py-[2px]">
-                    BETA
-                  </span>
-                </span>
+
+
+              <a href="#/report/demo" onClick={(e) => { e.preventDefault(); navigate('/report/demo') }} className="hover:underline">Sample report</a>
+
+              <a
+                href="/pricing"
+                onClick={(e) => { e.preventDefault(); navigate('/pricing'); }}
+                className="hover:opacity-80"
+                >
+                Pricing
               </a>
-              <nav aria-label="Primary" className="hidden sm:flex items-center gap-6 text-sm">
-                <a
-        href="#how-it-works"
-        onClick={(e) => {
-          e.preventDefault();
-          navigate('/'); // go to home
-          setTimeout(() => {
-            const el = document.getElementById('how-it-works');
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
-            // removed: window.location.hash = '#how-it-works';
-          }, 0);
-        }}
-        className="hover:opacity-80"
-      >
-        How it works
-      </a>
+ 
+              <a href="#accessibility" onClick={(e) => { e.preventDefault(); navigate('/accessibility') }} className="hover:underline">Accessibility</a>
+            </nav>
+            <div className="flex items-center gap-3">
+              <Button as="a"
+        href="#start-baseline"
+        className="js-cta-start"
+        data-source="header">
+  Start free baseline
+</Button>
 
-
-
-                <a href="#/report/demo" onClick={(e) => { e.preventDefault(); navigate('/report/demo') }} className="hover:underline">Sample report</a>
-
-                <a
-                  href="/pricing"
-                  onClick={(e) => { e.preventDefault(); navigate('/pricing'); }}
-                  className="hover:opacity-80"
-                  >
-                  Pricing
-                </a>
-       
-                <a href="#accessibility" onClick={(e) => { e.preventDefault(); navigate('/accessibility') }} className="hover:underline">Accessibility</a>
-              </nav>
-              <div className="flex items-center gap-3">
-                <Button as="a"
-          href="#start-baseline"
-          className="js-cta-start"
-          data-source="header">
-    Start free baseline
-  </Button>
-              </div>
             </div>
-          </Container>
-        </div>
+          </div>
+        </Container>
       </header>
 
       <main id="main" role="main">{children}</main>
@@ -1583,17 +1555,7 @@ function Hero({ navigate }) {
   </Button>
 </div>
 
-            {/* Founder Access link */}
-            <p className="mt-3 text-sm">
-              <button
-                className="underline text-amber-600 hover:text-amber-700"
-                onClick={() => navigate('/pricing')}
-              >
-                🚀 Founder Access — Early access with lifetime benefits
-              </button>
-            </p>
-
-            <p className="mt-2">
+            <p className="mt-3">
               <a href="https://www.w3.org/TR/WCAG22/" target="_blank" rel="noreferrer" className="underline underline-offset-2">WCAG 2.2</a>
               &nbsp;aligned •&nbsp;
               <a href="https://digital-strategy.ec.europa.eu/en/policies/web-accessibility" target="_blank" rel="noreferrer" className="underline underline-offset-2">EAA</a>
@@ -2744,7 +2706,7 @@ function StartBaselineView({ navigate }) {
               <li>We’ll queue a scan.</li>
 
               <li>We’ll email you a link to your report + a PDF.</li>
-
+              <li>Fix a few items and request a rescan.</li>
             </ol>
           </aside>
         </div>
@@ -3027,31 +2989,36 @@ function Pricing({ compact = false, navigate }) {
                   <h3 className="text-xl font-bold text-gray-900">{p.name}</h3>
                   <span className="text-xs text-gray-500">{p.sites} site{p.sites > 1 ? 's' : ''} • {p.scans} {p.callout ? '' : 'scans'}</span>
                 </div>
+               
+
+                
 
                 <div className="mt-2 text-3xl font-extrabold text-gray-900">{p.callout ? 'Free' : `£${price}`}<span className="text-base font-normal text-gray-500">{p.callout ? '' : `/${annual ? 'yr' : 'mo'}`}</span></div>
                 <ul className="mt-4 space-y-2 text-sm text-gray-700 list-disc pl-5">
                   {p.features.map((f, i) => (<li key={i}>{f}</li>))}
                 </ul>
                 <p className="mt-2 text-xs text-gray-500">
-                  {p.key === 'free'
-                    ? 'Instant baseline for one URL (one-off snapshot).'
-                    : p.key === 'starter'
-                    ? 'Typically saves ~3–5 dev-hours per month (triage + regressions).'
-                    : p.key === 'pro'
-                    ? 'Typically saves ~5–7 dev-hours per month across up to 3 sites.'
-                    : 'Typically saves ~8–12 dev-hours per month across multiple sites.'}
-                </p>
+  {p.key === 'free'
+    ? 'Instant baseline for one URL (one-off snapshot).'
+    : p.key === 'starter'
+    ? 'Typically saves ~3–5 dev-hours per month (triage + regressions).'
+    : p.key === 'pro'
+    ? 'Typically saves ~5–7 dev-hours per month across up to 3 sites.'
+    : 'Typically saves ~8–12 dev-hours per month across multiple sites.'}
+</p>
               </div>
               {p.callout ? (
                 <Button variant='secondary' className="bg-white text-indigo-700 ring-1 ring-inset px-3 py-2 mt-6" onClick={() => navigate('/start-baseline')}>Start free baseline</Button>
               ) : (
-                <Button
-                  className="mt-6"
-                  onClick={() => { t('pricing_click', { plan: p.key }); navigate(`/start-baseline?plan=${p.key}`) }}
-                >
-                  Choose {p.name}
-                </Button>
-              )}
+  <Button
+    className="mt-6"
+    onClick={() => { t('pricing_click', { plan: p.key }); navigate(`/start-baseline?plan=${p.key}`) }}
+  >
+    Choose {p.name}
+  </Button>
+)}
+
+
             </div>
           )
         })}
@@ -4020,4 +3987,3 @@ if (ok) { ok.classList.remove('opacity-0'); setTimeout(()=>ok.classList.add('opa
 
 </body>
 </html>
-
