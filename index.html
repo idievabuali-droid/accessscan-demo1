@@ -2992,6 +2992,15 @@ function FeatureGrid() {
 function Pricing({ compact = false, navigate }) {
   const [annual, setAnnual] = useState(false)
   const plans = useMemo(() => ([
+  { key: 'founder', name: 'Founder Access (Beta)', price: '£0', priceNote: 'reserve', callout: true, special: true, 
+    badges: ['Beta access', 'Limited-time'],
+    features: [
+      'Includes everything in Free baseline (score + Top-10, WCAG links, PDF by email)',
+      'One free rescan within 30 days (normally paid)',
+      'Founder pricing: 25% off any paid plan for 12 months',
+      'Priority queue + early features'
+    ] },
+
   { key: 'free', name: 'Free baseline', callout: true, sites: 1, scans: '1 page', features: ['Score + Top-10', 'WCAG links', 'PDF by email'] },
 
   { key: 'starter', name: 'Starter', monthly: 39, sites: 1, scans: 'weekly',
@@ -3017,23 +3026,49 @@ function Pricing({ compact = false, navigate }) {
         </button>
         <span className="text-sm text-gray-700">Annual <span className="rounded bg-green-100 px-2 py-0.5 text-green-700 text-xs">2 months free</span></span>
       </div>
-      <div className={`grid gap-6 ${compact ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-4'}`}>
+      <div className={`grid gap-6 ${compact ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-5'}`}>
         {plans.map((p) => {
           const price = p.callout ? 0 : (annual ? Math.round(p.monthly * 10) : p.monthly)
+          const isFounder = p.key === 'founder'
           return (
-            <div key={p.key} data-plan={p.key} className="glass-card rounded-2xl p-6 shadow flex flex-col border border-white/30">
+            <div key={p.key} data-plan={p.key} className={`glass-card rounded-2xl p-6 shadow flex flex-col ${isFounder ? 'border-2 border-amber-400 bg-gradient-to-br from-amber-50/80 to-yellow-50/60' : 'border border-white/30'}`}>
               <div className="flex-1">
-                <div className="flex items-baseline gap-2">
+                <div className="flex items-baseline gap-2 flex-wrap">
                   <h3 className="text-xl font-bold text-gray-900">{p.name}</h3>
-                  <span className="text-xs text-gray-500">{p.sites} site{p.sites > 1 ? 's' : ''} • {p.scans} {p.callout ? '' : 'scans'}</span>
+                  {isFounder && p.badges && (
+                    <div className="flex gap-1 flex-wrap">
+                      {p.badges.map((badge, i) => (
+                        <span key={i} className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 text-xs font-semibold px-2 py-1">
+                          {badge}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {!isFounder && (
+                    <span className="text-xs text-gray-500">{p.sites} site{p.sites > 1 ? 's' : ''} • {p.scans} {p.callout ? '' : 'scans'}</span>
+                  )}
                 </div>
 
-                <div className="mt-2 text-3xl font-extrabold text-gray-900">{p.callout ? 'Free' : `£${price}`}<span className="text-base font-normal text-gray-500">{p.callout ? '' : `/${annual ? 'yr' : 'mo'}`}</span></div>
-                <ul className="mt-4 space-y-2 text-sm text-gray-700 list-disc pl-5">
-                  {p.features.map((f, i) => (<li key={i}>{f}</li>))}
+                <div className="mt-2 text-3xl font-extrabold text-gray-900">
+                  {isFounder ? p.price : (p.callout ? 'Free' : `£${price}`)}
+                  <span className="text-base font-normal text-gray-500">
+                    {isFounder ? ` ${p.priceNote}` : (p.callout ? '' : `/${annual ? 'yr' : 'mo'}`)}
+                  </span>
+                </div>
+                
+                <ul className={`mt-4 space-y-2 text-sm text-gray-700 ${isFounder ? 'list-none pl-0' : 'list-disc pl-5'}`}>
+                  {p.features.map((f, i) => (
+                    <li key={i} className={isFounder ? 'flex items-start gap-2' : ''}>
+                      {isFounder && <span className="text-amber-500 mt-0.5">✨</span>}
+                      {f}
+                    </li>
+                  ))}
                 </ul>
+                
                 <p className="mt-2 text-xs text-gray-500">
-                  {p.key === 'free'
+                  {p.key === 'founder'
+                    ? 'Early access to our accessibility platform. Priority queue and special pricing.'
+                    : p.key === 'free'
                     ? 'Instant baseline for one URL (one-off snapshot).'
                     : p.key === 'starter'
                     ? 'Typically saves ~3–5 dev-hours per month (triage + regressions).'
@@ -3042,7 +3077,11 @@ function Pricing({ compact = false, navigate }) {
                     : 'Typically saves ~8–12 dev-hours per month across multiple sites.'}
                 </p>
               </div>
-              {p.callout ? (
+              {p.key === 'founder' ? (
+                <Button className="mt-6 bg-amber-500 hover:bg-amber-600 text-white" onClick={() => navigate('/founder-access')}>
+                  🚀 Reserve Founder Access
+                </Button>
+              ) : p.callout ? (
                 <Button variant='secondary' className="bg-white text-indigo-700 ring-1 ring-inset px-3 py-2 mt-6" onClick={() => navigate('/start-baseline')}>Start free baseline</Button>
               ) : (
                 <Button
