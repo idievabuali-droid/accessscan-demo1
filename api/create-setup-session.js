@@ -45,7 +45,6 @@ export default async function handler(req, res) {
       cancel_url: `${origin}/#/founder-access?canceled=1`,
       // Keep useful context
       metadata: { website, name },
-      consent_collection: { terms_of_service: 'required' },
       locale: 'auto'
     });
 
