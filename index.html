@@ -1480,6 +1480,7 @@ const TITLE_MAP = {
 // Layout (header + footer)
 // ----------------------------
 function Layout({ title, children, navigate }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   useEffect(() => { document.title = title }, [title])
   return (
     <>
@@ -1563,16 +1564,101 @@ function Layout({ title, children, navigate }) {
                 <a href="#accessibility" onClick={(e) => { e.preventDefault(); navigate('/accessibility') }} className="hover:underline">Accessibility</a>
               </nav>
               <div className="flex items-center gap-3">
+                {/* Mobile menu button */}
+                <button
+                  className="sm:hidden p-2 rounded-xl bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white transition-all duration-200"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  aria-label="Toggle navigation menu"
+                >
+                  <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {mobileMenuOpen ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    )}
+                  </svg>
+                </button>
+                
+                {/* Desktop CTA button */}
                 <Button as="a"
-          href="#start-baseline"
-          className="js-cta-start"
-          data-source="header">
-    Start free baseline
-  </Button>
+                  href="#start-baseline"
+                  className="js-cta-start hidden sm:inline-flex"
+                  data-source="header">
+                  Start free baseline
+                </Button>
               </div>
             </div>
           </Container>
         </div>
+        
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="sm:hidden border-t border-gray-200 bg-white/95 backdrop-blur-xl">
+            <Container>
+              <div className="py-4 space-y-3">
+                <a
+                  href="#how-it-works"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileMenuOpen(false);
+                    navigate('/');
+                    setTimeout(() => {
+                      const el = document.getElementById('how-it-works');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }, 0);
+                  }}
+                  className="block py-2 px-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
+                >
+                  How it works
+                </a>
+                <a
+                  href="#/report/demo"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileMenuOpen(false);
+                    navigate('/report/demo');
+                  }}
+                  className="block py-2 px-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
+                >
+                  Sample report
+                </a>
+                <a
+                  href="/pricing"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileMenuOpen(false);
+                    navigate('/pricing');
+                  }}
+                  className="block py-2 px-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
+                >
+                  Pricing
+                </a>
+                <a
+                  href="#accessibility"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileMenuOpen(false);
+                    navigate('/accessibility');
+                  }}
+                  className="block py-2 px-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
+                >
+                  Accessibility
+                </a>
+                <div className="pt-3 border-t border-gray-200">
+                  <Button
+                    as="a"
+                    href="#start-baseline"
+                    className="js-cta-start w-full justify-center"
+                    data-source="mobile-header"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Start free baseline
+                  </Button>
+                </div>
+              </div>
+            </Container>
+          </div>
+        )}
       </header>
 
       <main id="main" role="main">{children}</main>
@@ -2716,18 +2802,52 @@ function HomeView({ navigate }) {
     <>
       <Hero navigate={navigate} />
 
-      {/* 3-step walkthrough strip directly under hero */}
-      <section id="how-it-works" aria-labelledby="howitworks-title" className="mx-auto max-w-7xl px-4 lg:px-6 py-10">
-        <h2 id="howitworks-title" className="text-xl font-semibold mb-4">How it works</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+      {/* Enhanced 3-step walkthrough */}
+      <section id="how-it-works" aria-labelledby="howitworks-title" className="mx-auto max-w-7xl px-4 lg:px-6 py-16 lg:py-20">
+        <div className="text-center mb-12">
+          <h2 id="howitworks-title" className="text-3xl lg:text-4xl font-bold tracking-tight text-gray-900 mb-4">
+            How it works
+          </h2>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Get actionable accessibility insights in minutes with our streamlined three-step process
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12 relative">
+          {/* Connection lines for desktop */}
+          <div className="hidden md:block absolute top-16 left-1/3 right-1/3 h-0.5 bg-gradient-to-r from-blue-200 via-emerald-200 to-blue-200"></div>
+          
           {[
-            { icon: '🔗', text: 'Paste your URL — run a scan (minutes).' },
-            { icon: '✅', text: 'See top 10 issues with WCAG links and how-to-fix snippets.' },
-            { icon: '📈', text: '(Paid) weekly or nightly rescans and score trend.' },
+            { 
+              icon: '🔗', 
+              title: 'Scan Your Site', 
+              text: 'Paste your URL and run a comprehensive scan in just minutes.',
+              step: '01'
+            },
+            { 
+              icon: '✅', 
+              title: 'Get Actionable Insights', 
+              text: 'See top 10 issues with WCAG links and copy-paste fix snippets.',
+              step: '02'
+            },
+            { 
+              icon: '📈', 
+              title: 'Track Progress', 
+              text: 'Monitor improvements with weekly rescans and score trends.',
+              step: '03'
+            },
           ].map((s, i) => (
-            <div key={i} className="glass-card rounded-2xl p-5 min-h-24">
-              <div className="text-2xl mb-2" aria-hidden="true">{s.icon}</div>
-              <p className="text-slate-800">{s.text}</p>
+            <div key={i} className="relative">
+              {/* Step number */}
+              <div className="absolute -top-4 left-6 w-8 h-8 bg-gradient-to-r from-blue-500 to-emerald-500 text-white text-sm font-bold rounded-full flex items-center justify-center shadow-lg z-10">
+                {s.step}
+              </div>
+              
+              <div className="glass-card rounded-3xl p-8 min-h-48 hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border border-white/60 bg-white/90 backdrop-blur-sm">
+                <div className="text-4xl mb-4" aria-hidden="true">{s.icon}</div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">{s.title}</h3>
+                <p className="text-gray-700 leading-relaxed">{s.text}</p>
+              </div>
             </div>
           ))}
         </div>
@@ -2740,12 +2860,23 @@ function HomeView({ navigate }) {
         </Container>
       </section>
       <FeatureGrid />
-      <section id="faq" aria-labelledby="faq-title" className="border-t border-white/20 py-12 sm:py-16">
+      <section id="faq" aria-labelledby="faq-title" className="border-t border-emerald-200/50 py-16 lg:py-20">
         <Container>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="glass-card rounded-2xl p-6">
-              <h3 className="font-semibold text-gray-900">Do you guarantee compliance?</h3>
-              <p className="mt-2 text-gray-700">No single tool can. We cover common issues automatically and guide the rest.</p>
+          <div className="text-center mb-12">
+            <h2 id="faq-title" className="text-3xl lg:text-4xl font-bold tracking-tight text-gray-900 mb-4">
+              Frequently asked questions
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Everything you need to know about our accessibility scanning platform
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <div className="glass-card rounded-3xl p-8 hover:shadow-xl transition-all duration-300 border border-white/60 bg-white/90 backdrop-blur-sm">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-3">
+                <span className="w-8 h-8 bg-gradient-to-r from-blue-500 to-emerald-500 text-white text-sm rounded-full flex items-center justify-center">?</span>
+                Do you guarantee compliance?
+              </h3>
+              <p className="text-gray-700 leading-relaxed">No single tool can guarantee full accessibility compliance. We cover common issues automatically and provide clear guidance on what still needs human review to help you build truly accessible experiences.</p>
             </div>
             <div className="glass-card rounded-2xl p-6">
               <h3 className="font-semibold text-gray-900">Do you inject an overlay?</h3>
@@ -3225,19 +3356,41 @@ function EmailPreviewView({ navigate }) {
 
 function FeatureGrid() {
   const items = [
-    { t: 'Top issues, prioritized' },
-    { t: 'Actionable fixes (copy CSS / markup)' },
-    { t: 'Score & trend + PDF' },
+    { 
+      icon: '🎯',
+      title: 'Top issues, prioritized',
+      description: 'Focus on what matters most with AI-powered issue ranking'
+    },
+    { 
+      icon: '⚡',
+      title: 'Actionable fixes',
+      description: 'Copy-paste CSS and markup solutions ready to ship'
+    },
+    { 
+      icon: '📊',
+      title: 'Score & trend tracking',
+      description: 'Monitor progress with detailed PDFs and trend analysis'
+    },
     { t: 'Transparent “Needs human review” in every report' },
   ]
   return (
-    <section aria-labelledby="features-title" className="border-t border-white/20 py-12 sm:py-16">
+    <section aria-labelledby="features-title" className="border-t border-emerald-200/50 py-16 lg:py-20 bg-gradient-to-b from-white to-blue-50/30">
       <Container>
-        <h2 id="features-title" className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 mb-6">Why teams use AccessScan</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="text-center mb-12">
+          <h2 id="features-title" className="text-3xl lg:text-4xl font-bold tracking-tight text-gray-900 mb-4">
+            Why teams use AccessScan
+          </h2>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Everything you need to build accessible experiences that work for everyone
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {items.map((f, i) => (
-            <div key={i} className="glass-card rounded-2xl p-6">
-              <p className="text-gray-800">{f.t}</p>
+            <div key={i} className="glass-card rounded-3xl p-8 text-center hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border border-white/60 bg-white/90 backdrop-blur-sm">
+              <div className="text-4xl mb-4" aria-hidden="true">{f.icon || '✨'}</div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">{f.title || f.t}</h3>
+              <p className="text-gray-600 leading-relaxed">{f.description || 'Enhanced accessibility insights'}</p>
             </div>
           ))}
         </div>
@@ -3641,7 +3794,7 @@ function App() {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-indigo-50 text-slate-900">
       <Layout title={title} navigate={navigate}>
   <ErrorBoundary>
-    {route === '/' && <HomeView navigate={navigate} />}
+    {(route === '/' || route === '/home') && <HomeView navigate={navigate} />}
     {route === '/start-baseline' && <StartBaselineView navigate={navigate} />}
     {route === '/lead' && <PlanLeadView navigate={navigate} />}
 
