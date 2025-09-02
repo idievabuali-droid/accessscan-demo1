@@ -1,13 +1,18 @@
 // /api/create-setup-session.js
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
   try {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key || !key.startsWith('sk_')) {
+      return res.status(500).json({ error: 'MISSING_STRIPE_SECRET_KEY' });
+    }
+    const stripe = new Stripe(key, { apiVersion: '2024-06-20' });
+
     const { name, email, website } = req.body || {};
-    if (!name || !email || !website) return res.status(400).json({ error: 'Missing fields' });
+    if (!name || !email || !website) return res.status(400).json({ error: 'MISSING_FIELDS' });
 
     // Reuse customer by email for repeat attempts
     const existing = await stripe.customers.list({ email, limit: 1 });
@@ -33,7 +38,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ url: session.url });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'stripe_error', message: err.message });
+    console.error('create-setup-session error:', err?.message || err);
+    return res.status(500).json({ error: 'STRIPE_CREATE_SESSION_FAILED', message: err?.message || 'unknown' });
   }
 }

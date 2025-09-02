@@ -3,6 +3,6 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "stripe": "^16.6.0"
+    "stripe": "^16.12.0"
   }
 }
