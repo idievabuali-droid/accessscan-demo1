@@ -1673,27 +1673,26 @@ function Layout({ title, children, navigate }) {
               <p className="text-sm text-gray-600 leading-relaxed mb-3">Transparent automated accessibility audits with human‑check guidance. No overlays, no hype.</p>
               <p className="mt-3 text-xs text-gray-600">Transparent by design: tools can’t check everything; humans still matter.</p>
             </div>
-            <div className="glass-card rounded-2xl p-6 text-sm">
-              <div className="font-semibold text-gray-900 mb-2">Product</div>
-              <ul className="space-y-2">
-                <li><a href="#pricing" onClick={(e) => { e.preventDefault(); navigate('/pricing') }} className="hover:underline">Pricing</a></li>
-                <li><a href="#/report/demo" onClick={(e) => { e.preventDefault(); navigate('/report/demo') }} className="hover:underline">Sample report</a>
-</li>
-                <li><a href="#accessibility" onClick={(e) => { e.preventDefault(); navigate('/accessibility') }} className="hover:underline">Accessibility</a></li>
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-4">Product</h3>
+              <ul className="space-y-3 text-sm">
+                <li><a href="#pricing" onClick={(e) => { e.preventDefault(); navigate('/pricing') }} className="text-gray-600 hover:text-blue-600 transition-colors duration-200">Pricing</a></li>
+                <li><a href="#/report/demo" onClick={(e) => { e.preventDefault(); navigate('/report/demo') }} className="text-gray-600 hover:text-blue-600 transition-colors duration-200">Sample report</a></li>
+                <li><a href="#accessibility" onClick={(e) => { e.preventDefault(); navigate('/accessibility') }} className="text-gray-600 hover:text-blue-600 transition-colors duration-200">Accessibility</a></li>
               </ul>
             </div>
-            <div className="glass-card rounded-2xl p-6 text-sm">
-              <div className="font-semibold text-gray-900 mb-2">Legal</div>
-              <ul className="space-y-2">
-                <li><a href="#privacy" onClick={(e) => { e.preventDefault(); navigate('/privacy') }} className="hover:underline">Privacy</a></li>
-                <li><a href="#terms" onClick={(e) => { e.preventDefault(); navigate('/terms') }} className="hover:underline">Terms</a></li>
-                <li><a href="#cookies" onClick={(e) => { e.preventDefault(); navigate('/cookies') }} className="hover:underline">Cookies</a></li>
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-4">Legal</h3>
+              <ul className="space-y-3 text-sm">
+                <li><a href="#privacy" onClick={(e) => { e.preventDefault(); navigate('/privacy') }} className="text-gray-600 hover:text-blue-600 transition-colors duration-200">Privacy</a></li>
+                <li><a href="#terms" onClick={(e) => { e.preventDefault(); navigate('/terms') }} className="text-gray-600 hover:text-blue-600 transition-colors duration-200">Terms</a></li>
+                <li><a href="#cookies" onClick={(e) => { e.preventDefault(); navigate('/cookies') }} className="text-gray-600 hover:text-blue-600 transition-colors duration-200">Cookies</a></li>
               </ul>
             </div>
-            <div className="glass-card rounded-2xl p-6 text-sm">
-              <div className="font-semibold text-gray-900 mb-2">Contact</div>
-              <ul className="space-y-2">
-                <li><a className="hover:underline" href="mailto:idievabuali@gmail.com">idievabuali@gmail.com</a></li>
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-4">Contact</h3>
+              <ul className="space-y-3 text-sm">
+                <li><a className="text-gray-600 hover:text-blue-600 transition-colors duration-200" href="mailto:idievabuali@gmail.com">idievabuali@gmail.com</a></li>
               </ul>
             </div>
           </div>
@@ -3632,26 +3631,50 @@ function AccessibilityView() {
   return (
     <section className="py-12 sm:py-16">
       <Container>
-        <h1 className="text-3xl font-bold text-gray-900">Accessibility statement</h1>
-        <div className="mt-4 glass-card rounded-2xl border border-white/30 p-6 shadow text-sm text-gray-800 space-y-4">
-          <p>This statement applies to this demo site and targets <strong>WCAG 2.2 Level AA</strong>. Some parts may not fully conform as this is a demonstration.</p>
-          <h2 className="text-xl font-semibold">Measures to support accessibility</h2>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>Accessibility is embedded in design/development reviews.</li>
-            <li>Automated testing for common issues.</li>
-            <li>Manual testing of key flows with keyboard and screen readers.</li>
-          </ul>
-          <h2 className="text-xl font-semibold">Conformance status</h2>
-          <p>We aim for WCAG 2.2 Level AA. Known gaps are tracked and prioritized.</p>
-          <h2 className="text-xl font-semibold">Feedback</h2>
-          <p>If you encounter accessibility barriers, email <a className="underline" href="mailto:idievabuali@gmail.com">idievabuali@gmail.com</a>. We try to respond within 5 business days.</p>
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-4">Accessibility Statement</h1>
+            <div className="w-24 h-1 bg-gradient-to-r from-blue-600 to-emerald-600 mx-auto rounded-full"></div>
+          </div>
+          <div className="glass-card rounded-3xl border border-white/30 p-8 shadow-xl">
+            <div className="prose prose-gray max-w-none text-gray-700 leading-relaxed space-y-6">
+              <p className="text-lg">This statement applies to this demo site and targets <strong className="text-blue-700">WCAG 2.2 Level AA</strong>. Some parts may not fully conform as this is a demonstration.</p>
+              
+              <div className="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-r-xl">
+                <h2 className="text-xl font-semibold text-blue-900 mb-3">Measures to support accessibility</h2>
+                <ul className="list-disc pl-5 space-y-2 text-blue-800">
+                  <li>Accessibility is embedded in design/development reviews.</li>
+                  <li>Automated testing for common issues.</li>
+                  <li>Manual testing of key flows with keyboard and screen readers.</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-3">Conformance status</h2>
+                <p>We aim for WCAG 2.2 Level AA. Known gaps are tracked and prioritized.</p>
+              </div>
+              
+              <div className="bg-green-50 border-l-4 border-green-400 p-6 rounded-r-xl">
+                <h2 className="text-xl font-semibold text-green-900 mb-3">Feedback</h2>
+                <p className="text-green-800">If you encounter accessibility barriers, email <a className="text-green-600 hover:text-green-800 font-semibold transition-colors duration-200" href="mailto:idievabuali@gmail.com">idievabuali@gmail.com</a>. We try to respond within 5 business days.</p>
+              </div>
 
-          <h2 className="text-xl font-semibold">Technical specifications</h2>
-          <p>Technology used: HTML, WAI‑ARIA, CSS, JavaScript.</p>
-          <h2 className="text-xl font-semibold">Assessment approach</h2>
-          <p>Self-evaluation using automated checks and manual verification.</p>
-          <h2 className="text-xl font-semibold">Date</h2>
-          <p>This statement was last reviewed on {new Date().toLocaleDateString()}.</p>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-3">Technical specifications</h2>
+                <p>Technology used: HTML, WAI‑ARIA, CSS, JavaScript.</p>
+              </div>
+              
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-3">Assessment approach</h2>
+                <p>Self-evaluation using automated checks and manual verification.</p>
+              </div>
+              
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-3">Date</h2>
+                <p>This statement was last reviewed on {new Date().toLocaleDateString()}.</p>
+              </div>
+            </div>
+          </div>
         </div>
       </Container>
     </section>
@@ -3703,7 +3726,15 @@ function TermsPage() {
 function CookiesPage() {
   return (
     <SimpleDoc title="Cookies">
-      <p>We use <a className="underline" href="https://plausible.io" target="_blank" rel="noreferrer">Plausible Analytics</a>, which is cookieless. No consent banner is shown in this mode. Learn how Plausible handles data in their <a className="underline" href="https://plausible.io/data-policy" target="_blank" rel="noreferrer">Data Policy</a>. If we switch to Google Analytics in the future, we will add a cookie banner and Consent Mode v2 for UK/EU.</p>
+      <div className="space-y-6">
+        <p className="text-lg leading-relaxed">We use <a className="text-blue-600 hover:text-blue-800 font-semibold transition-colors duration-200" href="https://plausible.io" target="_blank" rel="noreferrer">Plausible Analytics</a>, which is cookieless. No consent banner is shown in this mode.</p>
+        <div className="bg-green-50 border-l-4 border-green-400 p-6 rounded-r-xl">
+          <p className="text-green-800 font-medium">Learn how Plausible handles data in their <a className="text-green-600 hover:text-green-800 font-semibold transition-colors duration-200" href="https://plausible.io/data-policy" target="_blank" rel="noreferrer">Data Policy</a>.</p>
+        </div>
+        <div className="bg-gray-50 border-l-4 border-gray-400 p-6 rounded-r-xl">
+          <p className="text-gray-800 font-medium">If we switch to Google Analytics in the future, we will add a cookie banner and Consent Mode v2 for UK/EU.</p>
+        </div>
+      </div>
     </SimpleDoc>
   )
 }
