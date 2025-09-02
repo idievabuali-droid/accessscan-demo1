@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     const stripe = new Stripe(key, { apiVersion: '2024-06-20' });
 
     const { name = '', email = '', website = '' } = (req.body || {});
-    if (!email) return res.status(400).json({ error: 'Missing email' });
+    if (!name || !email || !website) return res.status(400).json({ error: 'Missing required fields' });
 
     // Find or create customer
     const found = await stripe.customers.list({ email, limit: 1 });
@@ -75,7 +75,6 @@ export default async function handler(req, res) {
         }
       },
 
-      consent_collection: { terms_of_service: 'required' },
       locale: 'auto'
     });
 
