@@ -2996,9 +2996,9 @@ function Pricing({ compact = false, navigate }) {
     badges: ['Beta access', 'Limited-time'],
     features: [
       'Includes everything in Free baseline (score + Top-10, WCAG links, PDF by email)',
-      'One free rescan within 30 days (normally paid)',
-      'Founder pricing: 25% off any paid plan for 12 months',
-      'Priority queue + early features'
+      '<strong>One free rescan within 30 days (normally paid)</strong>',
+      '<strong>Founder pricing: 25% off any paid plan for 12 months</strong>',
+      '<strong>Priority queue + early features</strong>'
     ] },
 
   { key: 'free', name: 'Free baseline', callout: true, sites: 1, scans: '1 page', features: ['Score + Top-10', 'WCAG links', 'PDF by email'] },
@@ -3060,7 +3060,11 @@ function Pricing({ compact = false, navigate }) {
                   {p.features.map((f, i) => (
                     <li key={i} className={`leading-relaxed ${isFounder ? 'flex items-start gap-2' : ''}`}>
                       {isFounder && <span className="text-amber-500 mt-0.5 flex-shrink-0">✨</span>}
-                      <span>{f}</span>
+                      {isFounder ? (
+                        <span dangerouslySetInnerHTML={{ __html: f }} />
+                      ) : (
+                        <span>{f}</span>
+                      )}
                     </li>
                   ))}
                 </ul>
