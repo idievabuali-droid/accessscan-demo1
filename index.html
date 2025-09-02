@@ -3026,17 +3026,17 @@ function Pricing({ compact = false, navigate }) {
         </button>
         <span className="text-sm text-gray-700">Annual <span className="rounded bg-green-100 px-2 py-0.5 text-green-700 text-xs">2 months free</span></span>
       </div>
-      <div className={`grid gap-6 ${compact ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-5'}`}>
+      <div className={`grid gap-6 ${compact ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5'}`}>
         {plans.map((p) => {
           const price = p.callout ? 0 : (annual ? Math.round(p.monthly * 10) : p.monthly)
           const isFounder = p.key === 'founder'
           return (
-            <div key={p.key} data-plan={p.key} className={`glass-card rounded-2xl p-6 shadow flex flex-col ${isFounder ? 'border-2 border-amber-400 bg-gradient-to-br from-amber-50/80 to-yellow-50/60' : 'border border-white/30'}`}>
+            <div key={p.key} data-plan={p.key} className={`glass-card rounded-2xl p-6 shadow flex flex-col min-h-[400px] ${isFounder ? 'border-2 border-amber-400 bg-gradient-to-br from-amber-50/80 to-yellow-50/60' : 'border border-white/30'}`}>
               <div className="flex-1">
-                <div className="flex items-baseline gap-2 flex-wrap">
-                  <h3 className="text-xl font-bold text-gray-900">{p.name}</h3>
+                <div className="mb-2">
+                  <h3 className="text-lg font-bold text-gray-900 leading-tight mb-2">{p.name}</h3>
                   {isFounder && p.badges && (
-                    <div className="flex gap-1 flex-wrap">
+                    <div className="flex gap-1 flex-wrap mb-2">
                       {p.badges.map((badge, i) => (
                         <span key={i} className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 text-xs font-semibold px-2 py-1">
                           {badge}
@@ -3045,27 +3045,27 @@ function Pricing({ compact = false, navigate }) {
                     </div>
                   )}
                   {!isFounder && (
-                    <span className="text-xs text-gray-500">{p.sites} site{p.sites > 1 ? 's' : ''} • {p.scans} {p.callout ? '' : 'scans'}</span>
+                    <span className="text-xs text-gray-500 block">{p.sites} site{p.sites > 1 ? 's' : ''} • {p.scans} {p.callout ? '' : 'scans'}</span>
                   )}
                 </div>
 
-                <div className="mt-2 text-3xl font-extrabold text-gray-900">
+                <div className="mb-4 text-2xl lg:text-3xl font-extrabold text-gray-900">
                   {isFounder ? p.price : (p.callout ? 'Free' : `£${price}`)}
-                  <span className="text-base font-normal text-gray-500">
+                  <span className="text-sm lg:text-base font-normal text-gray-500">
                     {isFounder ? ` ${p.priceNote}` : (p.callout ? '' : `/${annual ? 'yr' : 'mo'}`)}
                   </span>
                 </div>
                 
-                <ul className={`mt-4 space-y-2 text-sm text-gray-700 ${isFounder ? 'list-none pl-0' : 'list-disc pl-5'}`}>
+                <ul className={`mb-4 space-y-2 text-sm text-gray-700 ${isFounder ? 'list-none pl-0' : 'list-disc pl-5'}`}>
                   {p.features.map((f, i) => (
-                    <li key={i} className={isFounder ? 'flex items-start gap-2' : ''}>
-                      {isFounder && <span className="text-amber-500 mt-0.5">✨</span>}
-                      {f}
+                    <li key={i} className={`leading-relaxed ${isFounder ? 'flex items-start gap-2' : ''}`}>
+                      {isFounder && <span className="text-amber-500 mt-0.5 flex-shrink-0">✨</span>}
+                      <span>{f}</span>
                     </li>
                   ))}
                 </ul>
                 
-                <p className="mt-2 text-xs text-gray-500">
+                <p className="text-xs text-gray-500 leading-relaxed">
                   {p.key === 'founder'
                     ? 'Early access to our accessibility platform. Priority queue and special pricing.'
                     : p.key === 'free'
