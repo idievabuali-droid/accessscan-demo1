@@ -3,9 +3,9 @@
 // Creates a Stripe Checkout Session in "setup" mode and
 // saves Website URL on the Customer + Session + SetupIntent metadata.
 
-const Stripe = require('stripe');
+import Stripe from 'stripe';
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   try {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
@@ -84,4 +84,4 @@ module.exports = async function handler(req, res) {
     console.error('create-setup-session error:', err);
     return res.status(500).json({ error: 'SERVER_ERROR' });
   }
-};
+}

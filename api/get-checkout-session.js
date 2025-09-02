@@ -2,9 +2,9 @@
 // Returns summary for the success page and surfaces the website URL
 // from Session/SetupIntent/Customer metadata.
 
-const Stripe = require('stripe');
+import Stripe from 'stripe';
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   try {
     if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });
 
@@ -52,4 +52,4 @@ module.exports = async function handler(req, res) {
     console.error('get-checkout-session error:', err);
     return res.status(500).json({ error: 'SERVER_ERROR' });
   }
-};
+}
