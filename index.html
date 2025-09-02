@@ -3026,15 +3026,15 @@ function Pricing({ compact = false, navigate }) {
         </button>
         <span className="text-sm text-gray-700">Annual <span className="rounded bg-green-100 px-2 py-0.5 text-green-700 text-xs">2 months free</span></span>
       </div>
-      <div className={`grid gap-6 ${compact ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5'}`}>
+      <div className={`grid gap-8 ${compact ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'} max-w-none`}>
         {plans.map((p) => {
           const price = p.callout ? 0 : (annual ? Math.round(p.monthly * 10) : p.monthly)
           const isFounder = p.key === 'founder'
           return (
-            <div key={p.key} data-plan={p.key} className={`glass-card rounded-2xl p-6 shadow flex flex-col min-h-[400px] ${isFounder ? 'border-2 border-amber-400 bg-gradient-to-br from-amber-50/80 to-yellow-50/60' : 'border border-white/30'}`}>
+            <div key={p.key} data-plan={p.key} className={`glass-card rounded-2xl p-8 shadow flex flex-col min-h-[450px] ${isFounder ? 'border-2 border-amber-400 bg-gradient-to-br from-amber-50/80 to-yellow-50/60' : 'border border-white/30'}`}>
               <div className="flex-1">
-                <div className="mb-2">
-                  <h3 className="text-lg font-bold text-gray-900 leading-tight mb-2">{p.name}</h3>
+                <div className="mb-3">
+                  <h3 className="text-xl lg:text-2xl font-bold text-gray-900 leading-tight mb-3">{p.name}</h3>
                   {isFounder && p.badges && (
                     <div className="flex gap-1 flex-wrap mb-2">
                       {p.badges.map((badge, i) => (
@@ -3049,9 +3049,9 @@ function Pricing({ compact = false, navigate }) {
                   )}
                 </div>
 
-                <div className="mb-4 text-2xl lg:text-3xl font-extrabold text-gray-900">
+                <div className="mb-6 text-3xl lg:text-4xl font-extrabold text-gray-900">
                   {isFounder ? p.price : (p.callout ? 'Free' : `£${price}`)}
-                  <span className="text-sm lg:text-base font-normal text-gray-500">
+                  <span className="text-base lg:text-lg font-normal text-gray-500">
                     {isFounder ? ` ${p.priceNote}` : (p.callout ? '' : `/${annual ? 'yr' : 'mo'}`)}
                   </span>
                 </div>
