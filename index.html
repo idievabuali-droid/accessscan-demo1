@@ -1568,7 +1568,7 @@ function Layout({ title, children, navigate }) {
                 <button
                   type="button"
                   className="sm:hidden p-2 rounded-xl bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white transition-all duration-200"
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  onClick={function() { setMobileMenuOpen(!mobileMenuOpen); }}
                   aria-label="Toggle navigation menu"
                 >
                   <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
