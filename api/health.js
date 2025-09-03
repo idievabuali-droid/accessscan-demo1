@@ -1,5 +1,5 @@
 // Simple health check endpoint
-module.exports = async function handler(req, res) {
+module.exports = function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -11,7 +11,7 @@ module.exports = async function handler(req, res) {
   return res.status(200).json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    message: 'API is working',
+    message: 'API is working perfectly',
     environment: {
       hasStripeKey: !!process.env.STRIPE_SECRET_KEY,
       hasAdminToken: !!process.env.ADMIN_TOKEN,

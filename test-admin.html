@@ -60,6 +60,7 @@
                         <p><strong>Current Domain:</strong> <span id="current-domain"></span></p>
                         <p><strong>Health API:</strong> <span id="health-url"></span></p>
                         <p><strong>Admin API:</strong> <span id="admin-url"></span></p>
+                        <p><strong>Admin Simple:</strong> <span id="admin-simple-url"></span></p>
                         <p><strong>Baseline API:</strong> <span id="baseline-url"></span></p>
                     </div>
                 </div>
@@ -73,6 +74,7 @@
         document.getElementById('current-domain').textContent = domain;
         document.getElementById('health-url').textContent = `${domain}/api/health`;
         document.getElementById('admin-url').textContent = `${domain}/api/admin-test`;
+        document.getElementById('admin-simple-url').textContent = `${domain}/api/admin-dashboard-simple`;
         document.getElementById('baseline-url').textContent = `${domain}/api/collect-baseline`;
 
         // Health check test
@@ -108,7 +110,7 @@
             resultDiv.innerHTML = 'Testing...';
             
             try {
-                const response = await fetch('/api/admin-test', {
+                const response = await fetch('/api/admin-dashboard-simple', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
