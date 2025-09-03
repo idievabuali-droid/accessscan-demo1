@@ -2984,14 +2984,13 @@ function StartBaselineView({ navigate }) {
     try {
       setBusy(true);
       
-      // Store data locally for potential later use
+      // Store data locally for backup
       localStorage.setItem('baseline_name', name);
       localStorage.setItem('baseline_email', email);
       localStorage.setItem('baseline_website', website);
       if (company) localStorage.setItem('baseline_company', company);
       
-      // Simulate API call to collect baseline data
-      // TODO: Replace this with actual API endpoint
+      // Submit to API endpoint
       const baselineData = {
         name: name.trim(),
         email: email.trim(),
@@ -3001,13 +3000,29 @@ function StartBaselineView({ navigate }) {
         type: 'free_baseline'
       };
       
-      // For now, just log the data (replace with actual API call)
-      console.log('Baseline signup data:', baselineData);
+      // Send to backend API
+      const response = await fetch('/api/collect-baseline', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(baselineData)
+      });
       
-      // Optional: Store in localStorage array for tracking
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to submit baseline request');
+      }
+      
+      const result = await response.json();
+      console.log('✅ Baseline submitted successfully:', result);
+      
+      // Store in localStorage array for local backup
       try {
         const existingRequests = JSON.parse(localStorage.getItem('baselineRequests') || '[]');
-        existingRequests.push(baselineData);
+        existingRequests.push({
+          ...baselineData,
+          requestId: result.requestId,
+          queuePosition: result.queuePosition
+        });
         localStorage.setItem('baselineRequests', JSON.stringify(existingRequests));
       } catch (e) {
         console.warn('Could not store baseline request locally:', e);
