@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AccessScan Admin Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <header class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-4 py-4">
+                <h1 class="text-2xl font-bold text-gray-900">AccessScan Admin Test</h1>
+                <p class="text-gray-600">Testing API endpoints and connectivity</p>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto px-4 py-8">
+            <div class="space-y-6">
+                <!-- Health Check -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-lg font-medium mb-4">API Health Check</h2>
+                    <button id="health-test" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                        Test Health Endpoint
+                    </button>
+                    <div id="health-result" class="mt-4 p-3 rounded bg-gray-50 hidden"></div>
+                </div>
+
+                <!-- Admin API Test -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-lg font-medium mb-4">Admin API Test</h2>
+                    <div class="space-y-3">
+                        <input 
+                            id="admin-token" 
+                            type="text" 
+                            placeholder="Enter admin token (gcOdlffwyi33YlVBypxDwusP)" 
+                            class="w-full px-3 py-2 border rounded"
+                            value="gcOdlffwyi33YlVBypxDwusP"
+                        />
+                        <button id="admin-test" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                            Test Admin Endpoint
+                        </button>
+                    </div>
+                    <div id="admin-result" class="mt-4 p-3 rounded bg-gray-50 hidden"></div>
+                </div>
+
+                <!-- Baseline API Test -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-lg font-medium mb-4">Baseline Collection Test</h2>
+                    <button id="baseline-test" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+                        Test Baseline Collection
+                    </button>
+                    <div id="baseline-result" class="mt-4 p-3 rounded bg-gray-50 hidden"></div>
+                </div>
+
+                <!-- URL Information -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                    <h3 class="text-lg font-medium text-blue-900 mb-2">Current URLs</h3>
+                    <div class="text-sm text-blue-800 space-y-1">
+                        <p><strong>Current Domain:</strong> <span id="current-domain"></span></p>
+                        <p><strong>Health API:</strong> <span id="health-url"></span></p>
+                        <p><strong>Admin API:</strong> <span id="admin-url"></span></p>
+                        <p><strong>Baseline API:</strong> <span id="baseline-url"></span></p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Get current domain
+        const domain = window.location.origin;
+        document.getElementById('current-domain').textContent = domain;
+        document.getElementById('health-url').textContent = `${domain}/api/health`;
+        document.getElementById('admin-url').textContent = `${domain}/api/admin-test`;
+        document.getElementById('baseline-url').textContent = `${domain}/api/collect-baseline`;
+
+        // Health check test
+        document.getElementById('health-test').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('health-result');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                resultDiv.innerHTML = `
+                    <div class="text-green-800">
+                        <strong>✅ Success (${response.status})</strong>
+                        <pre class="mt-2 text-sm">${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="text-red-800">
+                        <strong>❌ Error</strong>
+                        <p class="mt-1">${error.message}</p>
+                    </div>
+                `;
+            }
+        });
+
+        // Admin API test
+        document.getElementById('admin-test').addEventListener('click', async () => {
+            const token = document.getElementById('admin-token').value;
+            const resultDiv = document.getElementById('admin-result');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                const response = await fetch('/api/admin-test', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="text-green-800">
+                            <strong>✅ Success (${response.status})</strong>
+                            <p class="mt-1">Stats: ${data.stats.total} total customers, ${data.stats.withCards} with cards</p>
+                            <details class="mt-2">
+                                <summary class="cursor-pointer text-sm">View full response</summary>
+                                <pre class="mt-2 text-xs">${JSON.stringify(data, null, 2)}</pre>
+                            </details>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="text-red-800">
+                            <strong>❌ Error (${response.status})</strong>
+                            <p class="mt-1">${data.error || 'Unknown error'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="text-red-800">
+                        <strong>❌ Network Error</strong>
+                        <p class="mt-1">${error.message}</p>
+                    </div>
+                `;
+            }
+        });
+
+        // Baseline API test
+        document.getElementById('baseline-test').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('baseline-result');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = 'Testing...';
+            
+            const testData = {
+                name: 'Test User',
+                email: 'test@example.com',
+                website: 'https://example.com',
+                company: 'Test Company',
+                timestamp: new Date().toISOString(),
+                type: 'free_baseline'
+            };
+            
+            try {
+                const response = await fetch('/api/collect-baseline', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="text-green-800">
+                            <strong>✅ Success (${response.status})</strong>
+                            <p class="mt-1">Request ID: ${data.requestId}</p>
+                            <p>Queue Position: ${data.queuePosition}</p>
+                            <details class="mt-2">
+                                <summary class="cursor-pointer text-sm">View full response</summary>
+                                <pre class="mt-2 text-xs">${JSON.stringify(data, null, 2)}</pre>
+                            </details>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="text-red-800">
+                            <strong>❌ Error (${response.status})</strong>
+                            <p class="mt-1">${data.error || 'Unknown error'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="text-red-800">
+                        <strong>❌ Network Error</strong>
+                        <p class="mt-1">${error.message}</p>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
