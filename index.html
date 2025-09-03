@@ -2950,61 +2950,172 @@ function makeTallyEmbedSrc() {
 
 
 function StartBaselineView({ navigate }) {
+  // State management for the custom form
+  const [name, setName] = React.useState('');
+  const [email, setEmail] = React.useState('');
+  const [url, setUrl] = React.useState('');
+  const [company, setCompany] = React.useState('');
+  const [consent, setConsent] = React.useState(false);
+  const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState('');
+
+  // Form validation helpers
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isValidHttpsUrl = (url) => /^https:\/\//.test(url);
+  const normalizeUrl = (url) => url.replace(/\/$/, '');
+
+  // Analytics tracking on view load
   React.useEffect(() => {
-  try { t('start_baseline_view') } catch {}
+    try { t('start_baseline_view') } catch {}
+  }, []);
 
-  // Load the Tally embed (official pattern)
-  const load = () => {
-    if (window.Tally && typeof window.Tally.loadEmbeds === 'function') {
-      window.Tally.loadEmbeds();
-    } else {
-      document
-        .querySelectorAll('iframe[data-tally-src]:not([src])')
-        .forEach((iframeEl) => {
-          iframeEl.src = iframeEl.dataset.tallySrc;
-        });
-    }
-  };
-  load();
+  async function onSubmit(e) {
+    e.preventDefault();
+    setErr('');
+    
+    // Validation
+    if (!name.trim()) return setErr('Please enter your name');
+    if (!isValidEmail(email)) return setErr('Enter a valid work email');
+    if (!isValidHttpsUrl(url)) return setErr('URL must start with https://');
+    if (!consent) return setErr('Please agree to the terms');
 
-  // Listen for Tally form submission from the iframe
-  const onTallySubmit = (e) => {
+    const website = normalizeUrl(url);
+    
     try {
-      // Tally docs: e.data is a JSON string that includes 'Tally.FormSubmitted'
-      if (typeof e.data === 'string' && e.data.includes('Tally.FormSubmitted')) {
-        // Optional analytics (captures selected plan from URL)
-        try {
-          const plan = new URLSearchParams(location.search || '').get('plan') || '';
-          t && t('tally_form_submitted', __ctx({ plan }));
-        } catch {}
-        // Go to the queued page (same UI you already have)
-        navigate('/baseline/queued');
+      setBusy(true);
+      
+      // Store data locally for potential later use
+      localStorage.setItem('baseline_name', name);
+      localStorage.setItem('baseline_email', email);
+      localStorage.setItem('baseline_website', website);
+      if (company) localStorage.setItem('baseline_company', company);
+      
+      // Simulate API call to collect baseline data
+      // TODO: Replace this with actual API endpoint
+      const baselineData = {
+        name: name.trim(),
+        email: email.trim(),
+        website,
+        company: company.trim(),
+        timestamp: new Date().toISOString(),
+        type: 'free_baseline'
+      };
+      
+      // For now, just log the data (replace with actual API call)
+      console.log('Baseline signup data:', baselineData);
+      
+      // Optional: Store in localStorage array for tracking
+      try {
+        const existingRequests = JSON.parse(localStorage.getItem('baselineRequests') || '[]');
+        existingRequests.push(baselineData);
+        localStorage.setItem('baselineRequests', JSON.stringify(existingRequests));
+      } catch (e) {
+        console.warn('Could not store baseline request locally:', e);
       }
-    } catch {}
-  };
-  window.addEventListener('message', onTallySubmit);
-
-  return () => {
-    window.removeEventListener('message', onTallySubmit);
-  };
-}, []);
+      
+      // Analytics tracking
+      try { 
+        t && t('free_baseline_submitted', {
+          email_domain: email.split('@')[1],
+          has_company: !!company
+        });
+      } catch {}
+      
+      // Navigate to queued page after short delay
+      setTimeout(() => navigate('/baseline/queued'), 400);
+      
+    } catch (error) {
+      console.error('Baseline signup error:', error);
+      setErr('Something went wrong. Please try again.');
+      setBusy(false);
+    }
+  }
 
   return (
     <section className="py-12 sm:py-16">
       <Container>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="md:col-span-2 glass-strong rounded-2xl p-6 border border-white/30 shadow-lg">
-            <h1 className="text-3xl font-bold text-gray-900">Start your free baseline</h1>
-            <iframe
-  data-tally-src={makeTallyEmbedSrc()}
-  loading="lazy"
-  width="100%"
-  height="600"
-  frameBorder={0}
-  marginHeight={0}
-  marginWidth={0}
-  title="AccessScan Early Access"
-></iframe>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-900 to-blue-700 bg-clip-text text-transparent mb-2">Start your free baseline</h1>
+            <p className="text-gray-700 mb-6">Get your accessibility score and top 10 issues. <strong>No payment required.</strong></p>
+            
+            <form onSubmit={onSubmit} className="space-y-5" noValidate>
+              <div>
+                <label htmlFor="baseline_name" className="block text-sm font-medium text-gray-900 mb-2">Name *</label>
+                <input 
+                  id="baseline_name" 
+                  type="text"
+                  className="mt-1 w-full rounded-2xl border-2 border-gray-200 bg-white/95 backdrop-blur-sm px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none transition-all duration-200"
+                  value={name} 
+                  onChange={e=>setName(e.target.value)} 
+                  required 
+                  placeholder="Your full name"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="baseline_email" className="block text-sm font-medium text-gray-900 mb-2">Work email *</label>
+                <input 
+                  id="baseline_email" 
+                  type="email" 
+                  className="mt-1 w-full rounded-2xl border-2 border-gray-200 bg-white/95 backdrop-blur-sm px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none transition-all duration-200"
+                  value={email} 
+                  onChange={e=>setEmail(e.target.value)} 
+                  required 
+                  placeholder="you@company.com"
+                />
+                <p className="text-xs text-gray-600 mt-1">We'll send your report here</p>
+              </div>
+              
+              <div>
+                <label htmlFor="baseline_url" className="block text-sm font-medium text-gray-900 mb-2">Website URL *</label>
+                <input 
+                  id="baseline_url" 
+                  type="url"
+                  className="mt-1 w-full rounded-2xl border-2 border-gray-200 bg-white/95 backdrop-blur-sm px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none transition-all duration-200"
+                  placeholder="https://example.com"
+                  value={url} 
+                  onChange={e=>setUrl(e.target.value)} 
+                  required 
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="baseline_company" className="block text-sm font-medium text-gray-900 mb-2">Company name <span className="text-gray-500">(optional)</span></label>
+                <input 
+                  id="baseline_company" 
+                  type="text"
+                  className="mt-1 w-full rounded-2xl border-2 border-gray-200 bg-white/95 backdrop-blur-sm px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none transition-all duration-200"
+                  value={company} 
+                  onChange={e=>setCompany(e.target.value)} 
+                  placeholder="Your company"
+                />
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <input 
+                  id="baseline_consent" 
+                  type="checkbox" 
+                  className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                  checked={consent}
+                  onChange={e=>setConsent(e.target.checked)} 
+                  required
+                />
+                <label htmlFor="baseline_consent" className="text-sm text-gray-700">
+                  I agree to the <a href="#terms" onClick={(e) => { e.preventDefault(); navigate('/terms') }} className="text-blue-600 hover:text-blue-700 underline">Terms</a> and <a href="#privacy" onClick={(e) => { e.preventDefault(); navigate('/privacy') }} className="text-blue-600 hover:text-blue-700 underline">Privacy Policy</a> and understand this is a free baseline scan.
+                </label>
+              </div>
+              
+              {err && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg border border-red-200">{err}</p>}
+              
+              <button 
+                type="submit" 
+                disabled={busy}
+                className="w-full inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 px-6 py-3 font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] disabled:opacity-60 disabled:hover:scale-100 disabled:cursor-not-allowed"
+              >
+                {busy ? 'Starting scan...' : 'Start free baseline'}
+              </button>
+            </form>
 
 
           </div>
