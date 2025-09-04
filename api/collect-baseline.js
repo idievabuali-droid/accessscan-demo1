@@ -16,7 +16,8 @@ module.exports = async function handler(req, res) {
       return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    const { name, email, website, company, timestamp, type } = req.body;
+    // Safely extract request body with fallback
+    const { name, email, website, company, timestamp, type } = (req.body || {});
 
     // Validation
     if (!name || !email || !website) {
