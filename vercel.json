@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "env": {
-    "STRIPE_SECRET_KEY": "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"
-  }
+  "headers": [
+    { "source": "/admin.html", "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }] }
+  ]
 }
