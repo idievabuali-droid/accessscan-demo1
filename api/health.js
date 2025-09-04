@@ -13,7 +13,7 @@ module.exports = function handler(req, res) {
     timestamp: new Date().toISOString(),
     message: 'API is working perfectly',
     environment: {
-      hasStripeKey: !!process.env.STRIPE_SECRET_KEY,
+      hasStripeKey: !!(process.env.STRIPE_SECRET_KEY || process.env.stripe_testkey),
       hasAdminToken: !!process.env.ADMIN_TOKEN,
       nodeEnv: process.env.NODE_ENV || 'development'
     }

@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   try {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
-    const key = process.env.STRIPE_SECRET_KEY;
+    const key = process.env.STRIPE_SECRET_KEY || process.env.stripe_testkey;
     if (!key) return res.status(500).json({ error: 'MISSING_STRIPE_SECRET_KEY' });
 
     const stripe = new Stripe(key, { apiVersion: '2024-06-20' });

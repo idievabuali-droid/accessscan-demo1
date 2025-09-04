@@ -51,8 +51,9 @@ module.exports = async function handler(req, res) {
     // This way both founder access and baseline users appear in same dashboard
     let stripeSuccess = false;
     try {
-      if (process.env.STRIPE_SECRET_KEY) {
-        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+      const stripeKey = process.env.STRIPE_SECRET_KEY || process.env.stripe_testkey;
+      if (stripeKey) {
+        const stripe = require('stripe')(stripeKey);
         
         // Check if customer already exists
         const existingCustomers = await stripe.customers.list({ 

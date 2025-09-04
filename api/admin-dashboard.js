@@ -76,7 +76,7 @@ module.exports = function handler(req, res) {
       ],
       lastUpdated: new Date().toISOString(),
       environment: {
-        hasStripeKey: !!process.env.STRIPE_SECRET_KEY,
+        hasStripeKey: !!(process.env.STRIPE_SECRET_KEY || process.env.stripe_testkey),
         hasAdminToken: !!process.env.ADMIN_TOKEN,
         nodeVersion: process.version
       }
