@@ -1,4 +1,4 @@
-// Simple Admin Test API - No Stripe dependency
+// Simple Admin Test API - No Stripe dependency v2
 module.exports = async function handler(req, res) {
   try {
     // Set CORS headers
