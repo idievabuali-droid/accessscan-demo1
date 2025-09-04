@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     const { website = '', email = '', context = 'unknown', reportUrl = '' } = req.body || {};
     if (!website || !email) return res.status(400).json({ error: 'website_and_email_required' });
 
-    const key = process.env.STRIPE_SECRET_KEY;
+    const key = process.env.STRIPE_SECRET_KEY || process.env.stripe_testkey;
     const stripe = key ? new Stripe(key, { apiVersion: '2024-06-20' }) : null;
 
     let noteSaved = false;
