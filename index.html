@@ -3974,35 +3974,9 @@ function Pricing({ compact = false, navigate }) {
               ) : (
                 <Button
                   className="mt-6 !bg-gradient-to-r !from-blue-500 !to-emerald-500 hover:!from-blue-600 hover:!to-emerald-600 !text-white !shadow-md hover:!shadow-lg !transition-all !duration-300 hover:!scale-[1.01] !rounded-2xl !py-3 !font-semibold !border-0"
-                  onClick={async () => { 
+                  onClick={() => { 
                     t('pricing_click', { plan: p.key }); 
-                    
-                    // Create Stripe checkout session for paid plans
-                    try {
-                      const response = await fetch('/api/create-checkout-session', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ 
-                          plan: p.key,
-                          price_id: getPriceId(p.key, annual),
-                          mode: 'subscription'
-                        })
-                      });
-                      
-                      if (!response.ok) {
-                        throw new Error('Failed to create checkout session');
-                      }
-                      
-                      const data = await response.json();
-                      if (data.url) {
-                        window.location.assign(data.url);
-                      } else {
-                        throw new Error('No checkout URL received');
-                      }
-                    } catch (error) {
-                      console.error('Checkout error:', error);
-                      alert('Sorry, there was an error starting the checkout process. Please try again.');
-                    }
+                    alert(`${p.name} plan coming soon! For now, try our free baseline or reserve founder access for early access to paid features.`);
                   }}
                 >
                   Choose {p.name}

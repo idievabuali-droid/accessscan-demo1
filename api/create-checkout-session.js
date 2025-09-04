@@ -1,4 +1,4 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+import Stripe from 'stripe';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -6,6 +6,14 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Initialize Stripe with proper error handling
+    const stripeKey = process.env.STRIPE_SECRET_KEY || process.env.stripe_testkey;
+    if (!stripeKey) {
+      return res.status(500).json({ error: 'MISSING_STRIPE_SECRET_KEY' });
+    }
+    
+    const stripe = new Stripe(stripeKey, { apiVersion: '2024-06-20' });
+    
     const { plan, price_id, mode = 'subscription' } = req.body;
 
     if (!plan || !price_id) {
