@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AccessScan — Accessibility issues, prioritized</title>
+  <title>CodeFix — WCAG 2.2 code fixes for EAA compliance</title>
   <meta name="description" content="Automate 30–40% of fixes and get guided steps for the rest." />
   <!-- Tailwind (CDN) -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -121,6 +121,70 @@ dialog::backdrop { background: rgba(0,0,0,0.35); }
   }
 </style>
 
+<style>
+  /* Founder card: move forward on hover (right & up), not backward */
+  [data-plan="founder"]:hover {
+    transform: translate3d(6px, -4px, 0) scale(1.06) !important;
+  }
+
+  /* ===== Emphasise "Onboarding 10/week" badge ===== */
+  .onboard-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .375rem .625rem;
+    border-radius: 999px;
+    background: #ecfdf5;           /* green background to match beta design */
+    color: #059669;                /* green text to match beta design */
+    border: 1px solid #d1fae5;
+    font-weight: 600;
+    font-size: .875rem;
+    line-height: 1;
+  }
+  .onboard-badge .dot {
+    width: .5rem;
+    height: .5rem;
+    border-radius: 999px;
+    background: currentColor;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .onboard-badge .dot {
+      box-shadow: 0 0 0 0 currentColor;
+      animation: pulseDot 2s infinite;
+    }
+    @keyframes pulseDot {
+      0%   { box-shadow: 0 0 0 0 rgba(5,150,105,.35); }
+      70%  { box-shadow: 0 0 0 .6rem rgba(5,150,105,0); }
+      100% { box-shadow: 0 0 0 0 rgba(5,150,105,0); }
+    }
+  }
+
+  /* ===== Hero: tighten vertical spacing safely ===== */
+  /* Add data-section="hero" to your hero <section> (step 2 below) */
+  section[data-section="hero"] {
+    /* was roughly: py-12 sm:py-16 lg:py-24 */
+    padding-top: 2rem !important;     /* tighter top space */
+    padding-bottom: 3.5rem !important;/* keeps good balance below */
+  }
+
+  /* ===== Founder card: neutral by default, gentle lift on hover ===== */
+  /* Your markup sets all plan cards to hover:scale(1.02).
+     The Founder card had a base scale that made it look forward already,
+     then "shrank" on hover. We neutralise base state and give it a subtle hover lift. */
+  [data-plan="founder"] {
+    transform: none !important;
+  }
+  @media (hover:hover) {
+    [data-plan="founder"]:hover {
+      transform: translateY(-4px) scale(1.03) !important;
+    }
+  }
+
+  /* Optional: ensure non-founder cards don't jump more than the founder */
+  [data-plan]:not([data-plan="founder"]):hover {
+    transform: translateY(-2px) scale(1.02);
+  }
+</style>
 
 <script>
     !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init Re Ms Fs Pe Rs Cs capture Ve calculateEventProperties Ds register register_once register_for_session unregister unregister_for_session zs getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey canRenderSurveyAsync identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty Ls As createPersonProfile Ns Is Us opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing is_capturing clear_opt_in_out_capturing Os debug I js getPageViewId captureTraceFeedback captureTraceMetric".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
@@ -452,7 +516,7 @@ window.downloadReportJSON = function downloadReportJSON(){
     const blob = new Blob([JSON.stringify(R, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'accessscan-sample-report.json';
+    a.download = 'clearpath-sample-report.json';
     a.click();
   URL.revokeObjectURL(a.href);
   const sr = document.getElementById('sr-status'); if (sr) sr.textContent = 'JSON downloaded';
@@ -470,7 +534,7 @@ window.generateReportPDF = function generateReportPDF() {
 
     // ===== Inputs from current view =====
     const R = window.__demoReport || {};
-    const BRAND = R.brand || "AccessScan";
+    const BRAND = R.brand || "ClearPath";
     const URL_STR = R.url || "https://example.com";
     const ENGINE = R.engine || "axe-core";
     const ENGINE_VER = R.engineVersion ? `${R.engine} ${R.engineVersion}` : ENGINE;
@@ -781,7 +845,7 @@ window.generateReportPDF = function generateReportPDF() {
       });
     } catch {}
     const D = new Date(); const P = (n)=>String(n).padStart(2,"0");
-    const fname = `accessscan-sample-report-${host}-${D.getFullYear()}-${P(D.getMonth()+1)}-${P(D.getDate())}.pdf`;
+    const fname = `clearpath-sample-report-${host}-${D.getFullYear()}-${P(D.getMonth()+1)}-${P(D.getDate())}.pdf`;
     doc.save(fname);
   const sr = document.getElementById('sr-status'); if (sr) sr.textContent = 'PDF downloaded';
   } catch (err) {
@@ -810,7 +874,7 @@ window.downloadDevCSV = function downloadDevCSV () {
     const blob = new Blob([csv], { type: 'text/csv' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'accessscan-dev-tickets.csv';
+    a.download = 'clearpath-dev-tickets.csv';
     a.click();
   URL.revokeObjectURL(a.href);
   const sr = document.getElementById('sr-status'); if (sr) sr.textContent = 'CSV downloaded';
@@ -909,7 +973,7 @@ addEventListener("beforeunload", () => {
 
 })();
 /*
-  AccessScan – Demo SPA (HIG + Glassmorphism Redesign)
+  ClearPath – Demo SPA (HIG + Glassmorphism Redesign)
   ---------------------------------------------------------------------------------
   Visual goals (no data/text changed):
   - Apple HIG-inspired hierarchy: generous spacing, clear typographic scale, focus rings.
@@ -972,7 +1036,7 @@ function usePlausible() {
       const domain =
         (typeof window !== 'undefined' && window.NEXT_PUBLIC_PLAUSIBLE_DOMAIN) ||
         (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN) ||
-        'accessscan.example'
+        'clearpath.example'
       const s = document.createElement('script')
       s.setAttribute('defer', '')
       s.setAttribute('data-domain', domain)
@@ -1463,17 +1527,17 @@ function NavLink({ to, children, navigate }) {
 // Title map
 // ----------------------------
 const TITLE_MAP = {
-  '/': 'AccessScan – Accessibility issues, prioritized',
-  '/start-baseline': 'Start free baseline – AccessScan',
-  '/baseline/queued': 'Queued – AccessScan',
-  '/report/demo': 'Demo Report – AccessScan',
-  '/pricing': 'Pricing – AccessScan',
-  '/accessibility': 'Accessibility Statement – AccessScan',
-  '/privacy': 'Privacy Policy – AccessScan',
-  '/terms': 'Terms of Service – AccessScan',
-  '/cookies': 'Cookies – AccessScan',
-  '/dashboard/welcome': 'Welcome – AccessScan',
-  '/email/preview': 'Email Preview – AccessScan',
+  '/': 'ClearPath – Accessibility issues, prioritized',
+  '/start-baseline': 'Start free baseline – ClearPath',
+  '/baseline/queued': 'Queued – ClearPath',
+  '/report/demo': 'Demo Report – ClearPath',
+  '/pricing': 'Pricing – ClearPath',
+  '/accessibility': 'Accessibility Statement – ClearPath',
+  '/privacy': 'Privacy Policy – ClearPath',
+  '/terms': 'Terms of Service – ClearPath',
+  '/cookies': 'Cookies – ClearPath',
+  '/dashboard/welcome': 'Welcome – ClearPath',
+  '/email/preview': 'Email Preview – ClearPath',
 }
 
 // ----------------------------
@@ -1491,20 +1555,21 @@ function Layout({ title, children, navigate }) {
             <div className="h-12 flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
                   <span className="font-semibold text-emerald-700">Limited Early Access:</span>
-                  <span className="text-emerald-600">10 founder spots remaining this week</span>
+                  <span class="onboard-badge" aria-label="We onboard up to ten websites each week">
+                    <span class="dot" aria-hidden="true"></span>
+                    <span>We onboard up to <strong>10</strong> websites each week</span>
+                  </span>
                 </div>
               </div>
-              <Button
-                as="a"
+              <a
                 href="#pricing"
                 onClick={(e)=>{e.preventDefault(); navigate('/pricing');}}
-                variant="primary"
-                className="!px-4 !py-2 !text-xs !bg-gradient-to-r !from-emerald-600 !to-blue-600 hover:!from-emerald-700 hover:!to-blue-700 !border-0 !shadow-md hover:!shadow-lg !transition-all !duration-300 hover:!scale-105"
+                className="inline-flex items-center gap-2 px-3 py-1 text-xs font-medium text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded-full border border-emerald-200 hover:border-emerald-300 transition-all duration-300 hover:shadow-sm"
               >
-                🚀 Reserve Founder Access
-              </Button>
+                <span className="text-emerald-600">✨</span>
+                Want founder access benefits?
+              </a>
             </div>
           </Container>
         </div>
@@ -1515,19 +1580,21 @@ function Layout({ title, children, navigate }) {
             <div className="h-16 flex items-center justify-between">
               <a href="#home" onClick={(e) => { e.preventDefault(); navigate('/') }} className="inline-flex items-center gap-3 font-bold group transition-all duration-300">
                 <div className="relative">
-                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 text-white text-sm shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-600 to-blue-600 text-white text-sm shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="relative z-10">
-                      <path d="M9.5 16L5.5 12L9.5 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.3"/>
+                      {/* Magnifying glass (scanning/analysis) */}
+                      <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M21 21L16.65 16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                      {/* Checkmark inside (found issues/solutions) */}
+                      <path d="M8 11L11 14L16 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
                   <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
                 </div>
                 <span className="inline-flex items-center gap-2 text-lg">
-                  <span className="bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent font-semibold">AccessScan</span>
+                  <span className="bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent font-bold">ClearPath</span>
                   {/* Modern BETA badge */}
-                  <span className="inline-flex items-center rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 text-blue-700 text-xs font-medium px-2.5 py-1 shadow-sm">
+                  <span className="inline-flex items-center rounded-full bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-200 text-emerald-700 text-xs font-medium px-2.5 py-1 shadow-sm">
                     BETA
                   </span>
                 </span>
@@ -1604,7 +1671,7 @@ function Layout({ title, children, navigate }) {
                       if (el) el.scrollIntoView({ behavior: 'smooth' });
                     }, 0);
                   }}
-                  className="block py-2 px-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
+                  className="block py-2 px-3 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all duration-200"
                 >
                   How it works
                 </a>
@@ -1615,7 +1682,7 @@ function Layout({ title, children, navigate }) {
                     setMobileMenuOpen(false);
                     navigate('/report/demo');
                   }}
-                  className="block py-2 px-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
+                  className="block py-2 px-3 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all duration-200"
                 >
                   Sample report
                 </a>
@@ -1626,7 +1693,7 @@ function Layout({ title, children, navigate }) {
                     setMobileMenuOpen(false);
                     navigate('/pricing');
                   }}
-                  className="block py-2 px-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
+                  className="block py-2 px-3 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all duration-200"
                 >
                   Pricing
                 </a>
@@ -1637,7 +1704,7 @@ function Layout({ title, children, navigate }) {
                     setMobileMenuOpen(false);
                     navigate('/accessibility');
                   }}
-                  className="block py-2 px-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
+                  className="block py-2 px-3 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all duration-200"
                 >
                   Accessibility
                 </a>
@@ -1666,16 +1733,18 @@ function Layout({ title, children, navigate }) {
             <div className="sm:col-span-1">
               <div className="flex items-center gap-3 mb-4">
                 <div className="relative">
-                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 text-white text-sm shadow-lg">
+                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-600 to-blue-600 text-white text-sm shadow-lg">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="relative z-10">
-                      <path d="M9.5 16L5.5 12L9.5 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.3"/>
+                      {/* Magnifying glass (scanning/analysis) */}
+                      <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M21 21L16.65 16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                      {/* Checkmark inside (found issues/solutions) */}
+                      <path d="M8 11L11 14L16 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
                   <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
                 </div>
-                <span className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">AccessScan</span>
+                <span className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">ClearPath</span>
               </div>
               <p className="text-sm text-gray-600 leading-relaxed mb-3">Transparent automated accessibility audits with human‑check guidance. No overlays, no hype.</p>
               <p className="mt-3 text-xs text-gray-600">Transparent by design: tools can’t check everything; humans still matter.</p>
@@ -1683,23 +1752,23 @@ function Layout({ title, children, navigate }) {
             <div>
               <h3 className="font-semibold text-gray-900 mb-4">Product</h3>
               <ul className="space-y-3 text-sm">
-                <li><a href="#pricing" onClick={(e) => { e.preventDefault(); navigate('/pricing') }} className="text-gray-600 hover:text-blue-600 transition-colors duration-200">Pricing</a></li>
-                <li><a href="#/report/demo" onClick={(e) => { e.preventDefault(); navigate('/report/demo') }} className="text-gray-600 hover:text-blue-600 transition-colors duration-200">Sample report</a></li>
-                <li><a href="#accessibility" onClick={(e) => { e.preventDefault(); navigate('/accessibility') }} className="text-gray-600 hover:text-blue-600 transition-colors duration-200">Accessibility</a></li>
+                <li><a href="#pricing" onClick={(e) => { e.preventDefault(); navigate('/pricing') }} className="text-gray-600 hover:text-emerald-600 transition-colors duration-200">Pricing</a></li>
+                <li><a href="#/report/demo" onClick={(e) => { e.preventDefault(); navigate('/report/demo') }} className="text-gray-600 hover:text-emerald-600 transition-colors duration-200">Sample report</a></li>
+                <li><a href="#accessibility" onClick={(e) => { e.preventDefault(); navigate('/accessibility') }} className="text-gray-600 hover:text-emerald-600 transition-colors duration-200">Accessibility</a></li>
               </ul>
             </div>
             <div>
               <h3 className="font-semibold text-gray-900 mb-4">Legal</h3>
               <ul className="space-y-3 text-sm">
-                <li><a href="#privacy" onClick={(e) => { e.preventDefault(); navigate('/privacy') }} className="text-gray-600 hover:text-blue-600 transition-colors duration-200">Privacy</a></li>
-                <li><a href="#terms" onClick={(e) => { e.preventDefault(); navigate('/terms') }} className="text-gray-600 hover:text-blue-600 transition-colors duration-200">Terms</a></li>
-                <li><a href="#cookies" onClick={(e) => { e.preventDefault(); navigate('/cookies') }} className="text-gray-600 hover:text-blue-600 transition-colors duration-200">Cookies</a></li>
+                <li><a href="#privacy" onClick={(e) => { e.preventDefault(); navigate('/privacy') }} className="text-gray-600 hover:text-emerald-600 transition-colors duration-200">Privacy</a></li>
+                <li><a href="#terms" onClick={(e) => { e.preventDefault(); navigate('/terms') }} className="text-gray-600 hover:text-emerald-600 transition-colors duration-200">Terms</a></li>
+                <li><a href="#cookies" onClick={(e) => { e.preventDefault(); navigate('/cookies') }} className="text-gray-600 hover:text-emerald-600 transition-colors duration-200">Cookies</a></li>
               </ul>
             </div>
             <div>
               <h3 className="font-semibold text-gray-900 mb-4">Contact</h3>
               <ul className="space-y-3 text-sm">
-                <li><a className="text-gray-600 hover:text-blue-600 transition-colors duration-200" href="mailto:idievabuali@gmail.com">idievabuali@gmail.com</a></li>
+                <li><a className="text-gray-600 hover:text-emerald-600 transition-colors duration-200" href="mailto:idievabuali@gmail.com">idievabuali@gmail.com</a></li>
               </ul>
             </div>
           </div>
@@ -1715,20 +1784,23 @@ function Layout({ title, children, navigate }) {
 // ----------------------------
 const NARRATION_TEXT = `Paste your homepage URL and start a baseline scan. In a couple of minutes you’ll get a score, a Top‑10 list with WCAG links, and copy‑paste fix snippets. When you’re ready, pick a paid plan to enable scheduled rescans (weekly or nightly) and watch your score trend improve over time.`
 
+/* Feature flag: hide the right-side demo in Hero for now */
+const SHOW_HERO_DEMO = false;
+
 function Hero({ navigate }) {
   return (
-    <section aria-labelledby="home-hero" className="mx-auto max-w-7xl px-4 lg:px-6 py-16 lg:py-24 relative overflow-hidden">
+    <section data-section="hero" aria-labelledby="home-hero" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-6 py-8 sm:py-10 lg:py-16 relative overflow-hidden">
       {/* Enhanced background */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-emerald-50 -z-10"></div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(59,130,246,0.08),transparent_50%)] -z-10"></div>
       
-      <div className="glass-strong rounded-3xl p-8 lg:p-12 shadow-2xl border border-white/40 backdrop-blur-xl relative overflow-hidden">
+      <div className="glass-strong rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-12 shadow-2xl border border-white/40 backdrop-blur-xl relative overflow-hidden">
         {/* Subtle pattern overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-white/50 via-transparent to-emerald-50/30 -z-10"></div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center relative">
-          <div className="lg:col-span-6">
-            <h1 id="home-hero" className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12 items-center relative">
+          <div className={SHOW_HERO_DEMO ? "lg:col-span-6" : "lg:col-span-12"}>
+            <h1 id="home-hero" className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
               <span className="bg-gradient-to-r from-gray-900 via-blue-800 to-emerald-700 bg-clip-text text-transparent">
                 Accessibility issues, prioritized.
               </span>
@@ -1736,18 +1808,18 @@ function Hero({ navigate }) {
                 WCAG 2.2 fixes you can ship this sprint.
               </span>
             </h1>
-            <p className="mt-6 max-w-prose text-xl text-slate-600 leading-relaxed">
+            <p className="mt-4 sm:mt-6 max-w-prose text-lg sm:text-xl text-slate-600 leading-relaxed">
               Find the highest-impact issues, get actionable fixes, and see exactly what still needs a human review—no overlays.
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-4">
+            <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 sm:gap-4">
               <Button
                 as="a"
                 href="/start-baseline"
                 onClick={(e) => { e.preventDefault(); t('cta_start_baseline'); navigate('/start-baseline'); }}
-                className="js-cta-start !px-8 !py-4 !text-lg !font-semibold shadow-lg hover:shadow-xl"
+                className="js-cta-start w-full sm:w-auto !px-6 sm:!px-8 !py-3 sm:!py-4 !text-base sm:!text-lg !font-semibold shadow-lg hover:shadow-xl"
                 variant="primary"
               >
-                <span className="flex items-center gap-2">
+                <span className="flex items-center justify-center gap-2">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-blue-200">
                     <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>
                   </svg>
@@ -1760,9 +1832,9 @@ function Hero({ navigate }) {
                 href="/report/demo"
                 onClick={(e) => { e.preventDefault(); t('cta_sample_report'); navigate('/report/demo'); }}
                 variant="secondary"
-                className="!px-8 !py-4 !text-lg !font-medium"
+                className="w-full sm:w-auto !px-6 sm:!px-8 !py-3 sm:!py-4 !text-base sm:!text-lg !font-medium"
               >
-                <span className="flex items-center gap-2">
+                <span className="flex items-center justify-center gap-2">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-gray-500">
                     <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" stroke="currentColor" strokeWidth="2"/>
                     <polyline points="10,17 15,12 10,7" stroke="currentColor" strokeWidth="2"/>
@@ -1774,39 +1846,49 @@ function Hero({ navigate }) {
             </div>
 
             {/* Enhanced Founder Access link */}
-            <div className="mt-6">
-              <button
-                className="group inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-200 hover:border-emerald-300 transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
-                onClick={() => navigate('/pricing')}
+            <div className="mt-4 sm:mt-6">
+              <a
+                href="#pricing"
+                className="group inline-flex items-center gap-2 sm:gap-3 text-emerald-700 hover:text-emerald-800 transition-all duration-300 hover:underline underline-offset-4"
+                onClick={(e) => {e.preventDefault(); navigate('/pricing');}}
               >
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-emerald-500 to-blue-500 flex items-center justify-center text-white text-sm font-bold">
-                    🚀
+                  <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-xs sm:text-sm">
+                    ✨
                   </div>
                   <div className="text-left">
-                    <div className="font-semibold text-gray-900 group-hover:text-emerald-700 transition-colors">
-                      Founder Access
+                    <div className="font-semibold text-sm sm:text-base group-hover:text-emerald-800 transition-colors">
+                      Want founder access benefits? Reserve founder access
                     </div>
-                    <div className="text-sm text-gray-600">
-                      Early access with special pricing
+                    <div className="text-xs sm:text-sm text-emerald-600 opacity-80">
+                      Early access with special pricing — view plans below
                     </div>
                   </div>
                 </div>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-gray-400 group-hover:text-emerald-600 transition-colors">
-                  <path d="m9 18 6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-emerald-500 group-hover:text-emerald-700 transition-all duration-300 flex-shrink-0 sm:w-4 sm:h-4 group-hover:translate-x-1">
+                  <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-              </button>
+              </a>
             </div>
 
-            <p className="mt-4 text-sm text-gray-500 flex items-center gap-4">
-              <a href="https://www.w3.org/TR/WCAG22/" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-blue-600 transition-colors">WCAG 2.2</a>
-              <span>aligned •</span>
-              <a href="https://digital-strategy.ec.europa.eu/en/policies/web-accessibility" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-blue-600 transition-colors">EAA</a>
-              <span>applies (June 2025)</span>
+            <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-500 flex items-center gap-2 sm:gap-4 flex-wrap">
+              <span className="inline-flex items-center gap-1">
+                <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                <a href="https://www.w3.org/TR/WCAG22/" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-emerald-600 transition-colors">WCAG 2.2 aligned</a>
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                <a href="https://digital-strategy.ec.europa.eu/en/policies/web-accessibility" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-emerald-600 transition-colors">EAA in effect (June 2025)</a>
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
+                <span>No overlays — automation has limits.</span>
+              </span>
             </p>
           </div>
 
           {/* Right: Enhanced poster image */}
+          {SHOW_HERO_DEMO && (
           <div className="lg:col-span-6">
             <figure className="relative">
               <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-white/50 bg-white/80 backdrop-blur-sm hover:shadow-3xl transition-all duration-500 hover:scale-[1.02] group"
@@ -1865,6 +1947,7 @@ function Hero({ navigate }) {
               </p>
             </figure>
           </div>
+          )}
 
         </div>
       </div>
@@ -1974,8 +2057,8 @@ const DEMO_DATA = {
     { sev:'moderate', cat:'Empty links/buttons',    sel:'button.icon-only',          wcag:'4.1.2', copy:'Provide accessible name via text or aria-label', auto:true },
 
     // ⬇️ Demoted from serious -> moderate and made “Fix” (auto:true)
-    { sev:'moderate', cat:'Form inputs unlabeled',  sel:'input[type="email"]',       wcag:'3.3.2', auto:true },
-    { sev:'moderate', cat:'Form inputs unlabeled',  sel:'input[type="search"]',      wcag:'3.3.2', auto:true },
+    { sev:'moderate', cat:'Form inputs unlabeled',  sel:'input[type="email"]',       wcag:'3.3.2', auto:false },
+    { sev:'moderate', cat:'Form inputs unlabeled',  sel:'input[type="search"]',      wcag:'3.3.2', auto:false },
 
     // Keep this one as the remaining serious “Guide me”
     { sev:'serious',  cat:'Images without alt',     sel:'img.hero',                  wcag:'1.1.1', fix:'Provide descriptive alt for informative images; use empty alt for decorative.', auto:false },
@@ -1990,13 +2073,15 @@ const DEMO_DATA = {
   after: {
     name: 'W3C BAD — After',
     url: 'https://www.w3.org/WAI/demos/bad/after/home.html',
+    // Keep exactly 5 leftovers: 3 "Guide me" + 2 "Needs human review"
     issues: [
-      // After demo fixes: unresolved machine-detected items (guided)
-  { sev:'serious',  cat:'Images without alt',     sel:'img.hero',                  wcag:'1.1.1', fix:'Confirm alt text (or empty alt for decorative).', auto:false },
-  { sev:'serious',  cat:'Form inputs unlabeled',  sel:'input[type="email"]',       wcag:'3.3.2', fix:'Confirm labels/aria-labelledby present', auto:false },
-  { sev:'serious',  cat:'Form inputs unlabeled',  sel:'input[type="search"]',      wcag:'3.3.2', fix:'Confirm labels/aria-labelledby present', auto:false },
-  { sev:'moderate', cat:'Link purpose in context',  sel:'a:contains("Read more"), .icon', wcag:'2.4.4', needsHuman:true, humanKey:'link-purpose' },
-  { sev:'moderate', cat:'Focus order',              sel:'header > nav > a, main h1, .cta', wcag:'2.4.3', needsHuman:true, humanKey:'focus-order' },
+      // Guide me items (3)
+      { sev:'serious',  cat:'Images without alt',     sel:'img.hero',                  wcag:'1.1.1', fix:'Provide descriptive alt for informative images; use empty alt for decorative.', auto:false },
+      { sev:'moderate', cat:'Form inputs unlabeled',  sel:'input[type="email"]',       wcag:'3.3.2', auto:false },
+      { sev:'moderate', cat:'Form inputs unlabeled',  sel:'input[type="search"]',      wcag:'3.3.2', auto:false },
+      // Human review items (2)
+      { sev:'moderate', cat:'Link purpose in context',  sel:'a:contains("Read more"), .icon', wcag:'2.4.4', needsHuman:true, humanKey:'link-purpose' },
+      { sev:'moderate', cat:'Focus order',              sel:'header > nav > a, main h1, .cta', wcag:'2.4.3', needsHuman:true, humanKey:'focus-order' },
     ],
   },
   empty: {
@@ -2037,10 +2122,149 @@ function buildFixPack(issues){
   return blocks.length ? blocks.join('\n\n') : '// No quick-fix snippets in this view.';
 }
 
+// --- Rescan & scheduling helpers ---
+const RESCAN_SCHEDULE_KEY = 'a11y_rescan_schedule';
+
+function getSavedSchedule() {
+  try { return localStorage.getItem(RESCAN_SCHEDULE_KEY) || ''; } catch { return ''; }
+}
+function saveSchedule(v) {
+  try { localStorage.setItem(RESCAN_SCHEDULE_KEY, v); } catch {}
+}
+
+// Accessible modal for choosing a schedule
+function SchedulePicker({ open, onClose }) {
+  const [choice, setChoice] = React.useState(getSavedSchedule() || 'weekly');
+  if (!open) return null;
+
+  function save() {
+    saveSchedule(choice);
+    onClose();
+    // Simple confirmation for the demo. (Pilot: manual run)
+    alert(`Rescans scheduled: ${choice || 'none'}. During the 14-day pilot, we trigger these for you.`);
+    try { t('schedule_saved'); } catch {}
+  }
+
+  return (
+    <div role="dialog" aria-modal="true" aria-labelledby="sched-title" className="fixed inset-0 z-[60]">
+      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
+      <div className="absolute inset-0 grid place-items-center p-4">
+        <div className="w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-200 p-6">
+          <h2 id="sched-title" className="text-lg font-semibold text-gray-900">Schedule rescans</h2>
+          <p className="mt-1 text-sm text-gray-600">
+            Choose how often to recheck your site. In the 14-day pilot, we'll trigger these scans for you.
+          </p>
+
+          <fieldset className="mt-4 space-y-3">
+            <legend className="sr-only">Rescan frequency</legend>
+
+            <label className="flex items-center gap-3">
+              <input type="radio" name="rescan" value="none"
+                     checked={choice === 'none'} onChange={() => setChoice('none')} />
+              <span className="text-sm text-gray-800">No schedule (manual only)</span>
+            </label>
+
+            <label className="flex items-center gap-3">
+              <input type="radio" name="rescan" value="weekly"
+                     checked={choice === 'weekly'} onChange={() => setChoice('weekly')} />
+              <span className="text-sm text-gray-800">Weekly (e.g. Mondays, 02:00)</span>
+            </label>
+
+            <label className="flex items-center gap-3">
+              <input type="radio" name="rescan" value="nightly"
+                     checked={choice === 'nightly'} onChange={() => setChoice('nightly')} />
+              <span className="text-sm text-gray-800">Nightly (02:00)</span>
+            </label>
+          </fieldset>
+
+          <div className="mt-6 flex gap-2 justify-end">
+            <Button variant="ghost" onClick={onClose}>Cancel</Button>
+            <Button onClick={save}>Save schedule</Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 function ReportTabs({ navigate, dataset, setDataset }) {
 
   const [tab, setTab] = useState('issues')
+
+// --- Rescan & schedule state ---
+const [rescanBusy, setRescanBusy] = useState(false);
+const [rescanMsg, setRescanMsg] = useState('');
+const [scheduleOpen, setScheduleOpen] = useState(false);
+
+// Support deep-link: /report/demo#schedule opens the picker
+useEffect(() => {
+  try {
+    if (window.location.hash === '#schedule') {
+      setScheduleOpen(true);
+      // Clean the hash so it doesn't re-open on back/forward
+      history.replaceState(null, '', window.location.pathname);
+    }
+  } catch {}
+}, []);
+
+async function handleRescanNow() {
+  setRescanBusy(true);
+  setRescanMsg('Requesting rescan…');
+
+  // Try to reuse details from the latest baseline form submission (your code already saves it).
+  // Falls back to a quick prompt if missing.
+  let last = {};
+  try {
+    const arr = JSON.parse(localStorage.getItem('baselineRequests') || '[]');
+    last = Array.isArray(arr) && arr.length ? arr[arr.length - 1] : {};
+  } catch {}
+
+  let email = (last && last.email) || '';
+  let website = (last && last.website) || '';
+
+  if (!email || !website) {
+    // Simple, no-dependency fallback. Keeps the UI flowing without adding a new form lib.
+    website = website || window.prompt('Website to rescan (https://…)?') || '';
+    email = email || window.prompt('Work email for the updated report?') || '';
+  }
+
+  const payload = {
+    website,
+    email,
+    context: 'report-demo',
+    reportUrl: window.location.href
+  };
+
+  let sent = false;
+  try {
+    const res = await fetch('/api/request-rescan', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    sent = res.ok;
+  } catch {
+    sent = false;
+  }
+
+  // Keep your demo feel: switch to the "after" dataset with a short delay.
+  setRescanMsg(sent ? 'Rescan requested. Running the demo preview…' : 'Rescan request captured locally. Showing demo preview…');
+  setTimeout(() => {
+    if (dataset !== 'after') setDataset('after');
+    setRescanBusy(false);
+    setRescanMsg('We\'ll email you the updated report link when the rescan is done.');
+    try { t('report_rescan_complete'); } catch {}
+  }, 900);
+
+  // Optional: if the POST failed, offer a mail fallback to ensure you receive it
+  if (!sent && email && website) {
+    const subject = encodeURIComponent('Rescan request');
+    const body = encodeURIComponent(`Website: ${website}\nEmail: ${email}\nReport: ${window.location.href}`);
+    // Replace the address below with your inbox
+    window.open(`mailto:hello@yourdomain.com?subject=${subject}&body=${body}`, '_blank', 'noopener,noreferrer');
+  }
+}
 
 // Jump to Human checks: activate tab, scroll, and focus the panel (APG-friendly)
 const goToHumanChecks = React.useCallback(() => {
@@ -2156,7 +2380,7 @@ const durationSeconds = dataset === 'after' ? 2.6 : 3.2;
 
 // Expose to PDF/JSON according to selected dataset
 window.__demoReport = {
-  brand: 'AccessScan',
+  brand: 'ClearPath',
   engine: 'axe-core',
   engineVersion: '4.10',
   url: data.url,
@@ -2287,7 +2511,7 @@ const genNote = React.useMemo(() => {
   type="button"
   onClick={goToHumanChecks}
   aria-controls="panel-human"
-  className="mt-1 text-xs text-indigo-700 underline decoration-dotted focus:outline-none focus:ring-2 focus:ring-indigo-500/40 rounded"
+  className="mt-1 text-xs text-blue-700 underline decoration-dotted focus:outline-none focus:ring-2 focus:ring-blue-500/40 rounded"
 >
   Human checks pending: <span className="font-medium">{HUMAN_CHECKS}</span>. Review now
 </button>
@@ -2299,7 +2523,7 @@ const genNote = React.useMemo(() => {
 <div className="mt-4 flex items-center gap-3 text-sm" role="group" aria-label="Select dataset">
   <div className="inline-flex rounded-xl overflow-hidden border border-gray-200 bg-white/80 backdrop-blur">
     <button
-      className={`px-3 py-1.5 disabled:opacity-60 disabled:cursor-not-allowed ${dataset==='before'?'bg-indigo-50 text-indigo-700 font-semibold':''}`}
+      className={`px-3 py-1.5 disabled:opacity-60 disabled:cursor-not-allowed ${dataset==='before'?'bg-blue-50 text-blue-700 font-semibold':''}`}
       onClick={()=>setDataset('before')}
       aria-pressed={dataset==='before'}
       disabled={dataset==='before'}
@@ -2308,7 +2532,7 @@ const genNote = React.useMemo(() => {
       Before
     </button>
     <button
-      className={`px-3 py-1.5 disabled:opacity-60 disabled:cursor-not-allowed ${dataset==='after'?'bg-indigo-50 text-indigo-700 font-semibold':''}`}
+      className={`px-3 py-1.5 disabled:opacity-60 disabled:cursor-not-allowed ${dataset==='after'?'bg-blue-50 text-blue-700 font-semibold':''}`}
       onClick={()=>setDataset('after')}
       aria-pressed={dataset==='after'}
       disabled={dataset==='after'}
@@ -2339,7 +2563,7 @@ const genNote = React.useMemo(() => {
     onClick={() => setTab(x.k)}
     className={`px-3 py-2 rounded-t-md ${
       tab === x.k
-        ? 'border-b-2 border-indigo-600 font-semibold text-indigo-700 bg-indigo-50'
+        ? 'border-b-2 border-blue-600 font-semibold text-blue-700 bg-blue-50'
         : 'text-gray-600'
     }`}
   >
@@ -2367,7 +2591,7 @@ const genNote = React.useMemo(() => {
           aria-pressed={sevSel[k]}
           onClick={() => toggleSev(k)}
           className={`px-3 py-1 rounded-full text-xs border inline-flex items-center gap-1 ${
-            sevSel[k] ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-gray-300 text-gray-700'
+            sevSel[k] ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-300 text-gray-700'
           }`}
           title={sevSel[k] ? `Hide ${label}` : `Show ${label}`}
         >
@@ -2379,7 +2603,7 @@ const genNote = React.useMemo(() => {
     <button
       type="button"
       onClick={clearSev}
-      className="ml-1 text-xs underline text-indigo-700"
+      className="ml-1 text-xs underline text-blue-700"
       title="Reset all severity filters"
     >
       Reset filters
@@ -2392,14 +2616,14 @@ const genNote = React.useMemo(() => {
 
           <p>Some checks can’t be automated. We show exactly what needs a human review, with short test scripts so you can verify quickly.</p>
           <p className="text-sm text-gray-700">
-  Tip: Open the <button className="underline text-indigo-700" onClick={()=>setTab('issues')}>Issues</button> tab to see all {issues.length} items with how-to-fix steps.
+  Tip: Open the <button className="underline text-emerald-700" onClick={()=>setTab('issues')}>Issues</button> tab to see all {issues.length} items with how-to-fix steps.
 </p>
 
           {/* Resolved vs remaining */}
 {dataset==='after' && (
-  <div className="rounded-xl bg-green-50 border border-green-200 p-3">
-    <div className="font-semibold text-green-800 mb-1">Resolved since “Before”</div>
-    <ul className="list-disc pl-5 text-green-800">
+  <div className="rounded-xl bg-blue-50 border border-blue-200 p-3">
+    <div className="font-semibold text-blue-800 mb-1">Resolved since “Before”</div>
+    <ul className="list-disc pl-5 text-blue-800">
       {resolvedCats.length ? resolvedCats.map((c,i)=><li key={i}>{c}</li>) : <li>No changes detected in this demo set.</li>}
     </ul>
   </div>
@@ -2410,7 +2634,7 @@ const genNote = React.useMemo(() => {
   <div className="flex items-center justify-between">
     <div className="font-semibold">Copy quick-fix pack</div>
     <button
-      className="text-xs px-2 py-1 rounded border border-indigo-200 text-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+      className="text-xs px-2 py-1 rounded border border-emerald-200 text-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
       onClick={async ()=>{
   const txt = buildFixPack(issues);
   await window.copyTextWithStatus(txt, 'Quick-fix pack copied');
@@ -2447,7 +2671,7 @@ const genNote = React.useMemo(() => {
                 type="button"
                 aria-pressed={showAll}
                 onClick={() => setShowAll(s => !s)}
-                className="px-2 py-1 rounded border border-indigo-200 text-indigo-700"
+                className="px-2 py-1 rounded border border-emerald-200 text-emerald-700"
                 title={showAll ? 'Show top 5 items' : 'Show all items'}
               >
                 {showAll ? 'Show top 5' : 'Show all'}
@@ -2524,7 +2748,7 @@ const genNote = React.useMemo(() => {
                           <div className="flex items-center gap-2">
                             <button
                               type="button"
-                              className="px-2 py-1 text-xs rounded border border-indigo-200 text-indigo-700"
+                              className="px-2 py-1 text-xs rounded border border-blue-200 text-blue-700"
                               aria-controls="fixModal"
                               aria-label={`Open fix snippet for ${it.cat}`}
                               onClick={(e) => {
@@ -2535,7 +2759,7 @@ const genNote = React.useMemo(() => {
                               Fix
                             </button>
                             <a
-                              className="text-xs underline text-indigo-700"
+                              className="text-xs underline text-blue-700"
                               href={AXE_RULE_URL(ruleId)}
                               target="_blank" rel="noreferrer"
                               aria-label={`Open rule help for ${ruleId}`}
@@ -2553,7 +2777,7 @@ const genNote = React.useMemo(() => {
                         <div className="flex items-center gap-2">
                           {guided && (
                             <button
-                              className="px-2 py-1 text-xs rounded border border-indigo-200 text-indigo-700"
+                              className="px-2 py-1 text-xs rounded border border-blue-200 text-blue-700"
                               data-action="guide"
                               data-rule-id={ruleId}
                               aria-controls="guideModal"
@@ -2599,18 +2823,20 @@ const genNote = React.useMemo(() => {
 
       
 
-      <div className="sticky bottom-3 mt-6">
+      <div className="mt-6">{/* was: sticky bottom-3 */}
   <div className="rounded-xl bg-white/80 backdrop-blur border border-white/30 p-3 shadow flex flex-wrap items-center gap-2">
+    {false && (
+      <Button
+        variant='secondary'
+        className="bg-white text-blue-700 ring-1 ring-inset px-3 py-2"
+        onClick={() => { t('report_copy_link'); window.copyTextWithStatus(window.location.href + '?share=fakeToken123', 'Report link copied'); }}
+      >
+        Share this report
+      </Button>
+    )}
     <Button
       variant='secondary'
-      className="bg-white text-indigo-700 ring-1 ring-inset px-3 py-2"
-      onClick={() => { t('report_copy_link'); window.copyTextWithStatus(window.location.href + '?share=fakeToken123', 'Report link copied'); }}
-    >
-      Share this report
-    </Button>
-    <Button
-      variant='secondary'
-      className="bg-white text-indigo-700 ring-1 ring-inset px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+      className="bg-white text-blue-700 ring-1 ring-inset px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
       title={issues.length === 0 ? 'No issues to export' : undefined}
       disabled={issues.length === 0}
       onClick={() => { if (issues.length === 0) return; t('report_print'); window.generateReportPDF(); }}
@@ -2619,29 +2845,62 @@ const genNote = React.useMemo(() => {
     </Button>
     <Button
       variant='secondary'
-      className="bg-white text-indigo-700 ring-1 ring-inset px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-      title={issues.length === 0 ? 'No issues to export' : undefined}
-      disabled={issues.length === 0}
-      onClick={() => { if (issues.length === 0) return; t('report_json_download'); window.downloadReportJSON(); }}
+      className="bg-white text-blue-700 ring-1 ring-inset px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+      onClick={handleRescanNow}
+      disabled={rescanBusy}
+      aria-busy={rescanBusy ? 'true' : 'false'}
     >
-      Download JSON
+      {rescanBusy ? 'Requesting…' : 'Request a rescan'}
     </Button>
 
-    <Button
-      variant='secondary'
-      className="bg-white text-indigo-700 ring-1 ring-inset px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-      title={issues.length === 0 ? 'No issues to export' : undefined}
-      disabled={issues.length === 0}
-      onClick={() => { if (issues.length === 0) return; t('report_csv_download'); window.downloadDevCSV(); }}
-    >
-      Create dev tickets (CSV)
-    </Button>
+    {false && (
+      <Button
+        variant='secondary'
+        className="bg-white text-blue-700 ring-1 ring-inset px-3 py-2"
+        onClick={() => setScheduleOpen(true)}
+        title="Choose weekly or nightly rescans"
+      >
+        Schedule rescans
+      </Button>
+    )}
+
+    {false && (
+      <Button
+        variant='secondary'
+        className="bg-white text-blue-700 ring-1 ring-inset px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        title={issues.length === 0 ? 'No issues to export' : undefined}
+        disabled={issues.length === 0}
+        onClick={() => { if (issues.length === 0) return; t('report_json_download'); window.downloadReportJSON(); }}
+      >
+        Download JSON
+      </Button>
+    )}
+
+    {false && (
+      <Button
+        variant='secondary'
+        className="bg-white text-blue-700 ring-1 ring-inset px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        title={issues.length === 0 ? 'No issues to export' : undefined}
+        disabled={issues.length === 0}
+        onClick={() => { if (issues.length === 0) return; t('report_csv_download'); window.downloadDevCSV(); }}
+      >
+        Create dev tickets (CSV)
+      </Button>
+    )}
     <span className="ml-auto"></span>
-    <Button as='a' href="#pricing" onClick={(e) => { e.preventDefault(); navigate('/pricing') }} variant='ghost'>
-      See plans
-    </Button>
+    {false && (
+      <Button as='a' href="#pricing" onClick={(e) => { e.preventDefault(); navigate('/pricing') }} variant='ghost'>
+        See plans
+      </Button>
+    )}
   </div>
 </div>
+
+{/* Status for screen readers */}
+<div aria-live="polite" className="sr-only">{rescanMsg}</div>
+
+{/* Scheduling modal */}
+{false && <SchedulePicker open={scheduleOpen} onClose={() => setScheduleOpen(false)} />}
 
     </div>
   )
@@ -2799,63 +3058,77 @@ localStorage.setItem('website', nurl);
   )
 }
 
+function PilotCTASection({ navigate }) {
+  return (
+    <section aria-labelledby="pilot-title" className="py-10 sm:py-12">
+      <Container>
+        <div className="glass-strong rounded-2xl border border-white/40 bg-white/90 backdrop-blur p-6 sm:p-8 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 id="pilot-title" className="text-xl sm:text-2xl font-semibold text-gray-900">
+              14-day Pilot: ship your first fixes fast
+            </h2>
+            <p className="mt-1 text-sm text-gray-700">
+              We run your first rescan(s), guide the manual checks, and help you apply the copy-paste fixes. No credit card.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => navigate('/start-baseline')}>Start 14-day pilot</Button>
+            <Button variant="ghost" onClick={() => navigate('/report/demo')}>See sample report</Button>
+          </div>
+        </div>
+      </Container>
+    </section>
+  );
+}
+
 // ----------------------------
 // Pages
 // ----------------------------
+
 function HomeView({ navigate }) {
   return (
     <>
       <Hero navigate={navigate} />
 
-      {/* Enhanced 3-step walkthrough */}
-      <section id="how-it-works" aria-labelledby="howitworks-title" className="mx-auto max-w-7xl px-4 lg:px-6 py-16 lg:py-20">
-        <div className="text-center mb-12">
-          <h2 id="howitworks-title" className="text-3xl lg:text-4xl font-bold tracking-tight text-gray-900 mb-4">
+      {/* Combined 4-step walkthrough (replaces old How it works + What happens next) */}
+      <section id="how-it-works" aria-labelledby="howitworks-title" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-6 py-12 sm:py-16 lg:py-20">
+        <div className="text-center mb-8 sm:mb-12">
+          <h2 id="howitworks-title" className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-gray-900 mb-3 sm:mb-4">
             How it works
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Get actionable accessibility insights in minutes with our streamlined three-step process
+          <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto px-4">
+            From first click to complete accessibility proof — simple, fast, and straightforward.
           </p>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12 relative">
-          {/* Connection lines for desktop */}
-          <div className="hidden md:block absolute top-16 left-1/3 right-1/3 h-0.5 bg-gradient-to-r from-blue-200 via-emerald-200 to-blue-200"></div>
-          
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 lg:gap-12 relative">
+          {/* Connection line for desktop - emerald themed */}
+          <div className="hidden lg:block absolute top-16 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-emerald-200 via-emerald-300 to-emerald-200"></div>
+
           {[
-            { 
-              icon: '🔗', 
-              title: 'Scan Your Site', 
-              text: 'Paste your URL and run a comprehensive scan in just minutes.',
-              step: '01'
-            },
-            { 
-              icon: '✅', 
-              title: 'Get Actionable Insights', 
-              text: 'See top 10 issues with WCAG links and copy-paste fix snippets.',
-              step: '02'
-            },
-            { 
-              icon: '📈', 
-              title: 'Track Progress', 
-              text: 'Monitor improvements with weekly rescans and score trends.',
-              step: '03'
-            },
+            { icon: '🔗', title: 'Start a free baseline', text: 'Paste your URL and work email, then click Start. No card required.', step: '1' },
+            { icon: '📄', title: 'Get your report', text: 'Top 10 issues with WCAG 2.2 links and copy-paste fix tips.', step: '2' },
+            { icon: '🛠️', title: 'Fix high-impact items', text: 'Tackle contrast, alt text, labels, and empty links first.', step: '3' },
+            { icon: '📈', title: 'Rescan & track progress', text: 'Request a rescan; see your score trend and shareable PDF.', step: '4' },
           ].map((s, i) => (
             <div key={i} className="relative">
-              {/* Step number */}
-              <div className="absolute -top-4 left-6 w-8 h-8 bg-gradient-to-r from-blue-500 to-emerald-500 text-white text-sm font-bold rounded-full flex items-center justify-center shadow-lg z-10">
+              {/* Step number badge - matching your site's style */}
+              <div className="absolute -top-3 sm:-top-4 left-4 sm:left-6 w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-xs sm:text-sm font-bold rounded-full flex items-center justify-center shadow-lg z-10">
                 {s.step}
               </div>
-              
-              <div className="glass-card rounded-3xl p-8 min-h-48 hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border border-white/60 bg-white/90 backdrop-blur-sm">
-                <div className="text-4xl mb-4" aria-hidden="true">{s.icon}</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">{s.title}</h3>
-                <p className="text-gray-700 leading-relaxed">{s.text}</p>
+
+              <div className="glass-card rounded-2xl sm:rounded-3xl p-6 sm:p-8 min-h-44 sm:min-h-48 hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border border-white/60 bg-white/90 backdrop-blur-sm">
+                <div className="text-3xl sm:text-4xl mb-3 sm:mb-4" aria-hidden="true">{s.icon}</div>
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3">{s.title}</h3>
+                <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{s.text}</p>
               </div>
             </div>
           ))}
         </div>
+
+        <p className="mt-8 text-sm text-gray-500 text-center">
+          Note: Automated checks cover common, objective issues; some areas (keyboard flow, focus order, alt text quality) need a quick human review. Your report calls those out clearly.
+        </p>
       </section>
 
       <section id="pricing" aria-labelledby="pricing-preview" className="border-t border-white/20 py-12 sm:py-16">
@@ -2864,6 +3137,7 @@ function HomeView({ navigate }) {
           <Pricing compact navigate={navigate} />
         </Container>
       </section>
+      {false && <PilotCTASection navigate={navigate} />}
       <FeatureGrid />
       <section id="faq" aria-labelledby="faq-title" className="border-t border-emerald-200/50 py-16 lg:py-20">
         <Container>
@@ -3304,7 +3578,7 @@ function QueuedView({ navigate }) {
             aria-valuenow={progress}
             aria-describedby="queue-status"
           >
-            <div className="h-full bg-indigo-600" style={{ width: `${progress}%` }} />
+            <div className="h-full bg-blue-600" style={{ width: `${progress}%` }} />
           </div>
           <p id="queue-status" className="mt-2 text-sm text-gray-700" aria-live="polite">Status: {status}</p>
           <ul className="mt-3 list-disc pl-5 text-sm text-gray-700">
@@ -3509,7 +3783,7 @@ function FeatureGrid() {
       <Container>
         <div className="text-center mb-12">
           <h2 id="features-title" className="text-3xl lg:text-4xl font-bold tracking-tight text-gray-900 mb-4">
-            Why teams use AccessScan
+            Why teams use ClearPath
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Everything you need to build accessible experiences that work for everyone
@@ -3532,6 +3806,8 @@ function FeatureGrid() {
 
 function Pricing({ compact = false, navigate }) {
   const [annual, setAnnual] = useState(false)
+  // Toggle this to true later if you want the pilot line to show up again
+  const SHOW_PILOT_LINE = false
   const plans = useMemo(() => ([
   { key: 'founder', name: 'Founder Access (Beta)', price: '£0', priceNote: 'reserve', callout: true, special: true, 
     badges: ['Beta access', 'Limited-time'],
@@ -3539,7 +3815,10 @@ function Pricing({ compact = false, navigate }) {
       'Includes everything in Free baseline (score + Top-10, WCAG links, PDF by email)',
       '<strong>One free rescan within 30 days (normally paid)</strong>',
       '<strong>Founder pricing: 25% off any paid plan for 12 months</strong>',
-      '<strong>Priority queue + early features</strong>'
+      '<strong>Priority queue + early features</strong>',
+      ...(SHOW_PILOT_LINE
+        ? ['<strong>14-day pilot: we\'ll run your first rescans and guide manual checks</strong>']
+        : [])
     ] },
 
   { key: 'free', name: 'Free baseline', callout: true, sites: 1, scans: '1 page', features: ['Score + Top-10', 'WCAG links', 'PDF by email'] },
@@ -3707,7 +3986,7 @@ function PlanLeadView({ navigate }) {
               <h1 className="text-3xl font-bold text-gray-900">Tell us where to scan</h1>
               {planName && (
                 <span
-                  className="inline-flex items-center rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold px-3 py-1"
+                  className="inline-flex items-center rounded-full bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1"
                   aria-label={`Selected plan: ${planName}`}
                 >
                   Selected plan: {planName}
@@ -3731,7 +4010,7 @@ function PlanLeadView({ navigate }) {
               <li>We batch new sites regularly and schedule a baseline scan.</li>
               <li>You’ll get one email when the scan is scheduled and another when your PDF is ready.</li>
               <li>
-                <button className="underline text-indigo-700" onClick={()=>navigate('/report/demo')}>
+                <button className="underline text-blue-700" onClick={()=>navigate('/report/demo')}>
                   Open a sample report
                 </button>
                 &nbsp;to see the format.
@@ -3877,7 +4156,7 @@ function DashboardWelcome({ navigate }) {
     <section className="py-12 sm:py-16">
       <Container>
         <div className="glass-strong rounded-2xl border border-white/30 p-6 shadow-lg">
-          <h1 className="text-3xl font-bold text-gray-900">Welcome to AccessScan</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Welcome to ClearPath</h1>
           <p className="mt-2 text-gray-700">Let’s finish setup so we can queue your first scheduled scan.</p>
           <ol className="mt-4 list-decimal pl-5 space-y-2 text-sm text-gray-800">
             <li>Organization name</li>
@@ -3902,7 +4181,7 @@ function runDevTests() {
   try {
     // Title map
     assert(TITLE_MAP['/pricing'].includes('Pricing'), 'title map pricing failed')
-    assert((TITLE_MAP['/'] || '').startsWith('AccessScan'), 'title map root failed')
+    assert((TITLE_MAP['/'] || '').startsWith('ClearPath'), 'title map root failed')
     assert(TITLE_MAP['/report/demo'].includes('Demo'), 'title map demo failed')
     assert(TITLE_MAP['/cookies'].includes('Cookies'), 'title map cookies failed')
     assert(TITLE_MAP['/dashboard/welcome'].includes('Welcome'), 'title map welcome failed')
@@ -3964,10 +4243,10 @@ function App() {
   usePlausible()
   useEffect(() => { try { runDevTests() } catch { /* ignore */ } }, [])
 
-  const title = TITLE_MAP[route] || 'AccessScan'
+  const title = TITLE_MAP[route] || 'ClearPath'
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-indigo-50 text-slate-900">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50 text-slate-900">
       <Layout title={title} navigate={navigate}>
   <ErrorBoundary>
     {(route === '/' || route === '/home') && <HomeView navigate={navigate} />}
@@ -4368,8 +4647,8 @@ if (ok) { ok.classList.remove('opacity-0'); setTimeout(()=>ok.classList.add('opa
         <div id="gm-panel-${t}" role="tabpanel" aria-labelledby="gm-tab-${t}" ${i!==0?'hidden':''}>
           <pre class="rounded bg-zinc-50 p-3 text-xs overflow-auto" id="gm-code-${t}"></pre>
           <div class="mt-1">
-            <button type="button" class="gm-copy px-2 py-1 rounded border border-indigo-200 text-indigo-700" data-for="${t}">Copy</button>
-            <span class="ml-2 text-xs text-indigo-700 opacity-0 transition-opacity" id="gm-copied-${t}" aria-hidden="true">Copied!</span>
+            <button type="button" class="gm-copy px-2 py-1 rounded border border-blue-200 text-blue-700" data-for="${t}">Copy</button>
+            <span class="ml-2 text-xs text-blue-700 opacity-0 transition-opacity" id="gm-copied-${t}" aria-hidden="true">Copied!</span>
           </div>
         </div>
       `);
@@ -4445,7 +4724,7 @@ if (ok) { ok.classList.remove('opacity-0'); setTimeout(()=>ok.classList.add('opa
     }
     if (meta.url) {
       body.append(
-        html(`<p class="text-xs text-zinc-600 mt-2"><a class="underline text-indigo-700" href="${meta.url}" target="_blank" rel="noreferrer">WCAG ${meta.id}</a></p>`)
+        html(`<p class="text-xs text-zinc-600 mt-2"><a class="underline text-blue-700" href="${meta.url}" target="_blank" rel="noreferrer">WCAG ${meta.id}</a></p>`)
       );
     }
 

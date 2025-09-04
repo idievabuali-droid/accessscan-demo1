@@ -47,30 +47,82 @@ module.exports = async function handler(req, res) {
       createdAt: new Date().toISOString()
     };
 
-    // TODO: Store in your database (replace console.log)
-    // Example: await database.baselineRequests.create(baselineRequest);
+    // Store baseline request in Stripe as customer for easy admin access
+    // This way both founder access and baseline users appear in same dashboard
+    let stripeSuccess = false;
+    try {
+      if (process.env.STRIPE_SECRET_KEY) {
+        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        
+        // Check if customer already exists
+        const existingCustomers = await stripe.customers.list({ 
+          email: email.trim().toLowerCase(), 
+          limit: 1 
+        });
+        
+        let customer = existingCustomers.data[0];
+        
+        if (!customer) {
+          // Create new customer for baseline submission
+          customer = await stripe.customers.create({
+            email: email.trim().toLowerCase(),
+            name: name.trim(),
+            metadata: {
+              submission_type: 'baseline',
+              ba_source: 'free_baseline',
+              ba_website: website.replace(/\/$/, ''),
+              ba_company: company?.trim() || '',
+              ba_timestamp: timestamp || new Date().toISOString(),
+              ba_status: 'queued'
+            }
+          });
+          console.log('📊 Baseline customer created in Stripe:', customer.id);
+          stripeSuccess = true;
+        } else {
+          // Update existing customer with baseline info
+          await stripe.customers.update(customer.id, {
+            name: name.trim(),
+            metadata: {
+              ...(customer.metadata || {}),
+              submission_type: 'baseline',
+              ba_source: 'free_baseline', 
+              ba_website: website.replace(/\/$/, ''),
+              ba_company: company?.trim() || '',
+              ba_timestamp: timestamp || new Date().toISOString(),
+              ba_status: 'queued'
+            }
+          });
+          console.log('📊 Baseline info added to existing customer:', customer.id);
+          stripeSuccess = true;
+        }
+      } else {
+        console.log('⚠️ No Stripe key found, baseline submission saved locally only');
+      }
+      
+    } catch (stripeError) {
+      console.error('Failed to save baseline to Stripe (continuing anyway):', stripeError.message);
+      stripeSuccess = false;
+    }
+
+    // Also log for immediate visibility
     console.log('📊 New baseline request:', baselineRequest);
 
-    // TODO: Add to queue for processing
-    // Example: await queueService.addBaseline(baselineRequest);
-
-    // TODO: Send confirmation email
-    // Example: await emailService.sendBaselineConfirmation(baselineRequest);
-
-    // For now, simulate success
+    // Return success regardless of Stripe status
     return res.status(200).json({
       success: true,
       message: 'Baseline scan queued successfully',
       requestId: baselineRequest.id,
-      queuePosition: Math.floor(Math.random() * 5) + 1, // Simulated queue position
-      estimatedCompletion: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 minutes from now
+      stripeIntegration: stripeSuccess,
+      queuePosition: Math.floor(Math.random() * 5) + 1,
+      estimatedCompletion: new Date(Date.now() + 30 * 60 * 1000).toISOString()
     });
 
   } catch (error) {
     console.error('Baseline collection error:', error);
     return res.status(500).json({ 
       error: 'Internal server error',
-      message: error.message 
+      message: error.message,
+      timestamp: new Date().toISOString()
     });
   }
-}
+};

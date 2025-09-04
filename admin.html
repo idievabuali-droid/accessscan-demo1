@@ -144,16 +144,39 @@
     <script>
         async function loadDashboard() {
             try {
-                const token = prompt('Enter admin token:');
-                if (!token) return;
+                // Check for token in URL parameters first
+                const urlParams = new URLSearchParams(window.location.search);
+                let token = urlParams.get('token');
+                
+                // If no URL token, check localStorage
+                if (!token) {
+                    token = localStorage.getItem('admin_token');
+                }
+                
+                // If still no token, prompt user
+                if (!token) {
+                    token = prompt('Enter admin token:');
+                    if (!token) return;
+                    // Save token for next time
+                    localStorage.setItem('admin_token', token);
+                }
 
-                const response = await fetch('/api/admin-dashboard', {
+                const response = await fetch('/api/admin-dashboard-simple', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
 
                 if (!response.ok) {
+                    // If unauthorized, clear saved token and prompt again
+                    if (response.status === 401) {
+                        localStorage.removeItem('admin_token');
+                        token = prompt('Invalid token. Enter admin token:');
+                        if (!token) return;
+                        localStorage.setItem('admin_token', token);
+                        // Retry with new token
+                        return loadDashboard();
+                    }
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
 
