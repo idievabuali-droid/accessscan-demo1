@@ -153,10 +153,9 @@
                     token = localStorage.getItem('admin_token');
                 }
                 
-                // If still no token, prompt user
+                // If still no token, use the default admin token
                 if (!token) {
-                    token = prompt('Enter admin token:');
-                    if (!token) return;
+                    token = 'gc0diffwy133YlVBypxDwusP';
                     // Save token for next time
                     localStorage.setItem('admin_token', token);
                 }
