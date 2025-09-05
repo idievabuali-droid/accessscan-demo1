@@ -14,11 +14,16 @@ export default async function handler(req, res) {
     
     const stripe = new Stripe(stripeKey, { apiVersion: '2024-06-20' });
     
-    const { plan, price_id, mode = 'subscription' } = req.body;
+    const { plan, price_id, mode = 'subscription', customer_email, customer_name, website } = req.body;
 
     if (!plan || !price_id) {
       return res.status(400).json({ error: 'Missing required fields: plan and price_id' });
     }
+
+    // Compute origin for success/cancel URLs (works on Vercel)
+    const proto = req.headers['x-forwarded-proto'] || 'https';
+    const host = req.headers['x-forwarded-host'] || req.headers.host;
+    const origin = `${proto}://${host}`;
 
     // Create the checkout session
     const session = await stripe.checkout.sessions.create({
@@ -30,16 +35,28 @@ export default async function handler(req, res) {
           quantity: 1,
         },
       ],
-      success_url: `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.origin}/pricing?canceled=1`,
+      success_url: `${origin}/#/subscribe/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/#/pricing?canceled=1`,
       metadata: {
         plan: plan,
-        source: 'clearpath_website'
+        source: 'clearpath_website',
+        website: website || ''
       },
       // For subscriptions, collect customer information
       ...(mode === 'subscription' && {
         customer_creation: 'always',
         billing_address_collection: 'required',
+        customer_email: customer_email || undefined,
+        // Include customer name and website in metadata
+        ...(customer_name && {
+          customer_creation: 'always',
+          metadata: {
+            plan: plan,
+            source: 'clearpath_website', 
+            website: website || '',
+            customer_name: customer_name
+          }
+        })
       }),
     });
 

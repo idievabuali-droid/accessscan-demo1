@@ -3517,6 +3517,26 @@ function PaidPlanView({ navigate }) {
   const route = window.location.hash.slice(1) || '/';
   const planKey = route.split('/')[2]; // Extract from /plan/starter format
   
+  // Helper function to get Stripe price IDs for each plan
+  const getPriceId = (planKey, isAnnual) => {
+    const priceIds = {
+      starter: {
+        monthly: 'price_1QhUaXP8b0LKjKt25Qp7sDnr', // £39/month test price
+        yearly: 'price_1QhUaYP8b0LKjKt2xYz9WmFp'   // £390/year test price (20% off)
+      },
+      pro: {
+        monthly: 'price_1QhUb5P8b0LKjKt2v5rBkO3u', // £119/month test price
+        yearly: 'price_1QhUb6P8b0LKjKt2nRs4LmPq'   // £1190/year test price (20% off)
+      },
+      agency: {
+        monthly: 'price_1QhUbQP8b0LKjKt2j4vn8xGw', // £349/month test price
+        yearly: 'price_1QhUbRP8b0LKjKt2kN8vTxCz'   // £3490/year test price (20% off)
+      }
+    };
+    
+    return priceIds[planKey]?.[isAnnual ? 'yearly' : 'monthly'] || null;
+  };
+  
   // Find the plan details
   const plans = [
     { key: 'starter', name: 'Starter', monthly: 39, sites: 1, scans: 'weekly',
@@ -3554,12 +3574,40 @@ function PaidPlanView({ navigate }) {
 
     try {
       setBusy(true);
-      // For now, show success message. In future, integrate with Stripe checkout
-      alert(`Thank you for your interest in the ${plan.name} plan! We'll contact you soon to set up your subscription.`);
-      navigate('/pricing');
+      
+      // Get the correct price ID for this plan (monthly)
+      const priceId = getPriceId(plan.key, false); // false = monthly
+      
+      if (!priceId) {
+        throw new Error('Price ID not configured for this plan');
+      }
+
+      // Create Stripe checkout session
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan: plan.name,
+          price_id: priceId,
+          mode: 'subscription',
+          customer_email: email,
+          customer_name: name,
+          website: website
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout session');
+      }
+
+      // Redirect to Stripe checkout
+      window.location.href = data.url;
+      
     } catch (e2) {
-      console.error(e2);
-      setErr('Something went wrong. Please try again.');
+      console.error('Checkout error:', e2);
+      setErr(e2.message || 'Something went wrong. Please try again.');
       setBusy(false);
     }
   }
@@ -3567,7 +3615,7 @@ function PaidPlanView({ navigate }) {
   return (
     <main className="container mx-auto max-w-[680px] px-4 py-12">
       <h1 className="text-3xl font-bold mb-2">Subscribe to {plan.name}</h1>
-      <div className="bg-gradient-to-r from-blue-50 to-emerald-50 border border-blue-200 rounded-lg p-4 mb-6">
+      <div className="bg-gradient-to-r from-blue-50 to-emerald-50 border border-blue-200 rounded-lg p-4 mb-4">
         <h2 className="text-xl font-semibold text-gray-900 mb-2">{plan.name} Plan</h2>
         <p className="text-2xl font-bold text-blue-600 mb-2">£{plan.monthly}/month</p>
         <p className="text-gray-700 mb-3">{plan.sites} site{plan.sites > 1 ? 's' : ''} • {plan.scans} scans</p>
@@ -3579,6 +3627,16 @@ function PaidPlanView({ navigate }) {
             </li>
           ))}
         </ul>
+      </div>
+      
+      <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 mb-6">
+        <div className="flex items-center gap-2">
+          <span className="text-emerald-600 text-lg">💳</span>
+          <div>
+            <p className="font-semibold text-emerald-800">No charge today</p>
+            <p className="text-sm text-emerald-700">We'll save your payment method and notify you before your first billing cycle begins.</p>
+          </div>
+        </div>
       </div>
       
       <form onSubmit={onSubmit} className="space-y-5" noValidate>
@@ -3610,7 +3668,7 @@ function PaidPlanView({ navigate }) {
         <div className="flex gap-3">
           <button type="submit" disabled={busy}
                   className="inline-flex items-center rounded-lg bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 px-4 py-2 font-semibold text-white shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 disabled:opacity-60 disabled:hover:scale-100">
-            {busy ? 'Processing…' : `Subscribe to ${plan.name} - £${plan.monthly}/mo`}
+            {busy ? 'Redirecting to checkout…' : `Continue to Stripe Checkout`}
           </button>
           <Button variant="ghost" onClick={() => navigate('/pricing')}>
             Back to Pricing
@@ -3662,6 +3720,100 @@ function ReserveSuccessView() {
           <a href="#/" className="mt-4 inline-block underline">Back to home</a>
         </div>
       ) : !err ? <p>Loading confirmation…</p> : null}
+    </main>
+  );
+}
+
+function SubscribeSuccessView({ navigate }) {
+  const [info, setInfo] = React.useState(null);
+  const [err, setErr] = React.useState('');
+
+  React.useEffect(() => {
+    // Get session ID from URL hash
+    const m = (location.hash || '').match(/session_id=([^&]+)/);
+    const sessionId = m ? decodeURIComponent(m[1]) : null;
+    if (!sessionId) return setErr('Missing session id');
+    
+    (async () => {
+      try {
+        const res = await fetch('/api/get-checkout-session?session_id=' + encodeURIComponent(sessionId));
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to load session');
+        setInfo(json);
+      } catch (e) { 
+        setErr(e.message); 
+      }
+    })();
+  }, []);
+
+  return (
+    <main className="container mx-auto max-w-[680px] px-4 py-12">
+      <div className="text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-full mb-6">
+          <span className="text-2xl">🎉</span>
+        </div>
+        
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to AccessScan!</h1>
+        <p className="text-gray-600 mb-8">Your subscription has been set up successfully.</p>
+      </div>
+
+      {err && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <p className="text-red-600">{err}</p>
+        </div>
+      )}
+
+      {info ? (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-200 rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-3">Subscription Details</h2>
+            <div className="space-y-2">
+              <p><span className="font-medium">Plan:</span> {info.metadata?.plan || 'Subscription'}</p>
+              <p><span className="font-medium">Email:</span> {info.customer_email}</p>
+              {info.metadata?.website && (
+                <p><span className="font-medium">Website:</span> 
+                   <a href={info.metadata.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline ml-1">
+                     {info.metadata.website}
+                   </a>
+                </p>
+              )}
+              {info.payment_method && (
+                <p><span className="font-medium">Payment Method:</span> {info.payment_method.brand} •••• {info.payment_method.last4}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <h3 className="font-semibold text-blue-900 mb-2">What happens next?</h3>
+            <ul className="text-sm text-blue-800 space-y-1">
+              <li>• You'll receive a confirmation email shortly</li>
+              <li>• We'll begin scanning your website within 24 hours</li>
+              <li>• Your first accessibility report will be emailed to you</li>
+              <li>• Billing will start after your first scan is complete</li>
+            </ul>
+          </div>
+
+          <div className="text-center space-x-4">
+            <button 
+              onClick={() => navigate('/')}
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
+            >
+              Back to Home
+            </button>
+            <button 
+              onClick={() => navigate('/pricing')}
+              className="inline-flex items-center px-6 py-3 bg-white text-gray-700 font-semibold rounded-lg border border-gray-300 hover:bg-gray-50 transition-all duration-300"
+            >
+              View All Plans
+            </button>
+          </div>
+        </div>
+      ) : !err ? (
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-gray-600">Loading confirmation details...</p>
+        </div>
+      ) : null}
     </main>
   );
 }
@@ -4410,6 +4562,7 @@ function App() {
     {route === '/founder-access' && <FounderAccessView navigate={navigate} />}
     {route.startsWith('/plan/') && <PaidPlanView navigate={navigate} />}
     {route === '/reserve/success' && <ReserveSuccessView navigate={navigate} />}
+    {route === '/subscribe/success' && <SubscribeSuccessView navigate={navigate} />}
   </ErrorBoundary>
 </Layout>
 
