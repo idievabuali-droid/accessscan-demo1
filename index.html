@@ -3517,26 +3517,6 @@ function PaidPlanView({ navigate }) {
   const route = window.location.hash.slice(1) || '/';
   const planKey = route.split('/')[2]; // Extract from /plan/starter format
   
-  // Helper function to get Stripe price IDs for each plan
-  const getPriceId = (planKey, isAnnual) => {
-    const priceIds = {
-      starter: {
-        monthly: 'price_1QhUaXP8b0LKjKt25Qp7sDnr', // £39/month test price
-        yearly: 'price_1QhUaYP8b0LKjKt2xYz9WmFp'   // £390/year test price (20% off)
-      },
-      pro: {
-        monthly: 'price_1QhUb5P8b0LKjKt2v5rBkO3u', // £119/month test price
-        yearly: 'price_1QhUb6P8b0LKjKt2nRs4LmPq'   // £1190/year test price (20% off)
-      },
-      agency: {
-        monthly: 'price_1QhUbQP8b0LKjKt2j4vn8xGw', // £349/month test price
-        yearly: 'price_1QhUbRP8b0LKjKt2kN8vTxCz'   // £3490/year test price (20% off)
-      }
-    };
-    
-    return priceIds[planKey]?.[isAnnual ? 'yearly' : 'monthly'] || null;
-  };
-  
   // Find the plan details
   const plans = [
     { key: 'starter', name: 'Starter', monthly: 39, sites: 1, scans: 'weekly',
@@ -3575,21 +3555,13 @@ function PaidPlanView({ navigate }) {
     try {
       setBusy(true);
       
-      // Get the correct price ID for this plan (monthly)
-      const priceId = getPriceId(plan.key, false); // false = monthly
-      
-      if (!priceId) {
-        throw new Error('Price ID not configured for this plan');
-      }
-
       // Create Stripe checkout session for setup (save card, no immediate charge)
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           plan: plan.name,
-          price_id: priceId,
-          mode: 'setup',  // Changed from 'subscription' to 'setup' - saves card without charging
+          mode: 'setup',  // Setup mode - saves card without charging, no price_id needed
           customer_email: email,
           customer_name: name,
           website: website
