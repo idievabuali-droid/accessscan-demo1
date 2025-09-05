@@ -62,6 +62,16 @@ module.exports = async function handler(req, res) {
         // Also check setup session metadata for paid plans
         const setupSessionMetadata = setupSession?.metadata || {};
         
+        // Debug logging for paid plan customers
+        if (customer.email?.includes('teststarter')) {
+          console.log(`Debug for ${customer.email}:`, {
+            customerId: customer.id,
+            customerMetadata: metadata,
+            setupSessionId: setupSession?.id,
+            setupSessionMetadata: setupSessionMetadata,
+          });
+        }
+        
         const isFounderAccess = metadata.fa_source === 'founder_access';
         const isBaselineSubmission = metadata.ba_source === 'free_baseline' || metadata.submission_type === 'baseline';
         const isPaidPlan = metadata.source === 'paid_plan_signup' || setupSessionMetadata.source === 'paid_plan_signup';
@@ -71,6 +81,17 @@ module.exports = async function handler(req, res) {
         
         // Get plan information for paid plans
         const planName = metadata.plan || setupSessionMetadata.plan || '';
+        
+        // More debug logging
+        if (customer.email?.includes('teststarter')) {
+          console.log(`Detection results for ${customer.email}:`, {
+            isFounderAccess,
+            isBaselineSubmission,
+            isPaidPlan,
+            planName,
+            finalAccessType: isPaidPlan ? `paid_plan_${planName.toLowerCase()}` : (isFounderAccess ? 'founder_access' : (isBaselineSubmission ? 'free_baseline' : 'unknown'))
+          });
+        }
         
         // Determine access type based on metadata
         let accessType = 'unknown';
