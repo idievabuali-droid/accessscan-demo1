@@ -214,17 +214,17 @@
                 let agencyCount = 0;
 
                 data.customers.forEach(customer => {
-                    const setupMetadata = customer.setupSession?.metadata || {};
-                    if (setupMetadata.source === 'paid_plan_signup' && setupMetadata.plan) {
+                    // Use accessType instead of setup metadata
+                    if (customer.accessType && customer.accessType.startsWith('paid_plan_')) {
                         paidPlanCount++;
-                        const plan = setupMetadata.plan.toLowerCase();
+                        const plan = (customer.planName || '').toLowerCase();
                         if (plan === 'starter') starterCount++;
                         else if (plan === 'pro') proCount++;
                         else if (plan === 'agency') agencyCount++;
                     }
                 });
 
-                // Add paid plan stats to the display (we'll add these elements next)
+                // Add paid plan stats to the display
                 if (document.getElementById('stat-paid-plans')) {
                     document.getElementById('stat-paid-plans').textContent = paidPlanCount;
                 }
@@ -238,12 +238,13 @@
                     const setupMetadata = customer.setupSession?.metadata || {};
                     const customerMetadata = customer.metadata || {};
                     
-                    // Check for paid plan in setup session metadata
-                    if (setupMetadata.source === 'paid_plan_signup' && setupMetadata.plan) {
+                    // Check for paid plan using accessType
+                    if (customer.accessType && customer.accessType.startsWith('paid_plan_')) {
+                        const planName = customer.planName || 'Unknown Plan';
                         return {
                             type: 'paid_plan',
-                            plan: setupMetadata.plan,
-                            displayName: `${setupMetadata.plan} Plan`,
+                            plan: planName,
+                            displayName: `${planName} Plan`,
                             bgColor: 'bg-blue-100',
                             textColor: 'text-blue-800'
                         };
