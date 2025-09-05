@@ -37,7 +37,7 @@
 
             <div id="dashboard" class="hidden">
                 <!-- Stats Overview -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
                     <div class="bg-white rounded-lg shadow p-6">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
@@ -101,6 +101,22 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Paid Plans</p>
+                                <p id="stat-paid-plans" class="text-2xl font-semibold text-gray-900">-</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Customer Table -->
@@ -133,8 +149,9 @@
                     <div class="text-sm text-blue-800 space-y-1">
                         <p>• <strong>Free Baseline Users:</strong> Users who fill out the baseline form get their data collected via /api/collect-baseline</p>
                         <p>• <strong>Founder Access:</strong> Users who save a card for future billing (no charge today)</p>
+                        <p>• <strong>Paid Plans:</strong> Users who signed up for Starter, Pro, or Agency plans</p>
                         <p>• <strong>Card Saved:</strong> Successfully completed Stripe checkout and have a payment method on file</p>
-                        <p>• <strong>No Card:</strong> Started founder access flow but didn't complete card setup</p>
+                        <p>• <strong>No Card:</strong> Started setup flow but didn't complete card setup</p>
                     </div>
                 </div>
             </div>
@@ -190,11 +207,81 @@
                 document.getElementById('stat-without-cards').textContent = data.stats.withoutCards;
                 document.getElementById('stat-founder').textContent = data.stats.founderAccess;
 
+                // Calculate paid plan stats from the data
+                let paidPlanCount = 0;
+                let starterCount = 0;
+                let proCount = 0;
+                let agencyCount = 0;
+
+                data.customers.forEach(customer => {
+                    const setupMetadata = customer.setupSession?.metadata || {};
+                    if (setupMetadata.source === 'paid_plan_signup' && setupMetadata.plan) {
+                        paidPlanCount++;
+                        const plan = setupMetadata.plan.toLowerCase();
+                        if (plan === 'starter') starterCount++;
+                        else if (plan === 'pro') proCount++;
+                        else if (plan === 'agency') agencyCount++;
+                    }
+                });
+
+                // Add paid plan stats to the display (we'll add these elements next)
+                if (document.getElementById('stat-paid-plans')) {
+                    document.getElementById('stat-paid-plans').textContent = paidPlanCount;
+                }
+
                 // Populate table
                 const tbody = document.getElementById('customer-table-body');
                 tbody.innerHTML = '';
 
+                // Helper function to determine customer type and plan
+                function getCustomerInfo(customer) {
+                    const setupMetadata = customer.setupSession?.metadata || {};
+                    const customerMetadata = customer.metadata || {};
+                    
+                    // Check for paid plan in setup session metadata
+                    if (setupMetadata.source === 'paid_plan_signup' && setupMetadata.plan) {
+                        return {
+                            type: 'paid_plan',
+                            plan: setupMetadata.plan,
+                            displayName: `${setupMetadata.plan} Plan`,
+                            bgColor: 'bg-blue-100',
+                            textColor: 'text-blue-800'
+                        };
+                    }
+                    
+                    // Check for founder access
+                    if (customer.accessType === 'founder_access') {
+                        return {
+                            type: 'founder_access',
+                            plan: null,
+                            displayName: 'Founder Access',
+                            bgColor: 'bg-purple-100',
+                            textColor: 'text-purple-800'
+                        };
+                    }
+                    
+                    // Check for free baseline
+                    if (customer.accessType === 'free_baseline') {
+                        return {
+                            type: 'free_baseline',
+                            plan: null,
+                            displayName: 'Free Baseline',
+                            bgColor: 'bg-gray-100',
+                            textColor: 'text-gray-800'
+                        };
+                    }
+                    
+                    return {
+                        type: 'unknown',
+                        plan: null,
+                        displayName: 'Unknown',
+                        bgColor: 'bg-gray-100',
+                        textColor: 'text-gray-800'
+                    };
+                }
+
                 data.customers.forEach(customer => {
+                    const customerInfo = getCustomerInfo(customer);
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap">
@@ -204,13 +291,14 @@
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                customer.accessType === 'founder_access' 
-                                    ? 'bg-purple-100 text-purple-800' 
-                                    : 'bg-gray-100 text-gray-800'
-                            }">
-                                ${customer.accessType === 'founder_access' ? 'Founder Access' : 'Unknown'}
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${customerInfo.bgColor} ${customerInfo.textColor}">
+                                ${customerInfo.displayName}
                             </span>
+                            ${customerInfo.type === 'paid_plan' ? `
+                                <div class="text-xs text-gray-500 mt-1">
+                                    Paid Plan: ${customerInfo.plan}
+                                </div>
+                            ` : ''}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             ${customer.hasCard ? `

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auth Test</title>
+</head>
+<body>
+    <h1>Authentication Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        async function testAuth() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                // Test without auth
+                const response1 = await fetch('https://accessscan-demo1.vercel.app/api/admin-test');
+                const data1 = await response1.text();
+                
+                // Test with auth
+                const response2 = await fetch('https://accessscan-demo1.vercel.app/api/admin-test', {
+                    headers: {
+                        'Authorization': 'Bearer VCYYZEHEGQUMXUZJXWMUCOGWDDTHNKHA'
+                    }
+                });
+                const data2 = await response2.text();
+                
+                // Test health endpoint
+                const response3 = await fetch('https://accessscan-demo1.vercel.app/api/health');
+                const data3 = await response3.text();
+                
+                results.innerHTML = `
+                    <h3>Test Results:</h3>
+                    <h4>1. No Auth (should be 401):</h4>
+                    <pre>Status: ${response1.status}\n${data1}</pre>
+                    
+                    <h4>2. With Auth (should work):</h4>
+                    <pre>Status: ${response2.status}\n${data2}</pre>
+                    
+                    <h4>3. Health Check:</h4>
+                    <pre>Status: ${response3.status}\n${data3}</pre>
+                `;
+            } catch (error) {
+                results.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+        
+        // Run test immediately
+        testAuth();
+    </script>
+</body>
+</html>

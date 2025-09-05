@@ -25,12 +25,48 @@ export default async function handler(req, res) {
     const host = req.headers['x-forwarded-host'] || req.headers.host;
     const origin = `${proto}://${host}`;
 
+    // Create or get customer first to set metadata
+    let customer;
+    if (customer_email) {
+      // Try to find existing customer by email
+      const existingCustomers = await stripe.customers.list({
+        email: customer_email,
+        limit: 1
+      });
+      
+      if (existingCustomers.data.length > 0) {
+        customer = existingCustomers.data[0];
+        // Update existing customer with new metadata
+        customer = await stripe.customers.update(customer.id, {
+          metadata: {
+            plan: plan,
+            source: 'paid_plan_signup',
+            website: website || '',
+            customer_name: customer_name || ''
+          }
+        });
+      } else {
+        // Create new customer with metadata
+        customer = await stripe.customers.create({
+          email: customer_email,
+          name: customer_name || undefined,
+          metadata: {
+            plan: plan,
+            source: 'paid_plan_signup',
+            website: website || '',
+            customer_name: customer_name || ''
+          }
+        });
+      }
+    }
+
     // Create setup session (save card, no charge)
     const session = await stripe.checkout.sessions.create({
       mode: 'setup',
       payment_method_types: ['card'],
-      customer_creation: 'always',
-      customer_email: customer_email || undefined,
+      customer: customer ? customer.id : undefined,
+      customer_creation: customer ? undefined : 'always',
+      customer_email: customer ? undefined : (customer_email || undefined),
       success_url: `${origin}/#/subscribe/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/#/pricing?canceled=1`,
       metadata: {

@@ -58,13 +58,25 @@ module.exports = async function handler(req, res) {
         
         // Extract metadata to determine customer type
         const metadata = customer.metadata || {};
+        
+        // Also check setup session metadata for paid plans
+        const setupSessionMetadata = setupSession?.metadata || {};
+        
         const isFounderAccess = metadata.fa_source === 'founder_access';
         const isBaselineSubmission = metadata.ba_source === 'free_baseline' || metadata.submission_type === 'baseline';
-        const website = metadata.fa_website || metadata.ba_website || '';
+        const isPaidPlan = metadata.source === 'paid_plan_signup' || setupSessionMetadata.source === 'paid_plan_signup';
+        
+        // Get website from various sources
+        const website = metadata.fa_website || metadata.ba_website || metadata.website || setupSessionMetadata.website || '';
+        
+        // Get plan information for paid plans
+        const planName = metadata.plan || setupSessionMetadata.plan || '';
         
         // Determine access type based on metadata
         let accessType = 'unknown';
-        if (isFounderAccess) {
+        if (isPaidPlan) {
+          accessType = `paid_plan_${planName.toLowerCase()}`;
+        } else if (isFounderAccess) {
           accessType = 'founder_access';
         } else if (isBaselineSubmission) {
           accessType = 'free_baseline';
@@ -76,9 +88,9 @@ module.exports = async function handler(req, res) {
           email: customer.email,
           created: new Date(customer.created * 1000).toISOString(),
           
-          // Card status (only founder access customers can have cards)
-          hasCard: hasCard && isFounderAccess,
-          cardDetails: (hasCard && isFounderAccess) ? {
+          // Card status (founder access and paid plan customers can have cards)
+          hasCard: hasCard && (isFounderAccess || isPaidPlan),
+          cardDetails: (hasCard && (isFounderAccess || isPaidPlan)) ? {
             brand: paymentMethods.data[0].card.brand,
             last4: paymentMethods.data[0].card.last4,
             expMonth: paymentMethods.data[0].card.exp_month,
@@ -89,8 +101,8 @@ module.exports = async function handler(req, res) {
           accessType,
           website,
           
-          // Setup session status (only for founder access)
-          setupSession: (setupSession && isFounderAccess) ? {
+          // Setup session status (for founder access and paid plans)
+          setupSession: (setupSession && (isFounderAccess || isPaidPlan)) ? {
             id: setupSession.id,
             status: setupSession.status,
             url: setupSession.url
@@ -99,6 +111,9 @@ module.exports = async function handler(req, res) {
           // Additional metadata for baseline submissions
           company: metadata.ba_company || null,
           submissionStatus: metadata.ba_status || null,
+          
+          // Plan information for paid plans
+          planName: isPaidPlan ? planName : null,
           
           metadata
         });
@@ -112,7 +127,15 @@ module.exports = async function handler(req, res) {
         founderAccess: customerData.filter(c => c.accessType === 'founder_access').length,
         freeBaseline: customerData.filter(c => c.accessType === 'free_baseline').length,
         founderWithCards: customerData.filter(c => c.accessType === 'founder_access' && c.hasCard).length,
-        founderWithoutCards: customerData.filter(c => c.accessType === 'founder_access' && !c.hasCard).length
+        founderWithoutCards: customerData.filter(c => c.accessType === 'founder_access' && !c.hasCard).length,
+        
+        // Paid plan statistics
+        paidPlans: customerData.filter(c => c.accessType.startsWith('paid_plan_')).length,
+        starterPlan: customerData.filter(c => c.accessType === 'paid_plan_starter').length,
+        proPlan: customerData.filter(c => c.accessType === 'paid_plan_pro').length,
+        agencyPlan: customerData.filter(c => c.accessType === 'paid_plan_agency').length,
+        paidPlanWithCards: customerData.filter(c => c.accessType.startsWith('paid_plan_') && c.hasCard).length,
+        paidPlanWithoutCards: customerData.filter(c => c.accessType.startsWith('paid_plan_') && !c.hasCard).length
       };
 
       realData = {
