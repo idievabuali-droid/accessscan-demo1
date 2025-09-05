@@ -3740,12 +3740,12 @@ function SubscribeSuccessView({ navigate }) {
           <div className="bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-200 rounded-lg p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-3">Payment Setup Complete</h2>
             <div className="space-y-2">
-              <p><span className="font-medium">Selected Plan:</span> {info.metadata?.plan || 'Plan'}</p>
+              <p><span className="font-medium">Selected Plan:</span> {info.plan || 'Plan'}</p>
               <p><span className="font-medium">Email:</span> {info.customer_email}</p>
-              {info.metadata?.website && (
+              {info.website && (
                 <p><span className="font-medium">Website:</span> 
-                   <a href={info.metadata.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline ml-1">
-                     {info.metadata.website}
+                   <a href={info.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline ml-1">
+                     {info.website}
                    </a>
                 </p>
               )}

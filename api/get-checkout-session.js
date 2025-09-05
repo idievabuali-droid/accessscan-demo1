@@ -24,12 +24,32 @@ export default async function handler(req, res) {
     const pm = si?.payment_method;
     const card = pm?.card;
 
+    // Update customer metadata for paid plans
+    if (session.customer && session.metadata && session.metadata.source === 'paid_plan_signup') {
+      try {
+        await stripe.customers.update(session.customer.id, {
+          metadata: {
+            source: 'paid_plan_signup',
+            plan: session.metadata.plan || '',
+            website: session.metadata.website || '',
+            customer_name: session.metadata.customer_name || ''
+          }
+        });
+        console.log(`Updated customer ${session.customer.id} with paid plan metadata`);
+      } catch (updateError) {
+        console.error('Failed to update customer metadata:', updateError);
+        // Continue anyway, don't fail the request
+      }
+    }
+
     // Pull website from the most reliable source available
     const website =
       session?.metadata?.fa_website ||
+      session?.metadata?.website ||
       session?.client_reference_id ||
       si?.metadata?.fa_website ||
       (session?.customer && session.customer.metadata?.fa_website) ||
+      (session?.customer && session.customer.metadata?.website) ||
       null;
 
     return res.status(200).json({
@@ -39,6 +59,7 @@ export default async function handler(req, res) {
         session.customer?.email ||
         null,
       website, // <— expose it to the UI
+      plan: session?.metadata?.plan || null, // Add plan information
       payment_method: card
         ? {
             brand: card.brand,
