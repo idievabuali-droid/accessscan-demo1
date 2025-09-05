@@ -14,7 +14,7 @@ module.exports = async function handler(req, res) {
 
     // Security check - require admin token
     const authHeader = req.headers.authorization;
-    const adminToken = process.env.ADMIN_TOKEN || 'gc0diffwy133YlVBypxDwusP';
+    const adminToken = process.env.ADMIN_TOKEN || 'VCYYZEHEGQUMXUZJXWMUCOGWDDTHNKHA';
     
     if (!authHeader || authHeader !== `Bearer ${adminToken}`) {
       return res.status(401).json({ error: 'Unauthorized - Token required' });
