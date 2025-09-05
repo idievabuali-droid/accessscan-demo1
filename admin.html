@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClearPath Admin Dashboard v2</title>
+    <title>ClearPath Admin Dashboard - FIXED VERSION</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50">
     <div class="min-h-screen">
         <header class="bg-white shadow-sm border-b">
             <div class="max-w-7xl mx-auto px-4 py-4">
-                <h1 class="text-2xl font-bold text-gray-900">ClearPath Admin Dashboard</h1>
+                <h1 class="text-2xl font-bold text-gray-900">ClearPath Admin Dashboard - FIXED</h1>
                 <p class="text-gray-600">Customer data and card status overview</p>
             </div>
         </header>
@@ -207,14 +207,14 @@
                 document.getElementById('stat-without-cards').textContent = data.stats.withoutCards;
                 document.getElementById('stat-founder').textContent = data.stats.founderAccess;
 
-                // Calculate paid plan stats from the data
+                // Calculate paid plan stats from the data using FIXED LOGIC
                 let paidPlanCount = 0;
                 let starterCount = 0;
                 let proCount = 0;
                 let agencyCount = 0;
 
                 data.customers.forEach(customer => {
-                    // Use accessType instead of setup metadata
+                    // FIXED: Use accessType instead of setup metadata
                     if (customer.accessType && customer.accessType.startsWith('paid_plan_')) {
                         paidPlanCount++;
                         const plan = (customer.planName || '').toLowerCase();
@@ -224,21 +224,19 @@
                     }
                 });
 
-                // Add paid plan stats to the display
-                if (document.getElementById('stat-paid-plans')) {
-                    document.getElementById('stat-paid-plans').textContent = paidPlanCount;
-                }
+                // Update paid plan stats
+                document.getElementById('stat-paid-plans').textContent = paidPlanCount;
 
                 // Populate table
                 const tbody = document.getElementById('customer-table-body');
                 tbody.innerHTML = '';
 
-                // Helper function to determine customer type and plan
+                // FIXED: Helper function to determine customer type and plan
                 function getCustomerInfo(customer) {
                     const setupMetadata = customer.setupSession?.metadata || {};
                     const customerMetadata = customer.metadata || {};
                     
-                    // Check for paid plan using accessType
+                    // FIXED: Check for paid plan using accessType
                     if (customer.accessType && customer.accessType.startsWith('paid_plan_')) {
                         const planName = customer.planName || 'Unknown Plan';
                         return {
