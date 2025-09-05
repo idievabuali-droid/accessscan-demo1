@@ -6,6 +6,8 @@ export default async function handler(req, res) {
   }
 
   try {
+    console.log('DEBUG: Request body:', JSON.stringify(req.body, null, 2));
+    
     // Initialize Stripe with proper error handling
     const stripeKey = process.env.STRIPE_SECRET_KEY || process.env.stripe_testkey;
     if (!stripeKey) {
