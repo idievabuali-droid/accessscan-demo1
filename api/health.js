@@ -20,11 +20,11 @@ module.exports = function handler(req, res) {
     debug: {
       adminTokenLength: process.env.ADMIN_TOKEN ? process.env.ADMIN_TOKEN.length : 0,
       adminTokenPrefix: process.env.ADMIN_TOKEN ? process.env.ADMIN_TOKEN.substring(0, 8) + '...' : 'none',
-      expectedToken: 'VCYYZEHEGQUMXUZJXWMUCOGWDDTHNKHA',
-      tokensMatch: process.env.ADMIN_TOKEN === 'VCYYZEHEGQUMXUZJXWMUCOGWDDTHNKHA',
+      expectedToken: 'gc0diffwy133YlVBypxDwusP',
+      tokensMatch: process.env.ADMIN_TOKEN === 'gc0diffwy133YlVBypxDwusP',
       authHeader: req.headers.authorization || 'none',
-      authHeaderMatch: req.headers.authorization === `Bearer ${process.env.ADMIN_TOKEN || 'VCYYZEHEGQUMXUZJXWMUCOGWDDTHNKHA'}`,
-      expectedAuthHeader: `Bearer ${process.env.ADMIN_TOKEN || 'VCYYZEHEGQUMXUZJXWMUCOGWDDTHNKHA'}`
+      authHeaderMatch: req.headers.authorization === `Bearer ${process.env.ADMIN_TOKEN || 'gc0diffwy133YlVBypxDwusP'}`,
+      expectedAuthHeader: `Bearer ${process.env.ADMIN_TOKEN || 'gc0diffwy133YlVBypxDwusP'}`
     }
   });
 };
