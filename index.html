@@ -3582,14 +3582,14 @@ function PaidPlanView({ navigate }) {
         throw new Error('Price ID not configured for this plan');
       }
 
-      // Create Stripe checkout session
+      // Create Stripe checkout session for setup (save card, no immediate charge)
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           plan: plan.name,
           price_id: priceId,
-          mode: 'subscription',
+          mode: 'setup',  // Changed from 'subscription' to 'setup' - saves card without charging
           customer_email: email,
           customer_name: name,
           website: website
@@ -3633,8 +3633,8 @@ function PaidPlanView({ navigate }) {
         <div className="flex items-center gap-2">
           <span className="text-emerald-600 text-lg">💳</span>
           <div>
-            <p className="font-semibold text-emerald-800">No charge today</p>
-            <p className="text-sm text-emerald-700">We'll save your payment method and notify you before your first billing cycle begins.</p>
+            <p className="font-semibold text-emerald-800">Save payment method - no charge today</p>
+            <p className="text-sm text-emerald-700">We'll securely save your card and notify you before your first billing cycle. You can cancel anytime before we charge.</p>
           </div>
         </div>
       </div>
@@ -3661,14 +3661,14 @@ function PaidPlanView({ navigate }) {
           <input id="plan_consent" type="checkbox" className="mt-1" checked={consent}
                  onChange={e=>setConsent(e.target.checked)} />
           <label htmlFor="plan_consent" className="text-sm">
-            I agree to subscribe to the {plan.name} plan for £{plan.monthly}/month and accept the Terms and Privacy Policy.
+            I agree to save my payment method for the {plan.name} plan (£{plan.monthly}/month). I understand no charge will occur today and I'll be notified before any future billing.
           </label>
         </div>
         {err && <p className="text-sm text-red-600">{err}</p>}
         <div className="flex gap-3">
           <button type="submit" disabled={busy}
                   className="inline-flex items-center rounded-lg bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 px-4 py-2 font-semibold text-white shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 disabled:opacity-60 disabled:hover:scale-100">
-            {busy ? 'Redirecting to checkout…' : `Continue to Stripe Checkout`}
+            {busy ? 'Redirecting to payment setup…' : `Save Payment Method (No Charge Today)`}
           </button>
           <Button variant="ghost" onClick={() => navigate('/pricing')}>
             Back to Pricing
@@ -3753,8 +3753,8 @@ function SubscribeSuccessView({ navigate }) {
           <span className="text-2xl">🎉</span>
         </div>
         
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to AccessScan!</h1>
-        <p className="text-gray-600 mb-8">Your subscription has been set up successfully.</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Payment Method Saved!</h1>
+        <p className="text-gray-600 mb-8">Your card has been securely saved for future billing.</p>
       </div>
 
       {err && (
@@ -3766,9 +3766,9 @@ function SubscribeSuccessView({ navigate }) {
       {info ? (
         <div className="space-y-6">
           <div className="bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-200 rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-3">Subscription Details</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-3">Payment Setup Complete</h2>
             <div className="space-y-2">
-              <p><span className="font-medium">Plan:</span> {info.metadata?.plan || 'Subscription'}</p>
+              <p><span className="font-medium">Selected Plan:</span> {info.metadata?.plan || 'Plan'}</p>
               <p><span className="font-medium">Email:</span> {info.customer_email}</p>
               {info.metadata?.website && (
                 <p><span className="font-medium">Website:</span> 
@@ -3778,7 +3778,7 @@ function SubscribeSuccessView({ navigate }) {
                 </p>
               )}
               {info.payment_method && (
-                <p><span className="font-medium">Payment Method:</span> {info.payment_method.brand} •••• {info.payment_method.last4}</p>
+                <p><span className="font-medium">Saved Card:</span> {info.payment_method.brand} •••• {info.payment_method.last4}</p>
               )}
             </div>
           </div>
@@ -3787,9 +3787,9 @@ function SubscribeSuccessView({ navigate }) {
             <h3 className="font-semibold text-blue-900 mb-2">What happens next?</h3>
             <ul className="text-sm text-blue-800 space-y-1">
               <li>• You'll receive a confirmation email shortly</li>
-              <li>• We'll begin scanning your website within 24 hours</li>
-              <li>• Your first accessibility report will be emailed to you</li>
-              <li>• Billing will start after your first scan is complete</li>
+              <li>• We'll begin preparing your accessibility scanning setup</li>
+              <li>• You'll be notified by email before any billing begins</li>
+              <li>• No charges will occur until you're ready to start scanning</li>
             </ul>
           </div>
 
