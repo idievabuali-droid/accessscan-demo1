@@ -3556,7 +3556,7 @@ function PaidPlanView({ navigate }) {
       setBusy(true);
       
       // Create Stripe checkout session for setup (save card, no immediate charge)
-      const response = await fetch('/api/create-checkout-session', {
+      const response = await fetch('/api/test-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -3574,8 +3574,12 @@ function PaidPlanView({ navigate }) {
         throw new Error(data.error || 'Failed to create checkout session');
       }
 
-      // Redirect to Stripe checkout
-      window.location.href = data.url;
+      // For testing - show success message instead of redirecting
+      setErr('SUCCESS: Payment setup would redirect to Stripe. Plan: ' + data.plan + ', Email: ' + data.customer_email);
+      setBusy(false);
+      
+      // Uncomment below for real Stripe redirect:
+      // window.location.href = data.url;
       
     } catch (e2) {
       console.error('Checkout error:', e2);
