@@ -16,6 +16,12 @@ module.exports = function handler(req, res) {
       hasStripeKey: !!(process.env.STRIPE_SECRET_KEY || process.env.stripe_testkey),
       hasAdminToken: !!process.env.ADMIN_TOKEN,
       nodeEnv: process.env.NODE_ENV || 'development'
+    },
+    debug: {
+      adminTokenLength: process.env.ADMIN_TOKEN ? process.env.ADMIN_TOKEN.length : 0,
+      adminTokenPrefix: process.env.ADMIN_TOKEN ? process.env.ADMIN_TOKEN.substring(0, 8) + '...' : 'none',
+      expectedToken: 'gc0diffwy133YlVBypxDwusP',
+      tokensMatch: process.env.ADMIN_TOKEN === 'gc0diffwy133YlVBypxDwusP'
     }
   });
 };
