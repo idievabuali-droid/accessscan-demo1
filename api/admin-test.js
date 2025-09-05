@@ -11,7 +11,8 @@ module.exports = async function handler(req, res) {
     }
 
     // TEMP DEBUG: Return debug info for troubleshooting (before auth check)
-    if (req.method === 'GET' && req.query?.debug === 'true') {
+    // Force debug mode for now to troubleshoot
+    if (req.method === 'GET') {
       const authHeader = req.headers.authorization;
       const adminToken = process.env.ADMIN_TOKEN || 'gc0diffwy133YlVBypxDwusP';
       
@@ -19,14 +20,18 @@ module.exports = async function handler(req, res) {
         debug: {
           hasAuthHeader: !!authHeader,
           authHeaderValue: authHeader ? authHeader.substring(0, 10) + '...' : 'none',
+          fullAuthHeader: authHeader,
           hasAdminToken: !!adminToken,
           adminTokenLength: adminToken ? adminToken.length : 0,
           adminTokenPrefix: adminToken ? adminToken.substring(0, 8) + '...' : 'none',
+          fullAdminToken: adminToken,
           expectedMatch: `Bearer ${adminToken}`,
           actualHeader: authHeader,
           matches: authHeader === `Bearer ${adminToken}`,
           headers: Object.keys(req.headers),
-          query: req.query
+          query: req.query,
+          method: req.method,
+          url: req.url
         }
       });
     }
