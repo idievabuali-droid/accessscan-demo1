@@ -14,6 +14,22 @@ module.exports = async function handler(req, res) {
     const authHeader = req.headers.authorization;
     const adminToken = process.env.ADMIN_TOKEN || 'gc0diffwy133YlVBypxDwusP';
     
+    // TEMP DEBUG: Return debug info for troubleshooting
+    if (req.method === 'GET' && req.query?.debug === 'true') {
+      return res.status(200).json({
+        debug: {
+          hasAuthHeader: !!authHeader,
+          authHeaderValue: authHeader ? authHeader.substring(0, 10) + '...' : 'none',
+          hasAdminToken: !!adminToken,
+          adminTokenLength: adminToken ? adminToken.length : 0,
+          adminTokenPrefix: adminToken ? adminToken.substring(0, 8) + '...' : 'none',
+          expectedMatch: `Bearer ${adminToken}`,
+          actualHeader: authHeader,
+          matches: authHeader === `Bearer ${adminToken}`
+        }
+      });
+    }
+    
     if (!authHeader || authHeader !== `Bearer ${adminToken}`) {
       return res.status(401).json({ error: 'Unauthorized - Token required' });
     }
