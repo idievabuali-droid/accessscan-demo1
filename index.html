@@ -3513,9 +3513,9 @@ function PaidPlanView({ navigate }) {
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState('');
 
-  // Get plan key from URL
-  const route = window.location.hash.slice(1) || '/';
-  const planKey = route.split('/')[2]; // Extract from /plan/starter format
+  // Get plan key from URL using proper router logic
+  const { route } = useRouter();
+  const planKey = route.startsWith('/plan/') ? route.split('/')[2] : null; // Extract from /plan/starter format
   
   // Find the plan details
   const plans = [
