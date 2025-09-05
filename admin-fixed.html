@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClearPath Admin Dashboard - FIXED VERSION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <header class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-4 py-4">
+                <h1 class="text-2xl font-bold text-gray-900">ClearPath Admin Dashboard - FIXED</h1>
+                <p class="text-gray-600">Customer data and card status overview</p>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto px-4 py-8">
+            <div id="loading" class="text-center py-12">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <p class="mt-2 text-gray-600">Loading customer data...</p>
+            </div>
+
+            <div id="error" class="hidden bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-800">Error Loading Data</h3>
+                        <p id="error-message" class="mt-1 text-sm text-red-700"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="dashboard" class="hidden">
+                <!-- Stats Overview -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Total Customers</p>
+                                <p id="stat-total" class="text-2xl font-semibold text-gray-900">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Cards Saved</p>
+                                <p id="stat-with-cards" class="text-2xl font-semibold text-gray-900">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">No Cards</p>
+                                <p id="stat-without-cards" class="text-2xl font-semibold text-gray-900">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Founder Access</p>
+                                <p id="stat-founder" class="text-2xl font-semibold text-gray-900">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Paid Plans</p>
+                                <p id="stat-paid-plans" class="text-2xl font-semibold text-gray-900">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customer Table -->
+                <div class="bg-white shadow rounded-lg">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-medium text-gray-900">Customer Details</h2>
+                        <p class="mt-1 text-sm text-gray-600">Complete overview of all customers and their card status</p>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Access Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Card Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Website</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customer-table-body" class="bg-white divide-y divide-gray-200">
+                                <!-- Dynamic content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Summary -->
+                <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+                    <h3 class="text-lg font-medium text-blue-900 mb-2">Summary</h3>
+                    <div class="text-sm text-blue-800 space-y-1">
+                        <p>• <strong>Free Baseline Users:</strong> Users who fill out the baseline form get their data collected via /api/collect-baseline</p>
+                        <p>• <strong>Founder Access:</strong> Users who save a card for future billing (no charge today)</p>
+                        <p>• <strong>Paid Plans:</strong> Users who signed up for Starter, Pro, or Agency plans</p>
+                        <p>• <strong>Card Saved:</strong> Successfully completed Stripe checkout and have a payment method on file</p>
+                        <p>• <strong>No Card:</strong> Started setup flow but didn't complete card setup</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        async function loadDashboard() {
+            try {
+                // Check for token in URL parameters first
+                const urlParams = new URLSearchParams(window.location.search);
+                let token = urlParams.get('token');
+                
+                // If no URL token, check localStorage
+                if (!token) {
+                    token = localStorage.getItem('admin_token');
+                }
+                
+                // If still no token, use the default admin token
+                if (!token) {
+                    token = 'gc0diffwy133YlVBypxDwusP';
+                    // Save token for next time
+                    localStorage.setItem('admin_token', token);
+                }
+
+                const response = await fetch('/api/admin-dashboard-simple', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    // If unauthorized, clear saved token and prompt again
+                    if (response.status === 401) {
+                        localStorage.removeItem('admin_token');
+                        token = prompt('Invalid token. Enter admin token:');
+                        if (!token) return;
+                        localStorage.setItem('admin_token', token);
+                        // Retry with new token
+                        return loadDashboard();
+                    }
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+
+                // Update stats
+                document.getElementById('stat-total').textContent = data.stats.total;
+                document.getElementById('stat-with-cards').textContent = data.stats.withCards;
+                document.getElementById('stat-without-cards').textContent = data.stats.withoutCards;
+                document.getElementById('stat-founder').textContent = data.stats.founderAccess;
+
+                // Calculate paid plan stats from the data using FIXED LOGIC
+                let paidPlanCount = 0;
+                let starterCount = 0;
+                let proCount = 0;
+                let agencyCount = 0;
+
+                data.customers.forEach(customer => {
+                    // FIXED: Use accessType instead of setup metadata
+                    if (customer.accessType && customer.accessType.startsWith('paid_plan_')) {
+                        paidPlanCount++;
+                        const plan = (customer.planName || '').toLowerCase();
+                        if (plan === 'starter') starterCount++;
+                        else if (plan === 'pro') proCount++;
+                        else if (plan === 'agency') agencyCount++;
+                    }
+                });
+
+                // Update paid plan stats
+                document.getElementById('stat-paid-plans').textContent = paidPlanCount;
+
+                // Populate table
+                const tbody = document.getElementById('customer-table-body');
+                tbody.innerHTML = '';
+
+                // FIXED: Helper function to determine customer type and plan
+                function getCustomerInfo(customer) {
+                    const setupMetadata = customer.setupSession?.metadata || {};
+                    const customerMetadata = customer.metadata || {};
+                    
+                    // FIXED: Check for paid plan using accessType
+                    if (customer.accessType && customer.accessType.startsWith('paid_plan_')) {
+                        const planName = customer.planName || 'Unknown Plan';
+                        return {
+                            type: 'paid_plan',
+                            plan: planName,
+                            displayName: `${planName} Plan`,
+                            bgColor: 'bg-blue-100',
+                            textColor: 'text-blue-800'
+                        };
+                    }
+                    
+                    // Check for founder access
+                    if (customer.accessType === 'founder_access') {
+                        return {
+                            type: 'founder_access',
+                            plan: null,
+                            displayName: 'Founder Access',
+                            bgColor: 'bg-purple-100',
+                            textColor: 'text-purple-800'
+                        };
+                    }
+                    
+                    // Check for free baseline
+                    if (customer.accessType === 'free_baseline') {
+                        return {
+                            type: 'free_baseline',
+                            plan: null,
+                            displayName: 'Free Baseline',
+                            bgColor: 'bg-gray-100',
+                            textColor: 'text-gray-800'
+                        };
+                    }
+                    
+                    return {
+                        type: 'unknown',
+                        plan: null,
+                        displayName: 'Unknown',
+                        bgColor: 'bg-gray-100',
+                        textColor: 'text-gray-800'
+                    };
+                }
+
+                data.customers.forEach(customer => {
+                    const customerInfo = getCustomerInfo(customer);
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">${customer.name}</div>
+                                <div class="text-sm text-gray-500">${customer.email}</div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${customerInfo.bgColor} ${customerInfo.textColor}">
+                                ${customerInfo.displayName}
+                            </span>
+                            ${customerInfo.type === 'paid_plan' ? `
+                                <div class="text-xs text-gray-500 mt-1">
+                                    Paid Plan: ${customerInfo.plan}
+                                </div>
+                            ` : ''}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            ${customer.hasCard ? `
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    Card Saved
+                                </span>
+                                <div class="text-xs text-gray-500 mt-1">
+                                    ${customer.cardDetails.brand} •••• ${customer.cardDetails.last4}
+                                </div>
+                            ` : `
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                    No Card
+                                </span>
+                            `}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${customer.website ? `<a href="${customer.website}" target="_blank" class="text-blue-600 hover:text-blue-900">${customer.website}</a>` : '-'}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${new Date(customer.created).toLocaleDateString()}
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+            } catch (error) {
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('error').classList.remove('hidden');
+                document.getElementById('error-message').textContent = error.message;
+            }
+        }
+
+        // Load dashboard on page load
+        loadDashboard();
+    </script>
+</body>
+</html>
